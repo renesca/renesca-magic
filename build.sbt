@@ -9,7 +9,7 @@ val paradiseVersion = "2.1.0-M5"
 
 scalaVersion := scalaV
 
-addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
+// addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaV,

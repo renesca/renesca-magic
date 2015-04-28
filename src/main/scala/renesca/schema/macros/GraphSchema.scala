@@ -55,15 +55,14 @@ object GraphSchemaMacro {
     }
 
 
-    case class SchemaPattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with StatementsPattern
     object SchemaPattern {
       def unapply(tree: Tree): Option[SchemaPattern] = condOpt(tree) {
         case q""" object $name extends ..$superTypes { ..$statements } """ =>
           SchemaPattern(name.toString, superTypes.map(_.toString) diff List("scala.AnyRef"), statements)
       }
     }
+    case class SchemaPattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with StatementsPattern
 
-    case class GroupPattern(name: String, superTypes: List[String], nodes: List[String]) extends NamePattern with SuperTypesPattern
     object GroupPattern {
       //TODO: statements
       //TODO: extract modifier pattern
@@ -80,8 +79,8 @@ object GraphSchemaMacro {
           GroupPattern(name.toString, superTypes.map { _.toString } diff List("scala.AnyRef"), Nil)
       }
     }
+    case class GroupPattern(name: String, superTypes: List[String], nodes: List[String]) extends NamePattern with SuperTypesPattern
 
-    case class NodeTraitPattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StatementsPattern
     object NodeTraitPattern {
       def unapply(tree: Tree): Option[NodeTraitPattern] = condOpt(tree) {
         //http://stackoverflow.com/questions/26305528/scala-annotations-are-not-found
@@ -92,23 +91,30 @@ object GraphSchemaMacro {
           NodeTraitPattern(name.toString, superTypes.map { _.toString } diff List("scala.AnyRef"), statements)
       }
     }
+    case class NodeTraitPattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StatementsPattern
 
-    case class NodePattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StatementsPattern
     object NodePattern {
       def unapply(tree: Tree): Option[NodePattern] = condOpt(tree) {
         case q"""@Node class $name extends ..${superTypes} { ..$statements }""" =>
           NodePattern(name.toString, superTypes.map { _.toString }, statements)
       }
     }
+    case class NodePattern(name: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StatementsPattern
 
-    case class Relation(name: String, startNode: String, endNode: String, statements: List[Tree]) extends NamePattern with StartEndNodePattern with StatementsPattern
     object RelationPattern {
       def unapply(tree: Tree): Option[Relation] = condOpt(tree) {
         case q"""@Relation class $name (startNode:$startNode, endNode:$endNode) {..$statements}""" =>
           Relation(name.toString, startNode.toString, endNode.toString, statements)
       }
     }
+    case class Relation(name: String, startNode: String, endNode: String, statements: List[Tree]) extends NamePattern with StartEndNodePattern with StatementsPattern
 
+    object HyperRelationPattern {
+      def unapply(tree: Tree): Option[HyperRelation] = condOpt(tree) {
+        case q"""@HyperRelation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
+          HyperRelation(name.toString, startNode.toString, endNode.toString, superTypes.map { _.toString } diff List("scala.AnyRef"), statements)
+      }
+    }
     case class HyperRelation(name: String, startNode: String, endNode: String, superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StartEndNodePattern with StatementsPattern {
       def startRelation = relationName(startNode, name)
       def startRelation_type = TypeName(startRelation)
@@ -119,23 +125,7 @@ object GraphSchemaMacro {
       def endRelation_term = TermName(endRelation)
       def endRelation_label = nameToLabel(endRelation)
     }
-    object HyperRelationPattern {
-      def unapply(tree: Tree): Option[HyperRelation] = condOpt(tree) {
-        case q"""@HyperRelation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
-          HyperRelation(name.toString, startNode.toString, endNode.toString, superTypes.map { _.toString } diff List("scala.AnyRef"), statements)
-      }
-    }
 
-    case class Schema(
-                       name: String,
-                       superTypes: List[String],
-                       nodes: List[Node],
-                       relations: List[Relation],
-                       hyperRelations: List[HyperRelation],
-                       nodeTraits: List[NodeTrait],
-                       groups: List[Group],
-                       statements: List[Tree]
-                       ) extends NamePattern with SuperTypesPattern
     case class Node(
                      name: String,
                      superTypes: List[String],
@@ -152,16 +142,6 @@ object GraphSchemaMacro {
       }
     }
 
-    case class NodeTrait(name: String,
-                         superTypes: List[String],
-                         subNodes: List[String],
-                         subRelations: List[String],
-                         subHyperRelations: List[String],
-                         commonHyperNodeTraits: List[String],
-                         statements: List[Tree]
-                          ) extends NamePattern with SuperTypesPattern {
-      def commonHyperNodeTraits_type = commonHyperNodeTraits.map(TypeName(_))
-    }
     object NodeTrait {
 
       import Schema._
@@ -182,6 +162,16 @@ object GraphSchemaMacro {
           commonHyperNodeTraits = nodeTraitToCommonHyperNodeTraits(nodeTraitPatterns, selectedNodePatterns, hyperRelationPatterns, nodeTraitPattern),
           statements = nodeTraitPattern.statements
         )
+    }
+    case class NodeTrait(name: String,
+                         superTypes: List[String],
+                         subNodes: List[String],
+                         subRelations: List[String],
+                         subHyperRelations: List[String],
+                         commonHyperNodeTraits: List[String],
+                         statements: List[Tree]
+                          ) extends NamePattern with SuperTypesPattern {
+      def commonHyperNodeTraits_type = commonHyperNodeTraits.map(TypeName(_))
     }
     case class Group(name: String,
                      nodes: List[String],
@@ -256,6 +246,16 @@ object GraphSchemaMacro {
         nodeNamesToRelations(groupToNodes(groupPatterns, groupPattern), relations).map(_.name)
     }
 
+    case class Schema(
+                       name: String,
+                       superTypes: List[String],
+                       nodes: List[Node],
+                       relations: List[Relation],
+                       hyperRelations: List[HyperRelation],
+                       nodeTraits: List[NodeTrait],
+                       groups: List[Group],
+                       statements: List[Tree]
+                       ) extends NamePattern with SuperTypesPattern
 
     c.Expr[Any](annottees.map(_.tree).toList match {
       case SchemaPattern(schemaPattern) :: Nil =>
