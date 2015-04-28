@@ -5,6 +5,47 @@ import scala.language.experimental.macros
 import PartialFunction._
 import scala.annotation.StaticAnnotation
 
+object Helpers {
+  def nodeToFactoryName(name: String) = name + "Factory"
+  def rev(s: String) = "rev_" + s
+  def nameToPlural(name: String) = {
+    val lower = name.take(1).toLowerCase + name.drop(1)
+    val suffix = if(lower.endsWith("s")) "" else "s"
+    lower + suffix;
+  }
+  def nameToLabel(name: String) = name.toUpperCase
+  def relationName(start: String, end: String) = s"${ start }To${ end }"
+
+
+  trait NamePattern {
+    def name: String
+    def name_type(implicit c: whitebox.Context) = c.universe.TypeName(name)
+    def name_term(implicit c: whitebox.Context) = c.universe.TermName(name)
+    def name_label = nameToLabel(name)
+    def name_plural = nameToPlural(name)
+    def name_plural_term(implicit c: whitebox.Context) = c.universe.TermName(name_plural)
+  }
+
+  trait SuperTypesPattern {
+    def superTypes: List[String]
+    def superTypes_type(implicit c: whitebox.Context) = superTypes.map(c.universe.TypeName(_))
+  }
+
+  trait StartEndNodePattern {
+    def startNode: String
+    def endNode: String
+    def startNode_type(implicit c: whitebox.Context) = c.universe.TypeName(startNode)
+    def startNode_term(implicit c: whitebox.Context) = c.universe.TermName(startNode)
+    def endNode_type(implicit c: whitebox.Context) = c.universe.TypeName(endNode)
+    def endNode_term(implicit c: whitebox.Context) = c.universe.TermName(endNode)
+  }
+
+  trait StatementsPattern {
+    def statements(implicit c: whitebox.Context): List[c.universe.Tree]
+  }
+
+}
+
 class GraphSchema extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro GraphSchemaMacro.graphSchema
 }
@@ -16,43 +57,10 @@ object GraphSchemaMacro {
   // TODO: validation: nodeTraits(propertyTypes), nodes need to inherit exactly one NodeTrait
   // TODO: compile error when nodes inherit not only from nodeTraits
 
-  def graphSchema(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    import c.universe._
-
-    def nodeToFactoryName(name: String) = name + "Factory"
-    def rev(s: String) = "rev_" + s
-    def nameToPlural(name: String) = {
-      val lower = name.take(1).toLowerCase + name.drop(1)
-      val suffix = if(lower.endsWith("s")) "" else "s"
-      lower + suffix;
-    }
-    def nameToLabel(name: String) = name.toUpperCase
-    def relationName(start: String, end: String) = s"${ start }To${ end }"
-
-
-    trait NamePattern {
-      def name: String
-      def name_type = TypeName(name)
-      def name_term = TermName(name)
-      def name_label = nameToLabel(name)
-      def name_plural = nameToPlural(name)
-      def name_plural_term = TermName(name_plural)
-    }
-    trait SuperTypesPattern {
-      def superTypes: List[String]
-      def superTypes_type = superTypes.map(TypeName(_))
-    }
-    trait StartEndNodePattern {
-      def startNode: String
-      def endNode: String
-      def startNode_type = TypeName(startNode)
-      def startNode_term = TermName(startNode)
-      def endNode_type = TypeName(endNode)
-      def endNode_term = TermName(endNode)
-    }
-    trait StatementsPattern {
-      def statements: List[Tree]
-    }
+  def graphSchema(context: whitebox.Context)(annottees: context.Expr[Any]*): context.Expr[Any] = {
+    import Helpers._
+    implicit val c = context
+    import c._
 
 
     object SchemaPattern {
