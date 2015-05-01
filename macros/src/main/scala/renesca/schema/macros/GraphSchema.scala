@@ -11,7 +11,7 @@ object Helpers {
   def nameToPlural(name: String) = {
     val lower = name.take(1).toLowerCase + name.drop(1)
     val suffix = if(lower.endsWith("s")) "" else "s"
-    lower + suffix;
+    lower + suffix
   }
   def nameToLabel(name: String) = name.toUpperCase
   def relationName(start: String, end: String) = s"${ start }To${ end }"
@@ -297,19 +297,19 @@ object GraphSchemaMacro {
           }
 
           def isOptionalType(typeName: Tree) = typeName match {
-            case q"Option[$_]" => true
+            case q"Option[$x]" => true
             case _             => false
           }
 
 
           def nodeFactories(schema: Schema): List[Tree] = schema.nodes.map { node => import node._
             val localNonOptionalParamsWithoutDefault = statements.collect {
-              case statement@(q"val $_:$propertyType") if !isOptionalType(propertyType) => statement
-              case statement@(q"var $_:$propertyType") if !isOptionalType(propertyType) => statement
+              case statement@(q"val $x:$propertyType") if !isOptionalType(propertyType) => statement
+              case statement@(q"var $x:$propertyType") if !isOptionalType(propertyType) => statement
             }
             val localParamsWithDefault = statements.collect {
-              case statement@(q"val $_: $_ = $default") if !default.isEmpty => statement
-              case statement@(q"var $_: $_ = $default") if !default.isEmpty => statement
+              case statement@(q"val $x: $y = $default") if !default.isEmpty => statement
+              case statement@(q"var $x: $y = $default") if !default.isEmpty => statement
             }
             val localOptionalParamsWithoutDefault = statements.collect {
               case statement@(q"val $propertyName:Option[$propertyType]") => q"val $propertyName:Option[$propertyType] = None"
@@ -319,12 +319,12 @@ object GraphSchemaMacro {
             val localParams = List(localNonOptionalParamsWithoutDefault ::: localParamsWithDefault ::: localOptionalParamsWithoutDefault)
 
             val properties = statements.map {
-              case q"val $propertyName:$propertyType = $_" if !isOptionalType(propertyType) => propertyName
-              case q"var $propertyName:$propertyType = $_" if !isOptionalType(propertyType) => propertyName
+              case q"val $propertyName:$propertyType = $x" if !isOptionalType(propertyType) => propertyName
+              case q"var $propertyName:$propertyType = $x" if !isOptionalType(propertyType) => propertyName
             }
             val optionalProperties = statements.map {
-              case q"val $propertyName:Option[$_] = $_" => propertyName
-              case q"var $propertyName:Option[$_] = $_" => propertyName
+              case q"val $propertyName:Option[$x] = $y" => propertyName
+              case q"var $propertyName:Option[$x] = $y" => propertyName
             }
 
             val propertyAssignments = properties.map { propertyName => q"schemaNode.node.properties(${ propertyName.toString }) = $propertyName" }
