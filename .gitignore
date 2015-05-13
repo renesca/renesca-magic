@@ -1,2 +1,8 @@
 # sbt
 target/
+
+# local stuff
+local.*
+
+# tomcat distriubution folder
+.distribution

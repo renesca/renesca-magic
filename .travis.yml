@@ -1,0 +1,46 @@
+sudo: false
+language: scala
+cache:
+  directories:
+  - "$HOME/.sbt"
+  - "$HOME/.ivy2"
+scala:
+- 2.11.6
+# - 2.10.5
+jdk:
+- oraclejdk7
+# - oraclejdk8
+# - openjdk6 # httpmocks do not work with java6
+# - openjdk7
+script:
+# - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+# - sbt ++$TRAVIS_SCALA_VERSION test-integration:test # integration tests need a running neo4j instance
+- rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
+after_success:
+# - sbt ++$TRAVIS_SCALA_VERSION coveralls
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && test "${NEO4J_VERSION}" = '2.2.1' && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease # take fixed combination from build matrix for each scala version and publish
+env:
+  matrix:
+    # test across multiple versions of Neo4j:
+    # - NEO4J_VERSION="2.3.0-M01"
+    - NEO4J_VERSION="2.2.1"
+    # - NEO4J_VERSION="2.1.7" # does not isolate transactions (same for version 2.1.6)
+    # - NEO4J_VERSION="2.0.4" # does not support property += {...}
+  global:
+    - secure: NoM0IHXcd8yXIGKeQmHFe902ATGKhIRDW5Uln0CB3SjXjygg7t9ysXlL0rz14oXpxVE0jhPrdIlnbtvuVEoupbermx2zQIdweh/om09pqH1xv33tVawPreExIOJ02SZkZ7sos+W5Q1gFsE3HvSdrZuoR3f2nXWV9Z0kQHmuNdIc=
+    - secure: SExhNxk6rHNDbzRzKLzfWdEY99Ica2XoGR+th/t3XvqsgvtgCVsPA+ts1ZqGEKxiLqHRj/sBSbUAMVn5APFZad+zPrqJ+VGPuTLiC6v+4TYd0QbqikDNUp8BIBnUXcWkenBOw2GEnd/sAapglfM1cXhPuGte+8XVaI+6W7+0tUE=
+before_install:
+# install Neo4j locally and run with specific jvm:
+- wget dist.neo4j.org/neo4j-community-$NEO4J_VERSION-unix.tar.gz
+- tar -xzvf neo4j-community-$NEO4J_VERSION-unix.tar.gz
+- echo "org.neo4j.server.transaction.timeout=6" >> neo4j-community-$NEO4J_VERSION/conf/neo4j-server.properties
+#- echo "dbms.security.authorization_enabled=false" >> neo4j-community-$NEO4J_VERSION/conf/neo4j-server.properties
+curl --silent -H "Content-Type: application/json" -d "{\"password\":\"testingpw\"}" http://localhost:7474/user/neo4j/password
+- JAVA_HOME=$(jdk_switcher home oraclejdk7) neo4j-community-$NEO4J_VERSION/bin/neo4j start
+# decrypt secrets
+- openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
+  local.credentials.sbt -d
+- openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg
+  -d
+- openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg
+  -d

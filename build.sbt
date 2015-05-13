@@ -1,3 +1,6 @@
+import SonatypeKeys._
+
+
 name := "renesca-magic"
 
 version := "0.1"
@@ -15,6 +18,12 @@ addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVe
 scalacOptions ++= scalacOpts
 
 // publishing
+pgpSecretRing := file("local.secring.gpg")
+
+pgpPublicRing := file("local.pubring.gpg")
+
+sonatypeSettings
+
 organization := "com.github.renesca"
 
 pomExtra := {
