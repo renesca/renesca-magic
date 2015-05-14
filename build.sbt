@@ -3,7 +3,7 @@ import SonatypeKeys._
 
 name := "renesca-magic"
 
-version := "0.1.1"
+version := "0.1.1-1"
 
 val scalaV = "2.11.6"
 
@@ -12,6 +12,8 @@ val paradiseVersion = "2.1.0-M5"
 scalaVersion := scalaV
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaV
+
+addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
 
 scalacOptions ++= scalacOpts
 
