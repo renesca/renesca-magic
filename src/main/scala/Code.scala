@@ -168,7 +168,7 @@ trait Code extends Context with Generators {
                  relation,
                  $endNode_term.wrap(relation.endNode))
               def local (...${ List(List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode.head) }):$name_type = {
-                val relation = wrap(raw.Relation.local(startNode.node, endNode.node, relationType))
+                val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node))
                 ..${ parameterList.toAssignmentCode(q"relation.relation") }
                 relation
               }
@@ -223,9 +223,9 @@ trait Code extends Context with Generators {
                 val middleNode = raw.Node.local(List(label))
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
                 wrap(
-                  raw.Relation.local(startNode.node, middleNode, startRelationType),
+                  raw.Relation.local(startNode.node, startRelationType, middleNode),
                   middleNode,
-                  raw.Relation.local(middleNode, endNode.node, endRelationType)
+                  raw.Relation.local(middleNode, endRelationType, endNode.node)
                 )
              }
              ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type") }
