@@ -3,7 +3,7 @@ import SonatypeKeys._
 
 name := "renesca-magic"
 
-version := "0.1"
+version := "0.1.1"
 
 val scalaV = "2.11.6"
 
@@ -13,9 +13,8 @@ scalaVersion := scalaV
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaV
 
-addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
-
 scalacOptions ++= scalacOpts
+
 
 // publishing
 pgpSecretRing := file("local.secring.gpg")
