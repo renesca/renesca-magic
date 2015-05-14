@@ -36,15 +36,21 @@ trait Code extends Context with Generators {
     case otherStatement                          => otherStatement
   }
 
-  def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.map { nodeTrait => import nodeTrait._
+  def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
     val factoryName = TypeName(traitFactoryName(name))
     val localInterface = if(hasOwnFactory) q"def local (...${ parameterList.toParamCode }): NODE" else q""
     val superTypeFactories = superTypes.map(traitFactoryName).map(TypeName(_)).map(fact => tq"$fact[NODE]")
-    q"""
+    List(
+      q"""
            trait $factoryName[NODE <: Node] extends NodeFactory[NODE] with ..$superTypeFactories {
             $localInterface
            }
-           """
+    """,
+      q"""
+
+           object $name_term extends RootNodeTraitFactory[$name_type]
+    """
+    )
   }
 
   def relationTraitFactories(schema: Schema): List[Tree] = schema.relationTraits.map { relationTrait => import relationTrait._
@@ -106,15 +112,31 @@ trait Code extends Context with Generators {
            """
   }
 
+  def traitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
+    val traitName = TypeName(nodeTrait)
+    val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.foldLeft[Tree](q"Set.empty") { case (q"$all", name) => q"$all ++ ${ TermName(name) }" }
+    q""" def $relationPlural:Set[$traitName] = $successors"""
+  }
+
   def nodeClasses(schema: Schema): List[Tree] = schema.nodes.map { node => import node._
     val directNeighbours = node.neighbours_terms.map {
-      case (relationPlural, endNode_type, endNode_term) =>
-        q"""def $relationPlural:Set[$endNode_type] = successorsAs($endNode_term)"""
+      case (accessorName, relation_term, endNode_type, endNode_term) =>
+        q"""def $accessorName:Set[$endNode_type] = successorsAs($endNode_term,$relation_term)"""
+    }
+
+    val successorTraits = outRelationsToTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(nameToPlural(r))
+      traitNeighbours(r, node.neighbours, relationPlural, nodeTrait)
     }
 
     val directRevNeighbours = node.rev_neighbours_terms.map {
-      case (relationPlural, startNode_type, startNode_term) =>
-        q"""def $relationPlural:Set[$startNode_type] = predecessorsAs($startNode_term)"""
+      case (accessorName, relation_term, startNode_type, startNode_term) =>
+        q"""def $accessorName:Set[$startNode_type] = predecessorsAs($startNode_term, $relation_term)"""
+    }
+
+    val predecessorTraits = inRelationsFromTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(rev(nameToPlural(r)))
+      traitNeighbours(r, node.rev_neighbours, relationPlural, nodeTrait)
     }
 
     val nodeBody = statements.map(generateIndirectNeighbourAccessors(schema, _)).flatMap(generatePropertyAccessors(_))
@@ -124,7 +146,9 @@ trait Code extends Context with Generators {
     q"""
     case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$otherSuperTypes_type {
         ..$directNeighbours
+        ..$successorTraits
         ..$directRevNeighbours
+        ..$predecessorTraits
         ..$nodeBody
       }
     """
@@ -138,15 +162,13 @@ trait Code extends Context with Generators {
     q"""
            object $name_term extends RelationFactory[$startNode_type, $name_type, $endNode_type]
             with $superRelationFactory[$startNode_type, $name_type, $endNode_type] {
-               def startNodeFactory = $startNode_term
-               def endNodeFactory = $endNode_term
                def relationType = raw.RelationType($name_label)
                def wrap(relation: raw.Relation) = $name_term(
                  $startNode_term.wrap(relation.startNode),
                  relation,
                  $endNode_term.wrap(relation.endNode))
               def local (...${ List(List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode.head) }):$name_type = {
-                val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node))
+                val relation = wrap(raw.Relation.local(startNode.node, endNode.node, relationType))
                 ..${ parameterList.toAssignmentCode(q"relation.relation") }
                 relation
               }
@@ -180,18 +202,31 @@ trait Code extends Context with Generators {
              override def startRelationType = raw.RelationType($startRelation_label)
              override def endRelationType = raw.RelationType($endRelation_label)
 
-             override def startNodeFactory = $startNode_term
-             override def factory = $name_term
-             override def endNodeFactory = $endNode_term
-
              override def wrap(node: raw.Node) = new $name_type(node)
-             override def startRelationWrap(relation: raw.Relation) = $startRelation_term(startNodeFactory.wrap(relation.startNode), relation, factory.wrap(relation.endNode))
-             override def endRelationWrap(relation: raw.Relation) = $endRelation_term(factory.wrap(relation.startNode), relation, endNodeFactory.wrap(relation.endNode))
+
+             override def wrap(startRelation: raw.Relation, middleNode: raw.Node, endRelation: raw.Relation) = {
+               val hyperRelation = wrap(middleNode)
+               hyperRelation._startRelation = $startRelation_term(
+                  $startNode_term.wrap(startRelation.startNode),
+                  startRelation,
+                  hyperRelation
+                )
+                hyperRelation._endRelation = $endRelation_term(
+                  hyperRelation,
+                  endRelation,
+                  $endNode_term.wrap(endRelation.endNode)
+                )
+                hyperRelation
+             }
 
              def local (...${ List(List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode.head) }):$name_type = {
-              val middleNode = wrap(raw.Node.local(List(label)))
-              ..${ parameterList.toAssignmentCode(q"middleNode.node") }
-              wrap(startRelationLocal(startNode, middleNode).relation, middleNode.node, endRelationLocal(middleNode, endNode).relation)
+                val middleNode = raw.Node.local(List(label))
+                ..${ parameterList.toAssignmentCode(q"middleNode") }
+                wrap(
+                  raw.Relation.local(startNode.node, middleNode, startRelationType),
+                  middleNode,
+                  raw.Relation.local(middleNode, endNode.node, endRelationType)
+                )
              }
              ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type") }
            }
@@ -279,6 +314,17 @@ trait Code extends Context with Generators {
            """
   }
 
+  def nodeLabelToFactoryMap(schema: Schema): Tree = {
+    val tuples = schema.nodes.map { node => import node._
+      q"""
+        ($name_label, $name_term)
+      """
+    }
+    q"""
+      Map[raw.Label,NodeFactory[_ <: Node]](..$tuples)
+    """
+  }
+
   def otherStatements(schema: Schema): List[Tree] = schema.statements.filterNot { statement =>
     NodePattern.unapply(statement).isDefined ||
       RelationPattern.unapply(statement).isDefined ||
@@ -289,6 +335,7 @@ trait Code extends Context with Generators {
   }
 
 
+  //TODO: RootNodeTraitFactory.wrap can fail with unknown labels
   def schema(schema: Schema): Tree = {
     import schema.{name_term, superTypes_type}
     q"""
@@ -297,6 +344,15 @@ trait Code extends Context with Generators {
              import renesca.schema._
              import renesca.parameter.StringPropertyValue
              import renesca.parameter.implicits._
+
+             val nodeLabelToFactory = ${ nodeLabelToFactoryMap(schema) }
+
+             trait RootNodeTraitFactory[NODE <: Node] {
+               def wrap(node: raw.Node) = {
+                 val factory = nodeLabelToFactory(node.labels.head).asInstanceOf[NodeFactory[NODE]]
+                 factory.wrap(node)
+               }
+             }
 
              ..${ nodeTraitFactories(schema) }
              ..${ nodeSuperTraits(schema) }
