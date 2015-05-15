@@ -42,7 +42,7 @@ trait Code extends Context with Generators {
     val superTypeFactories = superTypes.map(traitFactoryName).map(TypeName(_)).map(fact => tq"$fact[NODE]")
     List(
       q"""
-           trait $factoryName[NODE <: Node] extends NodeFactory[NODE] with ..$superTypeFactories {
+           trait $factoryName[NODE <: $name_type] extends NodeFactory[NODE] with ..$superTypeFactories {
             $localInterface
            }
     """,
