@@ -283,7 +283,7 @@ trait Code extends Context with Generators {
       q"def $name_plural_term:Set[$name_type] = ${ allOf(subNodes) }"
     }
     val relationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      q"def ${ TermName(nameToPlural(name + "Relation")) }:Set[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations) }"
+      q"def ${ TermName(nameToPlural(name + "Relation")) }:Set[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relations)) }"
     }
     val hyperRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
       val hyperNodeRelationTraits_type = commonHyperNodeRelationTraits_type.map(t => tq"$t[$name_type, $name_type]")
