@@ -3,7 +3,7 @@ import SonatypeKeys._
 
 name := "renesca-magic"
 
-version := "0.1.4"
+version := "0.1.5"
 
 val scalaV = "2.11.6"
 

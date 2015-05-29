@@ -188,6 +188,7 @@ trait Generators extends Context with Patterns {
       patterns.filter { subPattern => isDeepSuperType(patterns, subPattern, pattern) }
     }
 
+    // TODO: check usages if other callers also need intermediate traits
     def childNodesOfNodeTrait(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
       (nodeTrait :: patternToFlatSubTypes(nodeTraits, nodeTrait)).flatMap { subTrait =>
         nodePatterns.filter(_.superTypes contains subTrait.name)
@@ -206,12 +207,18 @@ trait Generators extends Context with Patterns {
       NodeTraitPattern("traitA", Nil, Nil)
     ), List("nodeC", "nodeD"))
 
+    def childNodesOfNodeTraitsWithTraits(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
+      (nodeTrait :: patternToFlatSubTypes(nodeTraits, nodeTrait)).flatMap { subTrait =>
+        subTrait :: nodePatterns.filter(_.superTypes contains subTrait.name)
+      }.distinct.map(_.name)
+    }
+
     def nodeNamesToRelations[R <: StartEndNodePattern](nodeNames: List[String], relations: List[R]): List[R] = {
       relations.filter(relation => nodeNames.contains(relation.startNode) && nodeNames.contains(relation.endNode))
     }
 
     def nodeTraitToCommonHyperNodeTraits[P <: NamePattern with SuperTypesPattern](nodeTraitPatterns: List[NodeTraitPattern], middleNodeTraitPatterns: List[P], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], nodeTrait: NodeTraitPattern): List[String] = {
-      val nodes = childNodesOfNodeTrait(nodeTraitPatterns, nodePatterns ::: hyperRelationPatterns, nodeTrait)
+      val nodes = childNodesOfNodeTraitsWithTraits(nodeTraitPatterns, nodePatterns ::: hyperRelationPatterns, nodeTrait)
       val subHyperRelations = nodeNamesToRelations(nodes, hyperRelationPatterns)
       val flatSuperTypes: List[List[String]] = subHyperRelations.map(hyperRelation => patternToFlatSuperTypes(middleNodeTraitPatterns, hyperRelation).map(_.name))
       if(flatSuperTypes.isEmpty) Nil
