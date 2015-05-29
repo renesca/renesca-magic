@@ -294,7 +294,7 @@ trait Code extends Context with Generators {
                   _ <: Relation[_, $name_type],
                   $name_type]
                   with ..$commonHyperNodeNodeTraits_type with ..$hyperNodeRelationTraits_type]
-              = ${ allOf(subHyperRelations) }"""
+              = ${ allOf(subHyperRelations.intersect(hyperRelations)) }"""
     }
 
     q"""
