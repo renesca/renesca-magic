@@ -315,7 +315,7 @@ trait Code extends Context with Generators {
   }
 
   def nodeLabelToFactoryMap(schema: Schema): Tree = {
-    val tuples = schema.nodes.map { node => import node._
+    val tuples = (schema.nodes ++ schema.hyperRelations).map { node => import node._
       q"""
         ($name_label, $name_term)
       """

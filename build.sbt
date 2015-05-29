@@ -1,6 +1,6 @@
 name := "renesca-magic"
 
-version := "0.1.5"
+version := "0.1.6"
 
 val scalaV = "2.11.6"
 
