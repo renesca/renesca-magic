@@ -1,6 +1,3 @@
-import SonatypeKeys._
-
-
 name := "renesca-magic"
 
 version := "0.1.5"
@@ -22,8 +19,6 @@ scalacOptions ++= scalacOpts
 pgpSecretRing := file("local.secring.gpg")
 
 pgpPublicRing := file("local.pubring.gpg")
-
-sonatypeSettings
 
 organization := "com.github.renesca"
 
