@@ -233,7 +233,7 @@ trait Code extends Context with Generators {
            """
   }
 
-  def hyperRelationClasses(schema: Schema): List[Tree] = schema.hyperRelations.map { hyperRelation => import hyperRelation._
+  def hyperRelationClasses(schema: Schema): List[Tree] = schema.hyperRelations.flatMap { hyperRelation => import hyperRelation._
     //TODO: generate indirect neighbour-accessors based on hyperrelations
     //TODO: property accessors
     val superRelationTypesGenerics = superRelationTypes.map(TypeName(_)).map(superType => tq"$superType[$startNode_type,$endNode_type]")
@@ -250,7 +250,7 @@ trait Code extends Context with Generators {
            case class $endRelation_type(startNode: $name_type, relation: raw.Relation, endNode: $endNode_type)
              extends Relation[$name_type, $endNode_type]
            """)
-  }.flatten
+  }
 
   def nodeSuperTraits(schema: Schema): List[Tree] = schema.nodeTraits.map { nodeTrait => import nodeTrait._
     val superTypesWithDefault = (if(superTypes.isEmpty) List("Node") else superTypes).map(TypeName(_))
@@ -285,6 +285,11 @@ trait Code extends Context with Generators {
     val relationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
       q"def ${ TermName(nameToPlural(name + "Relation")) }:Set[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relations)) }"
     }
+    val abstractRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
+      println(name + "subRel: " + subRelations)
+      println(name + "rel: " + relationsWithHyperRelations)
+      q"def ${ TermName(nameToPlural(name + "AbstractRelation")) }:Set[_ <: AbstractRelation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relationsWithHyperRelations)) }"
+    }
     val hyperRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
       val hyperNodeRelationTraits_type = commonHyperNodeRelationTraits_type.map(t => tq"$t[$name_type, $name_type]")
       q"""def ${ TermName(nameToPlural(name + "HyperRelation")) } :Set[HyperRelation[
@@ -305,10 +310,12 @@ trait Code extends Context with Generators {
 
              ..$nodeTraitSets
              ..$relationTraitSets
+             ..$abstractRelationTraitSets
              ..$hyperRelationTraitSets
 
-             def nodes: Set[Node] = ${ allOf(nodes) }
+             def nodes: Set[Node] = ${ allOf(nodesWithHyperNodes) }
              def relations: Set[_ <: Relation[_,_]] = ${ allOf(relations) }
+             def abstractRelations: Set[_ <: AbstractRelation[_,_]] = ${ allOf(relationsWithHyperRelations) }
              def hyperRelations: Set[_ <: HyperRelation[_,_,_,_,_]] = ${ allOf(hyperRelations) }
            }
            """

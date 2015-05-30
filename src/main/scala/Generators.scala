@@ -90,10 +90,15 @@ trait Generators extends Context with Patterns {
           traitCanHaveOwnFactory(relationPatterns ::: hyperRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
       val groups = groupPatterns.map { groupPattern =>
           val groupedElements = groupToNodes(groupPatterns, groupPattern)
-          val groupedTraits = groupedElements.map(nameToPattern(nodePatterns, _)).flatMap(_.superTypes).distinct.intersect(nodeTraitPatterns.map(_.name)).map(nameToPattern(nodeTraitPatterns, _))
+          val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
+            .flatMap(_.superTypes).distinct
+            .intersect(nodeTraitPatterns.map(_.name))
+            .map(nameToPattern(nodeTraitPatterns, _))
           Group(groupPattern,
-            nodes = groupedElements,
+            nodes = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
+            nodesWithHyperNodes = groupedElements,
             relations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, groupPattern),
+            relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns ::: hyperRelationPatterns, groupPattern),
             hyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, groupPattern),
             nodeTraits = groupedTraits.map(nodeTraitPattern =>
               NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
@@ -257,7 +262,7 @@ trait Generators extends Context with Patterns {
 
     def groupToRelations(groupPatterns: List[GroupPattern], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern], groupPattern: GroupPattern): List[String] = {
       val nodes = groupToNodes(groupPatterns, groupPattern)
-      val traits = nodes.map(nameToPattern(nodePatterns, _)).flatMap(_.superTypes).distinct
+      val traits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).flatMap(_.superTypes).distinct
       nodeNamesToRelations(nodes ::: traits ::: hyperRelationPatterns.map(_.name), relations).map(_.name)
     }
 
@@ -299,7 +304,9 @@ trait Generators extends Context with Patterns {
 
   case class Group(
                     pattern: GroupPattern,
+                    nodesWithHyperNodes: List[String],
                     nodes: List[String],
+                    relationsWithHyperRelations: List[String],
                     relations: List[String],
                     hyperRelations: List[String],
                     nodeTraits: List[NodeTrait]
@@ -341,7 +348,7 @@ trait Generators extends Context with Patterns {
       new NodeTrait(
         nodeTraitPattern,
         subNodes = childNodes,
-        subRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, relationPatterns).map(_.name),
+        subRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns ::: relationPatterns).map(_.name),
         subHyperRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns).map(_.name),
         commonHyperNodeNodeTraits = nodeTraitToCommonHyperNodeTraits(nodeTraitPatterns, nodeTraitPatterns, selectedNodePatterns, hyperRelationPatterns, nodeTraitPattern),
         commonHyperNodeRelationTraits = nodeTraitToCommonHyperNodeTraits(nodeTraitPatterns, relationTraitPatterns, selectedNodePatterns, hyperRelationPatterns, nodeTraitPattern),
