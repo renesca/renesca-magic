@@ -1,5 +1,7 @@
 package renesca.schema.macros
 
+import java.io.{PrintWriter, File}
+
 object Helpers {
   var asserted = 0
   def assertX(a: Any, b: Any) { if(a != b) { println(s"### Assertion failed: $a != $b"); asserted += 1 } }
@@ -14,4 +16,14 @@ object Helpers {
   def traitFactoryName(name: String) = name + "Factory"
   def nameToLabel(name: String) = name.toUpperCase
   def relationName(start: String, end: String) = s"${ start }To${ end }"
+
+
+  def writeFile(filename: String, contents: String) = {
+    val parent = new File(filename).getParentFile()
+    if(parent != null) parent.mkdirs()
+
+    val out = new PrintWriter(filename)
+    out.println(contents)
+    out.close()
+  }
 }
