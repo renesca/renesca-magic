@@ -6,3 +6,5 @@ local.*
 
 # tomcat distriubution folder
 .distribution
+
+/magic
