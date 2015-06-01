@@ -18,7 +18,7 @@ lazy val test = (project in file("test")).settings(
   resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases", // specs2
   libraryDependencies ++= Seq(
     "org.specs2" %% "specs2-core" % "3.6" % "test",
-    //    "org.specs2" %% "specs2-mock" % "3.6" % "test",
+    "org.specs2" %% "specs2-mock" % "3.6" % "test",
     "org.scala-lang" % "scala-compiler" % scalaV % "test",
     "com.github.renesca" %% "renesca" % "0.2.2"
   ),
