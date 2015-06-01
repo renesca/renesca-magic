@@ -1,6 +1,6 @@
 package renesca.schema.macros
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
 object Helpers {
   var asserted = 0

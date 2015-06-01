@@ -1,6 +1,6 @@
 package renesca.schema.macros
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
@@ -8,6 +8,7 @@ trait Context {
   val context: whitebox.Context
 }
 
+@compileTimeOnly("enable macro paradise to expand macro annotations")
 class GraphSchema extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro GraphSchemaMacro.graphSchema
 }
