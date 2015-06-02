@@ -1,6 +1,5 @@
 package renesca.schema.macros
 
-
 trait Generators extends Context with Patterns {
 
   //TODO: abort when wrong superType inheritance. example: Relation extends NodeTrait
@@ -392,7 +391,6 @@ trait Generators extends Context with Patterns {
     }
   }
 
-
   case class Relation(
                        pattern: RelationPattern,
                        flatStatements: List[Tree], // TODO: rename to flatSuperStatements (same for node etc)
@@ -403,7 +401,6 @@ trait Generators extends Context with Patterns {
 
     val parameterList = ParameterList.create(flatStatements)
   }
-
 
   case class HyperRelation(
                             pattern: HyperRelationPattern,
@@ -458,7 +455,7 @@ trait Generators extends Context with Patterns {
       providerParameters.map(Some(_)).zipAll(receiverParameters.map(Some(_)), None, None).map {
         case (Some(mine), Some(other)) => mine.name
         case (Some(mine), None)        => mine.default.get // we know that we only handle list of default params (put into typesystem?)
-        case (None, _)                 => q"" //TODO: context.abort(NoPosition, "This should never happen: Subclass has less properties than TraitFactory")
+        case (None, _)                 => context.abort(NoPosition, "This should never happen: Subclass has less properties than TraitFactory")
       }
     }
 
@@ -475,4 +472,3 @@ trait Generators extends Context with Patterns {
   }
 
 }
-

@@ -32,7 +32,6 @@ trait PatternTraits extends Context {
   }
 }
 
-
 trait Patterns extends Context with PatternTraits {
 
   import context.universe._
@@ -44,7 +43,6 @@ trait Patterns extends Context with PatternTraits {
         SchemaPattern(name, superTypes, statements)
     }
   }
-
 
   object GroupPattern {
     //TODO: statements
@@ -117,5 +115,3 @@ trait Patterns extends Context with PatternTraits {
 
   case class HyperRelationPattern(name: String, startNode: String, endNode: String, _superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StartEndNodePattern with StatementsPattern
 }
-
-
