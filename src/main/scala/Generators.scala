@@ -79,8 +79,8 @@ trait Generators extends Context with Patterns {
         import nodePattern._
         Node(nodePattern, superTypes, rawNodePattern.superTypes.filterNot(nodeTraits.map(_.name) contains _),
           neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns), rev_neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
-          outRelationsToTrait = allRelationPatterns.filter(r => r.startNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.endNode)).map(r => (r.name, r.endNode)),
-          inRelationsFromTrait = allRelationPatterns.filter(r => r.endNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.startNode)).map(r => (r.name, r.startNode)),
+          outRelationsToTrait = allRelationPatterns.filter(r => (patternToFlatSuperTypes(nodeTraitPatterns, nodePattern).map(_.name) contains r.startNode) && (nodeTraitPatterns.map(_.name) contains r.endNode)).map(r => (r.name, r.endNode)),
+          inRelationsFromTrait = allRelationPatterns.filter(r => (patternToFlatSuperTypes(nodeTraitPatterns, nodePattern).map(_.name) contains r.endNode) && (nodeTraitPatterns.map(_.name) contains r.startNode)).map(r => (r.name, r.startNode)),
           flatSuperStatements(nodeTraitPatterns, nodePattern), findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
       }}
       val relationTraits = relationTraitPatterns.map(relationTraitPattern =>
