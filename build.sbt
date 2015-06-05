@@ -1,6 +1,6 @@
 name := "renesca-magic"
 
-version := "0.1.7"
+version := "0.1.8"
 
 val scalaV = "2.11.6"
 
@@ -20,7 +20,7 @@ lazy val test = (project in file("test")).settings(
     "org.specs2" %% "specs2-core" % "3.6" % "test",
     "org.specs2" %% "specs2-mock" % "3.6" % "test",
     "org.scala-lang" % "scala-compiler" % scalaV % "test",
-    "com.github.renesca" %% "renesca" % "0.2.2"
+    "com.github.renesca" %% "renesca" % "0.2.3"
   ),
   addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
   scalacOptions in Test ++= Seq("-Yrangepos") // specs2
