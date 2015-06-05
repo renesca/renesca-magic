@@ -70,6 +70,7 @@ trait Generators extends Context with Patterns {
       val nodeTraitPatterns: List[NodeTraitPattern] = schemaPattern.statements.collect { case NodeTraitPattern(nodeTraitpattern) => nodeTraitpattern }
       val relationTraitPatterns: List[RelationTraitPattern] = schemaPattern.statements.collect { case RelationTraitPattern(nodeTraitpattern) => nodeTraitpattern }
       val groupPatterns: List[GroupPattern] = schemaPattern.statements.collect { case GroupPattern(groupPattern) => groupPattern }
+      val allRelationPatterns = relationPatterns ::: hyperRelationPatterns
 
       val nodeTraits = nodeTraitPatterns.map(nodeTraitPattern =>
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns))
@@ -77,16 +78,15 @@ trait Generators extends Context with Patterns {
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
         import nodePattern._
         Node(nodePattern, superTypes, rawNodePattern.superTypes.filterNot(nodeTraits.map(_.name) contains _),
-          neighbours(nodePattern, relationPatterns, nodePatterns, nodeTraitPatterns), rev_neighbours(nodePattern, relationPatterns, nodePatterns, nodeTraitPatterns),
-          outRelationsToTrait = relationPatterns.filter(r => r.startNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.endNode)).map(r => (r.name, r.endNode)),
-          inRelationsFromTrait = relationPatterns.filter(r => r.endNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.startNode)).map(r => (r.name, r.startNode)),
+          neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns), rev_neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
+          outRelationsToTrait = allRelationPatterns.filter(r => r.startNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.endNode)).map(r => (r.name, r.endNode)),
+          inRelationsFromTrait = allRelationPatterns.filter(r => r.endNode == nodePattern.name && (nodeTraitPatterns.map(_.name) contains r.startNode)).map(r => (r.name, r.startNode)),
           flatSuperStatements(nodeTraitPatterns, nodePattern), findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
-      }
-      }
+      }}
       val relationTraits = relationTraitPatterns.map(relationTraitPattern =>
         RelationTrait(relationTraitPattern,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
-          traitCanHaveOwnFactory(relationPatterns ::: hyperRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
+          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
       val groups = groupPatterns.map { groupPattern =>
           val groupedElements = groupToNodes(groupPatterns, groupPattern)
           val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
@@ -97,7 +97,7 @@ trait Generators extends Context with Patterns {
             nodes = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
             nodesWithHyperNodes = groupedElements,
             relations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, groupPattern),
-            relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns ::: hyperRelationPatterns, groupPattern),
+            relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, groupPattern),
             hyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, groupPattern),
             nodeTraits = groupedTraits.map(nodeTraitPattern =>
               NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
@@ -132,7 +132,7 @@ trait Generators extends Context with Patterns {
       ), testNode).map(_.toString).toSet,
       List(q"def titlex:String", q"def title:String", q"def titley:String").map(_.toString).toSet)
     def nameToPattern[P <: NamePattern](patterns: List[P], name: String): P = patterns.find(_.name == name).get
-    def neighbours(nodePattern: NodePattern, relations: List[RelationPattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val sources = (nodePattern :: patternToFlatSuperTypes(nodeTraitPatterns, nodePattern)).map(_.name)
       relations.filter(sources contains _.startNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.endNode) {
@@ -150,7 +150,7 @@ trait Generators extends Context with Patterns {
         }
       }
     }
-    def rev_neighbours(nodePattern: NodePattern, relations: List[RelationPattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def rev_neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val targets = (nodePattern :: patternToFlatSuperTypes(nodeTraitPatterns, nodePattern)).map(_.name)
       relations.filter(targets contains _.endNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.startNode) {
