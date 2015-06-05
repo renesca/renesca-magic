@@ -440,25 +440,20 @@ trait Generators extends Context with Patterns {
 
   case class ParameterList(parameters: List[Parameter]) {
 
-    import ParameterList.supplementMissingParameters
-
     val (withDefault, nonDefault) = parameters.sortBy(_.name.toString).partition(_.default.isDefined)
     val (withDefaultOptional, withDefaultNonOptional) = withDefault.partition(_.optional)
     val ordered = nonDefault ::: withDefaultNonOptional ::: withDefaultOptional
-    def toParamCode: List[List[Tree]] = List(ordered.map(_.toParamCode))
+    def toParamCode: List[Tree] = ordered.map(_.toParamCode)
     def toAssignmentCode(schemaItem: Tree): List[Tree] = ordered.map(_.toAssignmentCode(schemaItem))
-    def supplementMissingParametersOf(that: ParameterList): List[Tree] = this.nonDefault.map(_.name) ::: supplementMissingParameters(this.withDefault, that.withDefault) ::: supplementMissingParameters(this.withDefaultOptional, that.withDefaultOptional)
+    def supplementMissingParametersOf(that: ParameterList): List[Tree] = {
+      this.ordered.map(p => (p, that.ordered.find(_.name.toString == p.name.toString))).map {
+        case (_, Some(other))    => other.name
+        case (mine, None)        => mine.default.get // we know that we only handle a default param at this point (put into typesystem?)
+      }
+    }
   }
 
   object ParameterList {
-    def supplementMissingParameters(providerParameters: List[Parameter], receiverParameters: List[Parameter]): List[Tree] = {
-      providerParameters.map(Some(_)).zipAll(receiverParameters.map(Some(_)), None, None).map {
-        case (Some(mine), Some(other)) => mine.name
-        case (Some(mine), None)        => mine.default.get // we know that we only handle list of default params (put into typesystem?)
-        case (None, _)                 => context.abort(NoPosition, "This should never happen: Subclass has less properties than TraitFactory")
-      }
-    }
-
     def create(flatStatements: List[Tree]): ParameterList = new ParameterList(flatStatements.collect {
       case statement@(q"val $propertyName:Option[$propertyType] = $default") => Parameter(q"$propertyName", tq"Option[$propertyType]", optional = true, default = Some(q"$default"), mutable = false)
       case statement@(q"var $propertyName:Option[$propertyType] = $default") => Parameter(q"$propertyName", tq"Option[$propertyType]", optional = true, default = Some(q"$default"), mutable = true)

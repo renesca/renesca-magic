@@ -38,12 +38,15 @@ trait Code extends Context with Generators {
 
   def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
     val factoryName = TypeName(traitFactoryName(name))
-    val localInterface = if(hasOwnFactory) q"def local (...${ parameterList.toParamCode }): NODE" else q""
+    val localInterface = if(hasOwnFactory) q"def ${ TermName(traitFactoryLocal(name)) } (..${ parameterList.toParamCode }): NODE" else q""
     val superTypeFactories = superTypes.map(traitFactoryName).map(TypeName(_)).map(fact => tq"$fact[NODE]")
     List(
       q"""
-           trait $factoryName[NODE <: $name_type] extends NodeFactory[NODE] with ..$superTypeFactories {
+           trait $factoryName [NODE <: $name_type] extends NodeFactory[NODE] with ..$superTypeFactories {
             $localInterface
+
+            //TODO: should consider parameter list of parent
+            ${ forwardLocalMethod(parameterList, None, superTypes.headOption, traitFactoryLocal(name), tq"$name_type") }
            }
     """,
       q"""
@@ -54,38 +57,35 @@ trait Code extends Context with Generators {
   }
 
   def relationTraitFactories(schema: Schema): List[Tree] = schema.relationTraits.map { relationTrait => import relationTrait._
-    val startEndlocalParams = List(List(q"val startNode:START", q"val endNode:END") ::: parameterList.toParamCode.head)
+    val startEndlocalParams = List(q"val startNode:START", q"val endNode:END") ::: parameterList.toParamCode
     val factoryName = TypeName(traitFactoryName(name))
-    val localInterface = if(hasOwnFactory) q" def local (...$startEndlocalParams): RELATION " else q""
+    val localInterface = if(hasOwnFactory) q" def ${ TermName(traitFactoryLocal(name)) } (..$startEndlocalParams): RELATION " else q""
     val superTypeFactories = superTypes.map(traitFactoryName).map(TypeName(_)).map(fact => tq"$fact[START,RELATION,END]")
     q"""
-           trait $factoryName[START <: Node, +RELATION <: AbstractRelation[START,END], END <: Node] extends AbstractRelationFactory[START,RELATION,END]
+           trait $factoryName [START <: Node, +RELATION <: AbstractRelation[START,END], END <: Node] extends AbstractRelationFactory[START,RELATION,END]
             with ..$superTypeFactories {
             $localInterface
+
+            //TODO: should consider parameter list of parent
+            ${ forwardLocalMethod(parameterList, None, superTypes.headOption, traitFactoryLocal(name), tq"$name_type") }
            }
            """
   }
 
-  def forwardLocalMethod(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], typeName: Tree) = {
-    if(traitFactoryParameterList.isDefined
-      && parameterList.parameters.size > traitFactoryParameterList.get.parameters.size) {
-      val parentParameterList = traitFactoryParameterList.get
+  def forwardLocalMethod(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], superName: Option[String], local: String, typeName: Tree) = {
+    traitFactoryParameterList.map( parentParameterList => {
       val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
-      q""" def local (...${ parentParameterList.toParamCode }): $typeName = local(..$parentCaller) """
-    } else
-        q""
+      q""" def ${ TermName(traitFactoryLocal(superName.get)) } (..${ parentParameterList.toParamCode }): $typeName = ${ TermName(local) } (..$parentCaller) """
+    }).getOrElse(q"")
   }
 
   // TODO: duplicate code
-  def forwardLocalMethodStartEnd(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], typeName: Tree, startNodeType: Tree, endNodeType: Tree) = {
-    if(traitFactoryParameterList.isDefined
-      && parameterList.parameters.size > traitFactoryParameterList.get.parameters.size) {
-      val parentParameterList = traitFactoryParameterList.get
+  def forwardLocalMethodStartEnd(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], superName: Option[String], local: String, typeName: Tree, startNodeType: Tree, endNodeType: Tree) = {
+    traitFactoryParameterList.map( parentParameterList => {
       val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
-      val localParameters: List[List[Tree]] = List(List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: parentParameterList.toParamCode.head)
-      q""" def local (...$localParameters): $typeName = local(..${ List(q"startNode", q"endNode") ::: parentCaller }) """
-    } else
-        q""
+      val localParameters: List[Tree] = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: parentParameterList.toParamCode
+      q""" def ${ TermName(traitFactoryLocal(superName.get)) } (..$localParameters): $typeName = ${ TermName(local) } (..${ List(q"startNode", q"endNode") ::: parentCaller }) """
+    }).getOrElse(q"")
   }
 
   //TODO: what happens with name clashes?
@@ -102,12 +102,12 @@ trait Code extends Context with Generators {
            object $name_term extends $superFactory[$name_type] {
              def wrap(node: raw.Node) = new $name_type(node)
              val label = raw.Label($name_label)
-             def local (...${ parameterList.toParamCode }):$name_type = {
+             def local (..${ parameterList.toParamCode }):$name_type = {
               val node = wrap(raw.Node.local(List(label)))
               ..${ parameterList.toAssignmentCode(q"node.node") }
               node
              }
-             ${ forwardLocalMethod(parameterList, traitFactoryParameterList, tq"$name_type") }
+             ${ forwardLocalMethod(parameterList, traitFactoryParameterList, superTypes.headOption, "local", tq"$name_type") }
            }
            """
   }
@@ -159,6 +159,7 @@ trait Code extends Context with Generators {
       case Some(superType) => s"${ traitFactoryName(superType) }"
       case None            => s"AbstractRelationFactory"
     })
+
     q"""
            object $name_term extends RelationFactory[$startNode_type, $name_type, $endNode_type]
             with $superRelationFactory[$startNode_type, $name_type, $endNode_type] {
@@ -167,12 +168,12 @@ trait Code extends Context with Generators {
                  $startNode_term.wrap(relation.startNode),
                  relation,
                  $endNode_term.wrap(relation.endNode))
-              def local (...${ List(List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode.head) }):$name_type = {
+              def local (..${ List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode }):$name_type = {
                 val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node))
                 ..${ parameterList.toAssignmentCode(q"relation.relation") }
                 relation
               }
-              ${ forwardLocalMethod(parameterList, traitFactoryParameterList, tq"$name_type") }
+              ${ forwardLocalMethod(parameterList, traitFactoryParameterList, superTypes.headOption, "local", tq"$name_type") }
            }
            """
   }
@@ -194,6 +195,7 @@ trait Code extends Context with Generators {
       case Some(superType) => s"${ traitFactoryName(superType) }"
       case None            => s"AbstractRelationFactory"
     })
+
     q"""
            object $name_term extends HyperRelationFactory[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type]
              with $superRelationFactory[$startNode_type, $name_type, $endNode_type] {
@@ -219,7 +221,7 @@ trait Code extends Context with Generators {
                 hyperRelation
              }
 
-             def local (...${ List(List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode.head) }):$name_type = {
+             def local (..${ List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode }):$name_type = {
                 val middleNode = raw.Node.local(List(label))
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
                 wrap(
@@ -228,7 +230,7 @@ trait Code extends Context with Generators {
                   raw.Relation.local(middleNode, endRelationType, endNode.node)
                 )
              }
-             ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type") }
+             ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, superRelationTypes.headOption, "local", tq"$name_type", tq"$startNode_type", tq"$endNode_type") }
            }
            """
   }
@@ -349,7 +351,7 @@ trait Code extends Context with Generators {
            object $name_term extends ..$superTypes_type {
              import renesca.{graph => raw}
              import renesca.schema._
-             import renesca.parameter.StringPropertyValue
+             import renesca.parameter._
              import renesca.parameter.implicits._
 
              val nodeLabelToFactory = ${ nodeLabelToFactoryMap(schema) }
