@@ -22,8 +22,9 @@ trait CodeComparison extends Specification with ContextMock {
   def comparableWildcards(code: String) = wildcardRegex.replaceAllIn(code, "_")
   def withoutSpaces(code: String) = code.replaceAll("\\s", "")
   def comparable(code: Tree) = withoutSpaces(comparableWildcards(showCode(code)))
-  def containCode(c1: Tree, c2: Tree) = comparable(c1) must contain(comparable(c2))
+  def containCode(c1: Tree, c: Tree*) = c.map { c2 => comparable(c1) must contain(comparable(c2)) }
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))
-  def generatedContainsCode(c1: Tree, c2: Tree) = containCode(generate(c1), c2)
+  def generatedContainsCode(c1: Tree, c: Tree*) = containCode(generate(c1), c: _*)
+  def generatedContainsCodePrint(c1: Tree, c: Tree*) = containCode({val g = generate(c1); println(showCode(g)); g}, c: _*)
 }
 

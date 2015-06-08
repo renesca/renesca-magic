@@ -22,17 +22,23 @@ class GenerationSpec extends Specification with CodeComparison {
            factory.wrap(node)
          }
        }
-      }   
+      }
          """)
   }
 
 
   // "node trait field inheritance"
-  "primitive accessor" >> {
+  "immutable property accessor" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:String}}",
-      q""" case class N(node: raw.Node) extends Node {
-              def p: String = node.properties("p").asInstanceOf[StringPropertyValue]
-            } """)
+      q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""")
+  }
+
+  "mutable property accessor and setter" >> {
+    generatedContainsCode(
+      q"object A {@Node class N {var p:String}}",
+      q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""",
+      q"""def `p_=`(newValue: String): scala.Unit = node.properties.update("p", newValue)"""
+    )
   }
 }
