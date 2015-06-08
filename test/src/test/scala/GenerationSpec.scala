@@ -27,18 +27,70 @@ class GenerationSpec extends Specification with CodeComparison {
   }
 
 
-  // "node trait field inheritance"
-  "immutable property accessor" >> {
-    generatedContainsCode(
-      q"object A {@Node class N {val p:String}}",
-      q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""")
+  // TODO: "node trait field inheritance"
+  "Properties" >> {
+    "immutable property getter" >> {
+      generatedContainsCode(
+        q"object A {@Node class N {val p:String}}",
+        q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""")
+    }
+
+    "optional immutable property getter" >> {
+      generatedContainsCode(
+        q"object A {@Node class N {val p:Option[String]}}",
+        q"""def p:Option[String] = node.properties.get("p").asInstanceOf[Option[StringPropertyValue]].map(propertyValueToPrimitive)""")
+    }
+
+    "mutable property getter and setter" >> {
+      generatedContainsCode(
+        q"object A {@Node class N {var p:String}}",
+        q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""",
+        q"""def `p_=`(newValue: String): scala.Unit = node.properties.update("p", newValue)"""
+      )
+    }
+
+    "optional mutable property getter and setter" >> {
+      generatedContainsCode(
+        q"object A {@Node class N {var p:Option[String]}}",
+        q"""def p:Option[String] = node.properties.get("p").asInstanceOf[Option[StringPropertyValue]].map(propertyValueToPrimitive)""",
+        q"""def `p_=`(newValue:Option[String]): scala.Unit = { if(newValue.isDefined) node.properties("p") = newValue.get else node.properties -= "p" }"""
+      )
+    }
+  }
+  "Node class" >> {
+    "preserve custom code" >> {
+      generatedContainsCode(
+        q"object A {@Node class N {def custom = 0}}",
+        q"""def custom = 0"""
+      )
+    }
   }
 
-  "mutable property accessor and setter" >> {
-    generatedContainsCode(
-      q"object A {@Node class N {var p:String}}",
-      q"""def p: String = node.properties("p").asInstanceOf[StringPropertyValue]""",
-      q"""def `p_=`(newValue: String): scala.Unit = node.properties.update("p", newValue)"""
-    )
+
+  "Node trait factory" >> {
+    "simple factory trait" >> {
+      generatedContainsCode(
+        q"object A {@Node trait T}",
+        q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] { def localT(): NODE }"""
+      )
+    }
+    "with own factory" >> {
+      generatedContainsCode(
+        q"object A {@Node trait T; @Node class N extends T}",
+        q"""object T extends RootNodeTraitFactory[T]"""
+      )
+    }
+    "with local-interface" >> {
+      generatedContainsCode(
+        q"object A {@Node trait T {val p:String}}",
+        q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] { def localT(p: String): NODE }"""
+      )
+    }
+    "with superType factories" >> {
+      generatedContainsCode(
+        q"object A {@Node trait T ; @Node trait X extends T {val p:String} }",
+        q"""trait XFactory[NODE <: X] extends NodeFactory[NODE] with TFactory[NODE] { def localX(p: String): NODE }"""
+      )
+    }
   }
 }
