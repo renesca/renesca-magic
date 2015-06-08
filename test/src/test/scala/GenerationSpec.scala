@@ -93,4 +93,16 @@ class GenerationSpec extends Specification with CodeComparison {
       )
     }
   }
+
+  "relation trait factory" >> {
+    "simple relation trait" >> {
+      generatedContainsCode(
+        q"object A {@Relation trait T}",
+        q"""trait TFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
+                extends AbstractRelationFactory[START, RELATION, END] {
+              def localT(startNode: START, endNode: END): RELATION
+            }"""
+      )
+    }
+  }
 }
