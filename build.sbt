@@ -20,7 +20,7 @@ lazy val test = (project in file("test")).settings(
     "org.specs2" %% "specs2-core" % "3.6" % "test",
     "org.specs2" %% "specs2-mock" % "3.6" % "test",
     "org.scala-lang" % "scala-compiler" % scalaV % "test",
-    "com.github.renesca" %% "renesca" % "0.2.3"
+    "com.github.renesca" %% "renesca" % "0.2.4"
   ),
   addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
   scalacOptions in Test ++= Seq("-Yrangepos") // specs2
