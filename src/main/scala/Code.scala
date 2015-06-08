@@ -28,14 +28,6 @@ trait Code extends Context with Generators {
     case somethingElse                                   => List(somethingElse)
   }
 
-  def generateIndirectNeighbourAccessors(schema: Schema, statement: Tree): Tree = statement match {
-    case q"""def $chainName = $rel1 --> $rel2""" =>
-      q"""def $chainName:Set[${ TypeName(relationEnd(schema, rel2.toString)) }] = ${ TermName(nameToPlural(rel1.toString)) }.flatMap(_.${ TermName(nameToPlural(rel2.toString)) })"""
-    case q"""def $chainName = $rel1 <-- $rel2""" =>
-      q"""def $chainName:Set[${ TypeName(relationStart(schema, rel1.toString)) }] = ${ TermName(rev(nameToPlural(rel2.toString))) }.flatMap(_.${ TermName(rev(nameToPlural(rel1.toString))) })"""
-    case otherStatement                          => otherStatement
-  }
-
   def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
     val factoryName = TypeName(traitFactoryName(name))
     val localInterface = if(hasOwnFactory) q"def ${ TermName(traitFactoryLocal(name)) } (..${ parameterList.toParamCode }): NODE" else q""
@@ -139,7 +131,7 @@ trait Code extends Context with Generators {
       traitNeighbours(r, node.rev_neighbours, relationPlural, nodeTrait)
     }
 
-    val nodeBody = statements.map(generateIndirectNeighbourAccessors(schema, _)).flatMap(generatePropertyAccessors(_))
+    val nodeBody = statements.flatMap(generatePropertyAccessors(_))
     val superNodeTraitTypesWithDefault = if(superTypes.isEmpty) List(TypeName("Node")) else superTypes_type
     val otherSuperTypes_type = otherSuperTypes.map(TypeName(_))
 
