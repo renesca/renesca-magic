@@ -25,6 +25,10 @@ trait CodeComparison extends Specification with ContextMock {
   def containCode(c1: Tree, c: Tree*) = c.map { c2 => comparable(c1) must contain(comparable(c2)) }
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))
   def generatedContainsCode(c1: Tree, c: Tree*) = containCode(generate(c1), c: _*)
-  def generatedContainsCodePrint(c1: Tree, c: Tree*) = containCode({ val g = generate(c1); println(showCode(g)); g }, c: _*)
+  def generatedContainsCodePrint(c1: Tree, c: Tree*) = containCode({
+    val g = generate(c1);
+    println(showCode(c1) + "\n--- generates: ---\n" + showCode(g) + "\n----------\n");
+    g 
+  }, c: _*)
 }
 
