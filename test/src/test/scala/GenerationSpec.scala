@@ -57,6 +57,7 @@ class GenerationSpec extends Specification with CodeComparison {
       )
     }
   }
+
   "Node class" >> {
     "preserve custom code" >> {
       generatedContainsCode(
@@ -124,6 +125,36 @@ class GenerationSpec extends Specification with CodeComparison {
                 extends AbstractRelationFactory[START, RELATION, END] with TFactory[START, RELATION, END] {
               def localX(startNode: START, endNode: END): RELATION
             }"""
+      )
+    }
+  }
+
+  "node factory" >> {
+    "simple node factory" >> {
+      generatedContainsCode(
+        q"object A {@Node class N}",
+        q"""object N extends NodeFactory[N] {
+              def wrap(node: raw.Node) = new N(node);
+              val label = raw.Label("N");
+              def local(): N = {
+                val node = wrap(raw.Node.local(List(label)));
+                node
+              }
+            }"""
+      )
+    }
+    "with super factory" >> {
+      generatedContainsCodePrint(
+        q"object A {@Node trait T; @Node class N extends T}",
+        q"""object N extends TFactory[N] {
+              def wrap(node: raw.Node) = new N(node);
+              val label = raw.Label("N");
+              def local(): N = {
+                val node = wrap(raw.Node.local(List(label)));
+                node
+              };
+              def localT(): N = local()
+            } """
       )
     }
   }
