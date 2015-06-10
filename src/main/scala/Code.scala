@@ -317,13 +317,9 @@ trait Code extends Context with Generators {
 
   def nodeLabelToFactoryMap(schema: Schema): Tree = {
     val tuples = (schema.nodes ++ schema.hyperRelations).map { node => import node._
-      q"""
-        ($name_label, $name_term)
-      """
+      q""" ($name_label, $name_term) """
     }
-    q"""
-      Map[raw.Label,NodeFactory[_ <: Node]](..$tuples)
-    """
+    q""" Map[raw.Label,NodeFactory[_ <: Node]](..$tuples) """
   }
 
   def otherStatements(schema: Schema): List[Tree] = schema.statements.filterNot { statement =>
