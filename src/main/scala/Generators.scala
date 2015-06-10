@@ -137,14 +137,14 @@ trait Generators extends Context with Patterns {
       flatSuperTypes.flatMap(_.statements)
     }
     // TODO: move assertions to unit tests
-//    val testNode = NodePattern("a", List("superx"), List(q"def title:String"))
-//    assertX(flatSuperStatements(
-//      List(
-//        NodeTraitPattern("superx", List("supery"), List(q"def titlex:String")),
-//        NodeTraitPattern("supery", Nil, List(q"def titley:String")),
-//        testNode
-//      ), testNode).map(_.toString).toSet,
-//      List(q"def titlex:String", q"def title:String", q"def titley:String").map(_.toString).toSet)
+    //    val testNode = NodePattern("a", List("superx"), List(q"def title:String"))
+    //    assertX(flatSuperStatements(
+    //      List(
+    //        NodeTraitPattern("superx", List("supery"), List(q"def titlex:String")),
+    //        NodeTraitPattern("supery", Nil, List(q"def titley:String")),
+    //        testNode
+    //      ), testNode).map(_.toString).toSet,
+    //      List(q"def titlex:String", q"def title:String", q"def titley:String").map(_.toString).toSet)
     def nameToPattern[P <: NamePattern](patterns: List[P], name: String): P = patterns.find(_.name == name).get
     def neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val sources = (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern)).map(_.name)
@@ -190,12 +190,12 @@ trait Generators extends Context with Patterns {
         }
       }
     }
-//    assertX(isDeepSuperType(List(
-//      NodeTraitPattern("superx", List("supery"), Nil),
-//      NodeTraitPattern("supery", List("superz"), Nil),
-//      NodeTraitPattern("superz", Nil, Nil)
-//    ), subPattern = NodeTraitPattern("superx", List("supery"), Nil),
-//      superPattern = NodeTraitPattern("superz", Nil, Nil)), true)
+    //    assertX(isDeepSuperType(List(
+    //      NodeTraitPattern("superx", List("supery"), Nil),
+    //      NodeTraitPattern("supery", List("superz"), Nil),
+    //      NodeTraitPattern("superz", Nil, Nil)
+    //    ), subPattern = NodeTraitPattern("superx", List("supery"), Nil),
+    //      superPattern = NodeTraitPattern("superz", Nil, Nil)), true)
 
     def patternToSuperTypes[P <: NamePattern with SuperTypesPattern](patterns: List[P], pattern: P): List[P] = pattern.superTypes.map(nameToPattern(patterns, _))
     def patternToFlatSuperTypesWithoutSelf[P <: NamePattern with SuperTypesPattern, SUPER <: P](patterns: List[SUPER], pattern: P): List[SUPER] = {
@@ -215,18 +215,18 @@ trait Generators extends Context with Patterns {
         nodePatterns.filter(_.superTypes contains subTrait.name)
       }.distinct.map(_.name)
     }
-//    assertX(childNodesOfNodeTrait(
-//      List(
-//        NodeTraitPattern("traitA", Nil, Nil),
-//        NodeTraitPattern("traitB", List("traitA"), Nil),
-//        NodeTraitPattern("traitC", Nil, Nil)
-//      ),
-//      List(
-//        NodePattern("nodeC", List("traitA"), Nil),
-//        NodePattern("nodeD", List("traitB"), Nil)
-//      ),
-//      NodeTraitPattern("traitA", Nil, Nil)
-//    ), List("nodeC", "nodeD"))
+    //    assertX(childNodesOfNodeTrait(
+    //      List(
+    //        NodeTraitPattern("traitA", Nil, Nil),
+    //        NodeTraitPattern("traitB", List("traitA"), Nil),
+    //        NodeTraitPattern("traitC", Nil, Nil)
+    //      ),
+    //      List(
+    //        NodePattern("nodeC", List("traitA"), Nil),
+    //        NodePattern("nodeD", List("traitB"), Nil)
+    //      ),
+    //      NodeTraitPattern("traitA", Nil, Nil)
+    //    ), List("nodeC", "nodeD"))
 
     def childNodesOfNodeTraitsWithTraits(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
       (nodeTrait :: patternToFlatSubTypes(nodeTraits, nodeTrait)).flatMap { subTrait =>
@@ -246,35 +246,35 @@ trait Generators extends Context with Patterns {
       else if(flatSuperTypes.size == 1) flatSuperTypes.head
       else flatSuperTypes.reduce(_ intersect _)
     }
-//    assertX(nodeTraitToCommonHyperNodeTraits(
-//      List(
-//        NodeTraitPattern("traitA", Nil, Nil),
-//        NodeTraitPattern("traitB", Nil, Nil),
-//        NodeTraitPattern("traitC", Nil, Nil)
-//      ),
-//      List(
-//        NodeTraitPattern("traitA", Nil, Nil),
-//        NodeTraitPattern("traitB", Nil, Nil),
-//        NodeTraitPattern("traitC", Nil, Nil)
-//      ),
-//      List(
-//        NodePattern("nodeC", List("traitA"), Nil),
-//        NodePattern("nodeD", List("traitA"), Nil)
-//      ),
-//      List(
-//        HyperRelationPattern("hyperX", "nodeC", "nodeD", List("traitB", "traitC"), Nil),
-//        HyperRelationPattern("hyperY", "nodeD", "nodeC", List("traitA", "traitB", "traitC"), Nil)
-//      ),
-//      NodeTraitPattern("traitA", Nil, Nil)
-//    ).toSet, List("traitB", "traitC").toSet)
+    //    assertX(nodeTraitToCommonHyperNodeTraits(
+    //      List(
+    //        NodeTraitPattern("traitA", Nil, Nil),
+    //        NodeTraitPattern("traitB", Nil, Nil),
+    //        NodeTraitPattern("traitC", Nil, Nil)
+    //      ),
+    //      List(
+    //        NodeTraitPattern("traitA", Nil, Nil),
+    //        NodeTraitPattern("traitB", Nil, Nil),
+    //        NodeTraitPattern("traitC", Nil, Nil)
+    //      ),
+    //      List(
+    //        NodePattern("nodeC", List("traitA"), Nil),
+    //        NodePattern("nodeD", List("traitA"), Nil)
+    //      ),
+    //      List(
+    //        HyperRelationPattern("hyperX", "nodeC", "nodeD", List("traitB", "traitC"), Nil),
+    //        HyperRelationPattern("hyperY", "nodeD", "nodeC", List("traitA", "traitB", "traitC"), Nil)
+    //      ),
+    //      NodeTraitPattern("traitA", Nil, Nil)
+    //    ).toSet, List("traitB", "traitC").toSet)
 
     def groupToNodes(groupPatterns: List[GroupPattern], groupPattern: GroupPattern): List[String] = {
       (groupPattern :: patternToFlatSubTypes(groupPatterns, groupPattern)).flatMap(_.nodes)
     }
-//    assertX(groupToNodes(List(
-//      GroupPattern("groupA", Nil, List("nodeA", "nodeB")),
-//      GroupPattern("groupB", List("groupA"), List("nodeC", "nodeD"))
-//    ), GroupPattern("groupA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
+    //    assertX(groupToNodes(List(
+    //      GroupPattern("groupA", Nil, List("nodeA", "nodeB")),
+    //      GroupPattern("groupB", List("groupA"), List("nodeC", "nodeD"))
+    //    ), GroupPattern("groupA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
 
     def groupToRelations(groupPatterns: List[GroupPattern], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern], groupPattern: GroupPattern): List[String] = {
       val nodes = groupToNodes(groupPatterns, groupPattern)

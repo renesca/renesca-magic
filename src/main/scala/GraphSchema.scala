@@ -26,7 +26,7 @@ object GraphSchemaMacro {
     c.Expr[Any](annottees.map(_.tree).toList match {
       case SchemaPattern(schemaPattern) :: Nil =>
 
-      val code = schema(Schema(schemaPattern))
+        val code = schema(Schema(schemaPattern))
         Helpers.writeFile(s"magic/${ schemaPattern.name }.generated.scala", c.universe.showCode(code))
         code
     })

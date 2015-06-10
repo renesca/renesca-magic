@@ -30,6 +30,7 @@ trait PatternTraits extends Context {
   trait StatementsPattern {
     def statements: List[Tree]
   }
+
 }
 
 trait Patterns extends Context with PatternTraits {
@@ -37,6 +38,7 @@ trait Patterns extends Context with PatternTraits {
   import context.universe._
 
   case class SchemaPattern(name: String, _superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern
+
   object SchemaPattern {
     def unapply(tree: Tree): Option[SchemaPattern] = condOpt(tree) {
       case q""" object $name extends ..$superTypes { ..$statements } """ =>
@@ -114,4 +116,5 @@ trait Patterns extends Context with PatternTraits {
   }
 
   case class HyperRelationPattern(name: String, startNode: String, endNode: String, _superTypes: List[String], statements: List[Tree]) extends NamePattern with SuperTypesPattern with StartEndNodePattern with StatementsPattern
+
 }
