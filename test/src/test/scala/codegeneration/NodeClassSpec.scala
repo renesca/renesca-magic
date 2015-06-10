@@ -21,14 +21,14 @@ class NodeClassSpec extends Specification with CodeComparison {
   "with super types" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
-      q"""case class N(node: raw.Node) extends T"""
+      q"""case class N(node: raw.Node) extends T;"""
     )
   }
   //TODO: which other supertype constellations can appear?
   "with external super types (no nodeTraits)" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T with Ext}",
-      q"""case class N(node: raw.Node) extends T with Ext"""
+      q"""case class N(node: raw.Node) extends T with Ext;"""
     )
   }
   "direct neighbour accessors" >> {
