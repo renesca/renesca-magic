@@ -65,7 +65,7 @@ trait Code extends Context with Generators {
   }
 
   def forwardLocalMethod(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], superName: Option[String], local: String, typeName: Tree) = {
-    traitFactoryParameterList.map( parentParameterList => {
+    traitFactoryParameterList.map(parentParameterList => {
       val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
       q""" def ${ TermName(traitFactoryLocal(superName.get)) } (..${ parentParameterList.toParamCode }): $typeName = ${ TermName(local) } (..$parentCaller) """
     }).getOrElse(q"")
@@ -73,7 +73,7 @@ trait Code extends Context with Generators {
 
   // TODO: duplicate code
   def forwardLocalMethodStartEnd(parameterList: ParameterList, traitFactoryParameterList: Option[ParameterList], superName: Option[String], local: String, typeName: Tree, startNodeType: Tree, endNodeType: Tree) = {
-    traitFactoryParameterList.map( parentParameterList => {
+    traitFactoryParameterList.map(parentParameterList => {
       val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
       val localParameters: List[Tree] = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: parentParameterList.toParamCode
       q""" def ${ TermName(traitFactoryLocal(superName.get)) } (..$localParameters): $typeName = ${ TermName(local) } (..${ List(q"startNode", q"endNode") ::: parentCaller }) """
@@ -104,7 +104,7 @@ trait Code extends Context with Generators {
            """
   }
 
-  def traitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
+  def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
     val traitName = TypeName(nodeTrait)
     val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.foldLeft[Tree](q"Set.empty") { case (q"$all", name) => q"$all ++ ${ TermName(name) }" }
     q""" def $relationPlural:Set[$traitName] = $successors"""
@@ -118,7 +118,7 @@ trait Code extends Context with Generators {
 
     val successorTraits = outRelationsToTrait.map { case (r, nodeTrait) =>
       val relationPlural = TermName(nameToPlural(r))
-      traitNeighbours(r, node.neighbours, relationPlural, nodeTrait)
+      accumulatedTraitNeighbours(r, node.neighbours, relationPlural, nodeTrait)
     }
 
     val directRevNeighbours = node.rev_neighbours_terms.map {
@@ -128,15 +128,15 @@ trait Code extends Context with Generators {
 
     val predecessorTraits = inRelationsFromTrait.map { case (r, nodeTrait) =>
       val relationPlural = TermName(rev(nameToPlural(r)))
-      traitNeighbours(r, node.rev_neighbours, relationPlural, nodeTrait)
+      accumulatedTraitNeighbours(r, node.rev_neighbours, relationPlural, nodeTrait)
     }
 
     val nodeBody = statements.flatMap(generatePropertyAccessors(_))
     val superNodeTraitTypesWithDefault = if(superTypes.isEmpty) List(TypeName("Node")) else superTypes_type
-    val otherSuperTypes_type = otherSuperTypes.map(TypeName(_))
+    val externalSuperTypes_type = externalSuperTypes.map(TypeName(_))
 
     q"""
-    case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$otherSuperTypes_type {
+    case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$externalSuperTypes_type {
         ..$directNeighbours
         ..$successorTraits
         ..$directRevNeighbours
@@ -280,8 +280,6 @@ trait Code extends Context with Generators {
       q"def ${ TermName(nameToPlural(name + "Relation")) }:Set[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relations)) }"
     }
     val abstractRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      println(name + "subRel: " + subRelations)
-      println(name + "rel: " + relationsWithHyperRelations)
       q"def ${ TermName(nameToPlural(name + "AbstractRelation")) }:Set[_ <: AbstractRelation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relationsWithHyperRelations)) }"
     }
     val hyperRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
