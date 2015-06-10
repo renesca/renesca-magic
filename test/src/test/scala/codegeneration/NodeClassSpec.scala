@@ -7,7 +7,6 @@ class NodeClassSpec extends Specification with CodeComparison {
 
   import contextMock.universe._
 
-  //TODO: inherit custom code
   "simple class" >> {
     generatedContainsCode(
       q"object A {@Node class N}",
@@ -58,6 +57,20 @@ class NodeClassSpec extends Specification with CodeComparison {
             };"""
     )
   }
+  "accessors for super successor traits" >> {
+    generatedContainsCode(
+      q"""object A {@Node trait V; @Node trait T extends V;
+            @Node class N extends T; @Node class M extends T;
+            @Node class L;
+            @Relation class R(startNode:L,endNode:V);
+        }""",
+      q"""case class L(node: raw.Node) extends Node {
+              def rNs: Set[N] = successorsAs(N, R);
+              def rMs: Set[M] = successorsAs(M, R)
+              def rs: Set[V] = Set.empty.++(rNs).++(rMs);
+            };"""
+    )
+  }
   "accessors for predecessor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait T;
@@ -69,6 +82,20 @@ class NodeClassSpec extends Specification with CodeComparison {
               def rev_rNs: Set[N] = predecessorsAs(N, R);
               def rev_rMs: Set[M] = predecessorsAs(M, R);
               def rev_rs: Set[T] = Set.empty.++(rev_rNs).++(rev_rMs)
+            };"""
+    )
+  }
+  "accessors for super predecessor traits" >> {
+    generatedContainsCode(
+      q"""object A {@Node trait V; @Node trait T extends V;
+            @Node class N extends T; @Node class M extends T;
+            @Node class L;
+            @Relation class R(startNode:V,endNode:L);
+        }""",
+      q"""case class L(node: raw.Node) extends Node {
+              def rev_rNs: Set[N] = predecessorsAs(N, R);
+              def rev_rMs: Set[M] = predecessorsAs(M, R);
+              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
             };"""
     )
   }
@@ -89,5 +116,26 @@ class NodeClassSpec extends Specification with CodeComparison {
             };"""
     )
   }
-  //TODO: trait accessors with inheritance
+  "accessors for super predecessor and successor traits" >> {
+    generatedContainsCode(
+      q"""object A {@Node trait V; @Node trait T extends V;
+            @Node class N extends T; @Node class M extends T;
+            @Node class L;
+            @Relation class R(startNode:V,endNode:V);
+        }""",
+      q"""case class N(node: raw.Node) extends T {
+              def rNs: Set[N] = successorsAs(N, R);
+              def rMs: Set[M] = successorsAs(M, R);
+              def rs: Set[V] = Set.empty.++(rNs).++(rMs);
+              def rev_rNs: Set[N] = predecessorsAs(N, R);
+              def rev_rMs: Set[M] = predecessorsAs(M, R);
+              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
+            };"""
+    )
+  }
+  "property accessors" >> {
+    generatedContainsCode(
+      q"object A {@Node class N {val p:Int}}",
+      q"""def p: String = node.properties("p").asInstanceOf[IntPropertyValue]""")
+  }
 }
