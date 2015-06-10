@@ -170,6 +170,8 @@ trait Code extends Context with Generators {
            """
   }
 
+  //TODO: properties on relations
+  //TODO: external supertypes on relations
   def relationClasses(schema: Schema): List[Tree] = schema.relations.map { relation => import relation._
     val superTypesWithDefault = "Relation" :: superTypes
     val superTypesWithDefaultGenerics = superTypesWithDefault.map(TypeName(_)).map(superType => tq"$superType[$startNode_type,$endNode_type]")

@@ -16,8 +16,7 @@ class NodeClassSpec extends Specification with CodeComparison {
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@Node class N {def custom = 0}}",
-      q"""def custom = 0"""
-    )
+      q""" case class N(node: raw.Node) extends Node { def custom = 0 } """)
   }
   "with super types" >> {
     generatedContainsCode(
