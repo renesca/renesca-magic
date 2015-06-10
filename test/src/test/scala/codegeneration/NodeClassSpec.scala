@@ -136,6 +136,6 @@ class NodeClassSpec extends Specification with CodeComparison {
   "property accessors" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:Int}}",
-      q"""def p: String = node.properties("p").asInstanceOf[IntPropertyValue]""")
+      q"""def p: Int = node.properties("p").asInstanceOf[IntPropertyValue]""")
   }
 }
