@@ -104,7 +104,7 @@ trait Code extends Context with Generators {
 
   def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
     val traitName = TypeName(nodeTrait)
-    val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.foldLeft[Tree](q"Set.empty") { case (q"$all", name) => q"$all ++ ${ TermName(name) }" }
+    val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.foldRight[Tree](q"Set.empty") { case (name,q"$all") => q"${ TermName(name) } ++ $all " }
     q""" def $relationPlural:Set[$traitName] = $successors"""
   }
 
@@ -267,7 +267,7 @@ trait Code extends Context with Generators {
     // TODO: create subgroups
 
     def itemSets(nameAs: String, names: List[String]) = names.map { name => q""" def ${ TermName(nameToPlural(name)) }: Set[${ TypeName(name) }] = ${ TermName(nameAs) }(${ TermName(name) }) """ }
-    def allOf(items: List[String]) = items.foldLeft[Tree](q"Set.empty") { case (q"$all", name) => q"$all ++ ${ TermName(nameToPlural(name)) }" }
+    def allOf(items: List[String]) = items.foldRight[Tree](q"Set.empty") { case (name,q"$all") => q"${ TermName(nameToPlural(name)) } ++ $all" }
 
     val nodeSets = itemSets("nodesAs", nodes)
     val relationSets = itemSets("relationsAs", relations)

@@ -52,7 +52,7 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class L(node: raw.Node) extends Node {
               def rNs: Set[N] = successorsAs(N, R);
               def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[T] = Set.empty.++(rNs).++(rMs);
+              def rs: Set[T] = rNs.++(rMs.++(Set.empty));
             };"""
     )
   }
@@ -66,7 +66,7 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class L(node: raw.Node) extends Node {
               def rNs: Set[N] = successorsAs(N, R);
               def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[V] = Set.empty.++(rNs).++(rMs);
+              def rs: Set[V] = rNs.++(rMs.++(Set.empty));
             };"""
     )
   }
@@ -80,7 +80,7 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class L(node: raw.Node) extends Node {
               def rev_rNs: Set[N] = predecessorsAs(N, R);
               def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[T] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rs: Set[T] = rev_rNs.++(rev_rMs.++(Set.empty))
             };"""
     )
   }
@@ -94,7 +94,7 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class L(node: raw.Node) extends Node {
               def rev_rNs: Set[N] = predecessorsAs(N, R);
               def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rs: Set[V] = rev_rNs.++(rev_rMs.++(Set.empty))
             };"""
     )
   }
@@ -108,10 +108,10 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class N(node: raw.Node) extends T {
               def rNs: Set[N] = successorsAs(N, R);
               def rMs: Set[M] = successorsAs(M, R);
-              def rs: Set[T] = Set.empty.++(rNs).++(rMs);
+              def rs: Set[T] = rNs.++(rMs.++(Set.empty));
               def rev_rNs: Set[N] = predecessorsAs(N, R);
               def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[T] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rs: Set[T] = rev_rNs.++(rev_rMs.++(Set.empty))
             };"""
     )
   }
@@ -125,10 +125,10 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class N(node: raw.Node) extends T {
               def rNs: Set[N] = successorsAs(N, R);
               def rMs: Set[M] = successorsAs(M, R);
-              def rs: Set[V] = Set.empty.++(rNs).++(rMs);
+              def rs: Set[V] = rNs.++(rMs.++(Set.empty));
               def rev_rNs: Set[N] = predecessorsAs(N, R);
               def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rs: Set[V] = rev_rNs.++(rev_rMs.++(Set.empty))
             };"""
     )
   }

@@ -41,7 +41,7 @@ class GroupClassSpec extends Specification with CodeComparison {
       q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M}",
       q"""def ns: Set[N] = nodesAs(N);""",
       q"""def ms: Set[M] = nodesAs(M);""",
-      q"""def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
+      q"""def nodes: Set[Node] = ns.++(ms.++(Set.empty));"""
     )
   }
   "with relations" >> {
@@ -50,11 +50,17 @@ class GroupClassSpec extends Specification with CodeComparison {
       q"""def rs: Set[R] = relationsAs(R);""",
       q"""def s: Set[S] = relationsAs(S);""",
       q"""def relations: (Set[_$$629] forSome { 
-      type _$$629 <: (Relation[_$$637, _$$635] forSome { 
-        type _$$637;
-        type _$$635
-      })
-    }) = Set.empty.++(rs)++(s);"""
+            type _$$629 <: (Relation[_$$637, _$$635] forSome { 
+              type _$$637;
+              type _$$635
+            })
+          }) = rs++(s.++(Set.empty));""",
+      q"""def abstractRelations: (Set[_$$563] forSome { 
+            type _$$563 <: (AbstractRelation[_$$566, _$$564] forSome { 
+              type _$$566;
+              type _$$564
+            })
+          }) = rs.++(s.++(Set.empty));"""
     )
   }
   "with hyperRelations" >> {
@@ -62,14 +68,86 @@ class GroupClassSpec extends Specification with CodeComparison {
       q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
       q"""def rs: Set[R] = hyperRelationsAs(R);""",
       q"""def hyperRelations: (Set[_$$1386] forSome { 
-      type _$$1386 <: (HyperRelation[_$$1385, _$$1381, _$$1380, _$$1384, _$$1382] forSome { 
-        type _$$1385;
-        type _$$1381;
-        type _$$1380;
-        type _$$1384;
-        type _$$1382
-      })
-    }) = Set.empty.++(rs) """
+            type _$$1386 <: (HyperRelation[_$$1385, _$$1381, _$$1380, _$$1384, _$$1382] forSome { 
+              type _$$1385;
+              type _$$1381;
+              type _$$1380;
+              type _$$1384;
+              type _$$1382
+            })
+          }) = rs.++(Set.empty) """,
+      q"""def abstractRelations: (Set[_$$551] forSome { 
+            type _$$551 <: (AbstractRelation[_$$554, _$$552] forSome { 
+              type _$$554;
+              type _$$552
+            })
+          }) = rs.++(Set.empty); """
     )
   }
+
+  "with node trait and one node" >> {
+    generatedContainsCode(
+      q"object A {@Group trait G {List(N)}; @Node trait T; @Node class N extends T;}",
+      q"""def ts: Set[T] = ns.++(Set.empty);""", // tNodes
+      q"""def tRelations: (Set[_$$194] forSome { 
+            type _$$194 <: Relation[T, T]
+          }) = Set.empty;""",
+      q"""def tAbstractRelations: (Set[_$$195] forSome { 
+            type _$$195 <: AbstractRelation[T, T]
+          }) = Set.empty;""",
+      q"""def tHyperRelations: Set[(HyperRelation[T, _$$196, _$$201, _$$199, T] forSome { 
+            type _$$196 <: (Relation[T, _$$203] forSome { 
+              type _$$203
+            });
+            type _$$201 <: (HyperRelation[T, _$$198, _$$202, _$$200, T] forSome { 
+              type _$$198;
+              type _$$202;
+              type _$$200
+            });
+            type _$$199 <: (Relation[_$$197, T] forSome { 
+              type _$$197
+            })
+          })] = Set.empty;"""
+    )
+  }
+
+  "with node trait with relations" >> {
+    generatedContainsCode(
+      q"""object A {@Group trait G {List(N,M)}; @Node trait T;
+        @Node class N extends T;
+        @Node class M extends T;
+        @Relation class R(startNode:N, endNode:M)
+      }""",
+      q"""def tRelations: (Set[_$$1272] forSome { 
+            type _$$1272 <: Relation[T, T]
+          }) = rs.++(Set.empty);""",
+      q"""def tAbstractRelations: (Set[_$$1273] forSome { 
+            type _$$1273 <: AbstractRelation[T, T]
+          }) = rs.++(Set.empty);"""
+    )
+  }
+  "list trait relations only if in group and trait" >> {
+    generatedContainsCodePrint(
+      q"""object A {@Group trait G {List(M,N,O,P)};
+        @Node trait T;
+        @Node trait S;
+        @Node class M extends T;
+        @Node class N extends T;
+        @Node class O extends S;
+        @Node class P
+        @Node class Q
+        @Relation class R(startNode:N, endNode:M)
+        @Relation class R2(startNode:N, endNode:O)
+        @Relation class R3(startNode:N, endNode:P)
+        @Relation class R4(startNode:N, endNode:Q)
+      }""",
+      q"""def tRelations: (Set[_$$1272] forSome { 
+            type _$$1272 <: Relation[T, T]
+          }) = rs.++(Set.empty);""",
+      q"""def tAbstractRelations: (Set[_$$1273] forSome { 
+            type _$$1273 <: AbstractRelation[T, T]
+          }) = rs.++(Set.empty);"""
+    )
+  }
+
 }
