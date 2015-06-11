@@ -165,7 +165,7 @@ trait Code extends Context with Generators {
                 ..${ parameterList.toAssignmentCode(q"relation.relation") }
                 relation
               }
-              ${ forwardLocalMethod(parameterList, traitFactoryParameterList, superTypes.headOption, "local", tq"$name_type") }
+             ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, superTypes.headOption, "local", tq"$name_type", tq"$startNode_type", tq"$endNode_type") }
            }
            """
   }

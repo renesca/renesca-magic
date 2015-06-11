@@ -25,7 +25,7 @@ class RelationFactorySpec extends Specification with CodeComparison {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
       q"""object R extends RelationFactory[A, R, B] with TFactory[A, R, B] """,
-      q"""def localT(): R = local()"""
+      q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
     )
   }
   "with properties" >> {
