@@ -74,6 +74,9 @@ trait Generators extends Context with Patterns {
 
       val nodeTraits = nodeTraitPatterns.map(nodeTraitPattern =>
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns))
+      nodeTraits.foreach(nodeTrait =>
+        nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
+      )
       val nodes = nodePatterns.map { rawNodePattern => {
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
         import nodePattern._
@@ -100,6 +103,9 @@ trait Generators extends Context with Patterns {
         RelationTrait(relationTraitPattern,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
+      relationTraits.foreach(relationTrait =>
+        relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
+      )
       val groups = groupPatterns.map { groupPattern =>
           val groupedElements = groupToNodes(groupPatterns, groupPattern)
           val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
@@ -346,6 +352,9 @@ trait Generators extends Context with Patterns {
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
     val parameterList = ParameterList.create(flatStatements)
+
+    //TODO: do not use mutable property
+    var traitFactoryParameterList: Option[ParameterList] = None
   }
 
   object NodeTrait {
@@ -383,6 +392,8 @@ trait Generators extends Context with Patterns {
       context.abort(NoPosition, "Currently RelationTraits are restricted to only extend one trait")
 
     val parameterList = ParameterList.create(flatStatements)
+
+    var traitFactoryParameterList: Option[ParameterList] = None
   }
 
   case class Node(

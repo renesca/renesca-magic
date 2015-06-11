@@ -3,7 +3,7 @@ package codegeneration
 import org.specs2.mutable.Specification
 
 class RelationTraitFactorySpec extends Specification with CodeComparison {
-  // sequential 
+  // sequential
 
   import contextMock.universe._
 
@@ -13,7 +13,7 @@ class RelationTraitFactorySpec extends Specification with CodeComparison {
       q"""trait TFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
                 extends AbstractRelationFactory[START, RELATION, END] {
               def localT(startNode: START, endNode: END): RELATION
-            }"""
+      }"""
     )
   }
   "with local interface" >> {
@@ -22,7 +22,7 @@ class RelationTraitFactorySpec extends Specification with CodeComparison {
       q"""trait TFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
                 extends AbstractRelationFactory[START, RELATION, END] {
               def localT(startNode: START, endNode: END, p: String): RELATION
-            };"""
+      };"""
     )
   }
 
@@ -34,7 +34,8 @@ class RelationTraitFactorySpec extends Specification with CodeComparison {
       q"""trait XFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
                 extends AbstractRelationFactory[START, RELATION, END] with TFactory[START, RELATION, END] {
               def localX(startNode: START, endNode: END): RELATION
-            }"""
+              def localT(startNode: START, endNode: END): RELATION = localX(startNode, endNode)
+      }"""
     )
   }
 }

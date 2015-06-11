@@ -37,8 +37,7 @@ trait Code extends Context with Generators {
            trait $factoryName [NODE <: $name_type] extends NodeFactory[NODE] with ..$superTypeFactories {
             $localInterface
 
-            //TODO: should consider parameter list of parent
-            ${ forwardLocalMethod(parameterList, None, superTypes.headOption, traitFactoryLocal(name), tq"$name_type") }
+            ${ forwardLocalMethod(parameterList, traitFactoryParameterList, superTypes.headOption, traitFactoryLocal(name), tq"NODE") }
            }
     """,
       q"""
@@ -58,8 +57,7 @@ trait Code extends Context with Generators {
             with ..$superTypeFactories {
             $localInterface
 
-            //TODO: should consider parameter list of parent
-            ${ forwardLocalMethod(parameterList, None, superTypes.headOption, traitFactoryLocal(name), tq"$name_type") }
+             ${ forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, superTypes.headOption, traitFactoryLocal(name), tq"RELATION", tq"START", tq"END") }
            }
            """
   }
