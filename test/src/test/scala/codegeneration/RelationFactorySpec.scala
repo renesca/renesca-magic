@@ -48,7 +48,7 @@ class RelationFactorySpec extends Specification with CodeComparison {
             relation.relation.properties.update("x", x);
             relation
           }""",
-      q""" def localT(p: String, x: Int): R = local(p, x) """
+      q""" def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x) """
     )
   }
   "with indirectly inherited properties" >> {
@@ -60,7 +60,7 @@ class RelationFactorySpec extends Specification with CodeComparison {
             relation.relation.properties.update("x", x);
             relation
           } """,
-      q""" def localT(p: String, x: Int): R = local(p, x)"""
+      q""" def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
       //TOOD: concrete implementation of def localT?
     )
   }
