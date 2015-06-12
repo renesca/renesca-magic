@@ -42,6 +42,17 @@ class NodeClassSpec extends Specification with CodeComparison {
             };"""
     )
   }
+  "direct neighbour accessors over hyperrelations" >> {
+    generatedContainsCode(
+      q"object A {@Node class N; @Node class M; @HyperRelation class R(startNode:N,endNode:M)}",
+      q"""case class N(node: raw.Node) extends Node {
+              def rs: Set[M] = successorsAs(M, R)
+            };""",
+      q"""case class M(node: raw.Node) extends Node {
+              def rev_rs: Set[N] = predecessorsAs(N, R)
+            };"""
+    )
+  }
   "accessors for successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait T;
