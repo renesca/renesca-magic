@@ -127,7 +127,7 @@ class GroupClassSpec extends Specification with CodeComparison {
     )
   }
   "list trait relations only if in group and trait" >> {
-    generatedContainsCodePrint(
+    generatedContainsCode(
       q"""object A {@Group trait G {List(M,N,O,P)};
         @Node trait T;
         @Node trait S;
@@ -149,5 +149,99 @@ class GroupClassSpec extends Specification with CodeComparison {
           }) = rs.++(Set.empty);"""
     )
   }
+  "list trait hyperrelations only if in group and trait" >> {
+    generatedContainsCode(
+      q"""object A {@Group trait G {List(M,N,O,P)};
+        @Node trait T;
+        @Node trait S;
+        @Node class M extends T;
+        @Node class N extends T;
+        @Node class O extends S;
+        @Node class P
+        @Node class Q
+        @HyperRelation class R(startNode:N, endNode:M)
+        @HyperRelation class R2(startNode:N, endNode:O)
+        @HyperRelation class R3(startNode:N, endNode:P)
+        @HyperRelation class R4(startNode:N, endNode:Q)
+      }""",
+    q"""def tAbstractRelations: (Set[_$$418] forSome { 
+          type _$$418 <: AbstractRelation[T, T]
+        }) = rs.++(Set.empty);""",
+    q"""def tHyperRelations: Set[(HyperRelation[T, _$$427, _$$426, _$$425, T] forSome { 
+          type _$$427 <: (Relation[T, _$$423] forSome { 
+            type _$$423
+          });
+          type _$$426 <: (HyperRelation[T, _$$424, _$$422, _$$420, T] forSome { 
+            type _$$424;
+            type _$$422;
+            type _$$420
+          });
+          type _$$425 <: (Relation[_$$421, T] forSome { 
+            type _$$421
+          })
+        })] = rs.++(Set.empty);"""
+    )
+  }
+  "common hyperRelation traits between nodes of trait" >> {
+    generatedContainsCode(
+      q"""object A {@Group trait G {List(M,N,O,P)};
+        @Node trait T;
+        @Node class N extends T;
+        @Node class M extends T;
+        @Node class O extends T;
+        @Node class P extends T;
+        @Node trait X
+        @HyperRelation class R(startNode:N, endNode:M) extends X
+        @HyperRelation class R2(startNode:N, endNode:O) extends X
+        @HyperRelation class R3(startNode:N, endNode:P) extends X
+      }""",
+    q"""def tHyperRelations: Set[(HyperRelation[T, _$$3584, _$$3587, _$$3585, T] forSome { 
+          type _$$3584 <: (Relation[T, _$$3590] forSome { 
+            type _$$3590
+          });
+          type _$$3587 <: (HyperRelation[T, _$$3591, _$$3589, _$$3586, T] forSome { 
+            type _$$3591;
+            type _$$3589;
+            type _$$3586
+          }) with X;
+          type _$$3585 <: (Relation[_$$3588, T] forSome { 
+            type _$$3588
+          })
+        }) with X] = rs.++(r2s.++(r3s.++(Set.empty)));"""
+
+    )
+  }
+  "common hyperRelation traits between nodes of trait (multiple inheritance)" >> {
+    generatedContainsCode(
+      q"""object A {@Group trait G {List(M,N,O,P)};
+        @Node trait T;
+        @Node class N extends T;
+        @Node class M extends T;
+        @Node class O extends T;
+        @Node class P extends T;
+        @Node trait X
+        @Node trait Y
+        @Node trait Z
+        @HyperRelation class R(startNode:N, endNode:M) extends X with Y
+        @HyperRelation class R2(startNode:N, endNode:O) extends X
+        @HyperRelation class R3(startNode:N, endNode:P) extends Z with X
+      }""",
+    q"""def tHyperRelations: Set[(HyperRelation[T, _$$427, _$$426, _$$425, T] forSome { 
+          type _$$427 <: (Relation[T, _$$423] forSome { 
+            type _$$423
+          });
+          type _$$426 <: (HyperRelation[T, _$$424, _$$422, _$$420, T] forSome { 
+            type _$$424;
+            type _$$422;
+            type _$$420
+          });
+          type _$$425 <: (Relation[_$$421, T] forSome { 
+            type _$$421
+          })
+        })] = rs.++(Set.empty);"""
+    )
+  }.pendingUntilFixed
+
+  // TODO: Should hyperRelations be listed in Groups?
 
 }

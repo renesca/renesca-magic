@@ -294,6 +294,7 @@ trait Code extends Context with Generators {
               = ${ allOf(subHyperRelations.intersect(hyperRelations)) }"""
     }
 
+  //TODO: Common traits for nodes, relations, abstractRelations, hyperRelations
     q"""
            case class $name_type(graph: raw.Graph) extends Graph {
              ..$nodeSets

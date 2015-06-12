@@ -10,7 +10,10 @@ trait ContextMock extends Mockito {
   val contextMock: whitebox.Context = {
     import scala.reflect.macros.{Universe => macroUniverse}
     import scala.reflect.runtime.{universe => runtimeUniverse}
-    mock[whitebox.Context].universe returns runtimeUniverse.asInstanceOf[macroUniverse]
+    val context = mock[whitebox.Context]
+    context.universe returns runtimeUniverse.asInstanceOf[macroUniverse]
+    //TODO: context.abort returns 
+    context
   }
 }
 
