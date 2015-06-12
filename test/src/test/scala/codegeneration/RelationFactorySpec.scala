@@ -39,6 +39,19 @@ class RelationFactorySpec extends Specification with CodeComparison {
           } """
     )
   }
+  "with properties - parameter order of local" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Relation class R(startNode:A, endNode:B) {
+              var y:Option[Boolean]
+              val q:Option[Double]
+              var x:Int
+              val p:String
+            }
+          }""",
+      q"""def local(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R"""
+    )
+  }
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation class R(startNode:A, endNode:B) extends T}",

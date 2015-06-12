@@ -38,6 +38,19 @@ class NodeFactorySpec extends Specification with CodeComparison {
           } """
     )
   }
+  "with properties - parameter order of local" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N {
+              var y:Option[Boolean]
+              val q:Option[Double]
+              var x:Int
+              val p:String
+            }
+          }""",
+      q"""def local(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None): N"""
+    )
+  }
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node class N extends T}",
