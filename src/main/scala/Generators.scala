@@ -345,8 +345,6 @@ trait Generators extends Context with Patterns {
                         flatStatements: List[Tree],
                         hasOwnFactory: Boolean
                         ) extends Named with SuperTypes with Statements with HasOwnFactory {
-    if(pattern.superTypes.size > 1)
-      context.abort(NoPosition, "Currently NodeTraits are restricted to only extend one trait")
 
     def commonHyperNodeNodeTraits_type = commonHyperNodeNodeTraits.map(TypeName(_))
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
@@ -407,9 +405,6 @@ trait Generators extends Context with Patterns {
                    flatStatements: List[Tree],
                    traitFactoryParameterList: Option[ParameterList]
                    ) extends Named with SuperTypes with Statements {
-    if(superTypes.size > 1)
-      context.abort(NoPosition, "Currently Nodes are restricted to only extend one trait")
-
     val parameterList = ParameterList.create(flatStatements)
     def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
       (TermName(accessorName), TermName(relation), TypeName(endNode), TermName(endNode))

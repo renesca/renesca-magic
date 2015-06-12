@@ -24,6 +24,12 @@ class NodeClassSpec extends Specification with CodeComparison {
       q"""case class N(node: raw.Node) extends T;"""
     )
   }
+  "with multiple super types" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
+      q"""case class N(node: raw.Node) extends T with S;"""
+    )
+  }
   //TODO: which other supertype constellations can appear?
   "with external super types (no nodeTraits)" >> {
     generatedContainsCode(

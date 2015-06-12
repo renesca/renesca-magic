@@ -27,6 +27,14 @@ class NodeFactorySpec extends Specification with CodeComparison {
       q"""def localT(): N = local()"""
     )
   }
+  "with multiple super factories" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
+      q"""object N extends TFactory[N] with SFactory[N]""",
+      q"""def localT(): N = local()""",
+      q"""def localS(): N = local()"""
+    )
+  }
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:String; var x:Int}}",
@@ -63,6 +71,18 @@ class NodeFactorySpec extends Specification with CodeComparison {
       q""" def localT(p: String, x: Int): N = local(p, x) """
     )
   }
+  "with inherited properties by two traits" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node class N extends T with S}",
+      q"""def local(p: String, x: Int): N = {
+            val node = wrap(raw.Node.local(List(label)));
+            node.node.properties.update("p", p);
+            node.node.properties.update("x", x);
+            node
+          }""",
+      q""" def localT(p: String, x: Int): N = local(p, x) """
+    )
+  }.pendingUntilFixed("does localT/localS make sense here?")
   //TODO: different local/localT
   "with indirectly inherited properties" >> {
     generatedContainsCode(
@@ -77,4 +97,18 @@ class NodeFactorySpec extends Specification with CodeComparison {
       //TOOD: why no localT?
     )
   }
+  "with indirectly inherited properties by two traits" >> {
+    generatedContainsCodePrint(
+      q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
+      q"""def local(p: String, x: Int): N = {
+            val node = wrap(raw.Node.local(List(label)));
+            node.node.properties.update("p", p);
+            node.node.properties.update("x", x);
+            node
+          }""",
+      q""" def localX(p: String, x: Int): N = local(p, x) """
+      //TOOD: why no localT?
+    )
+  }.pendingUntilFixed("does localT/localS make sense here?")
+  // TODO one direct + one indirect
 }

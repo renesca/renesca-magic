@@ -7,11 +7,11 @@ class HyperRelationFactorySpec extends Specification with CodeComparison {
 
   import contextMock.universe._
 
-  "simple relation factory" >> {
+  "simple hyperrelation factory" >> {
     generatedContainsCode(
       // TODO: fail with compile error when start or endNode does not exist
       q"object A {@HyperRelation class R(startNode:A, endNode:B)}",
-      q"""object R extends HyperRelationFactory[A, AToR, R, RToB, B] with AbstractRelationFactory[A, R, B] {
+      q"""object R extends HyperRelationFactory[A, AToR, R, RToB, B] {
             override def label = raw.Label("R");
             override def startRelationType = raw.RelationType("ATOR");
             override def endRelationType = raw.RelationType("RTOB");
@@ -39,7 +39,7 @@ class HyperRelationFactorySpec extends Specification with CodeComparison {
   "with relation super factory" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      q"""object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B]""",
+      q"""object R extends TFactory[A, R, B]""",
       q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
     )
   }

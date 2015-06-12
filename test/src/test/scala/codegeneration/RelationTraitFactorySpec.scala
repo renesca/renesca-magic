@@ -32,7 +32,7 @@ class RelationTraitFactorySpec extends Specification with CodeComparison {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation trait X extends T}",
       q"""trait XFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
-                extends AbstractRelationFactory[START, RELATION, END] with TFactory[START, RELATION, END] {
+                extends TFactory[START, RELATION, END] {
               def localX(startNode: START, endNode: END): RELATION
               def localT(startNode: START, endNode: END): RELATION = localX(startNode, endNode)
       }"""

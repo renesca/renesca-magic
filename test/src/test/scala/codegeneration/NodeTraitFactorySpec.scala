@@ -29,13 +29,13 @@ class NodeTraitFactorySpec extends Specification with CodeComparison {
   "with superType factories" >> {
     generatedContainsCode(
       q"object A {@Node trait T ; @Node trait X extends T {val p:String} }",
-      q"""trait XFactory[NODE <: X] extends NodeFactory[NODE] with TFactory[NODE] { def localX(p: String): NODE }"""
+      q"""trait XFactory[NODE <: X] extends TFactory[NODE] { def localX(p: String): NODE }"""
     )
   }
   "with superType factories with inherited local method" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String}; @Node trait X extends T }",
-      q"""trait XFactory[NODE <: X] extends NodeFactory[NODE] with TFactory[NODE] {
+      q"""trait XFactory[NODE <: X] extends TFactory[NODE] {
             def localX(p: String): NODE
             def localT(p: String): NODE = localX(p)
       }"""
