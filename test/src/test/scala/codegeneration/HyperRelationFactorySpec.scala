@@ -32,17 +32,17 @@ class HyperRelationFactorySpec extends Specification with CodeComparison {
   "with node super factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      q"""not implemented"""
+      """not implemented"""
     )
   }.pendingUntilFixed("does it make sense to inherit from node trait factories?")
 
   "with relation super factory" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      q"""object R extends TFactory[A, R, B]""",
+      """object R extends TFactory[A, R, B] {""",
       q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
     )
-  }
+  }.pendingUntilFixed()
 
   "with properties" >> {
     generatedContainsCode(

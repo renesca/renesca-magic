@@ -23,14 +23,14 @@ class NodeFactorySpec extends Specification with CodeComparison {
   "with super factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
-      q"""object N extends TFactory[N] """,
+      """object N extends TFactory[N] {""",
       q"""def localT(): N = local()"""
     )
   }
   "with multiple super factories" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
-      q"""object N extends TFactory[N] with SFactory[N]""",
+      """object N extends TFactory[N] with SFactory[N] {""",
       q"""def localT(): N = local()""",
       q"""def localS(): N = local()"""
     )
@@ -98,7 +98,7 @@ class NodeFactorySpec extends Specification with CodeComparison {
     )
   }
   "with indirectly inherited properties by two traits" >> {
-    generatedContainsCodePrint(
+    generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
       q"""def local(p: String, x: Int): N = {
             val node = wrap(raw.Node.local(List(label)));

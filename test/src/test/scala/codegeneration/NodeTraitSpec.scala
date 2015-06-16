@@ -10,19 +10,19 @@ class NodeTraitSpec extends Specification with CodeComparison {
   "simple trait" >> {
     generatedContainsCode(
       q"object A {@Node trait T}",
-      q"""trait T extends Node"""
+      """trait T extends Node  }"""
     )
   }
   "with super trait" >> {
     generatedContainsCode(
       q"object A { @Node trait K; @Node trait T extends K}",
-      q"""trait T extends K"""
+      """trait T extends K  }"""
     )
   }
   "with multiple super traits" >> {
     generatedContainsCode(
       q"object A { @Node trait K;@Node trait L; @Node trait T extends K with L}",
-      q"""trait T extends K with L"""
+      """trait T extends K with L  }"""
     )
   }
   "with properties" >> {

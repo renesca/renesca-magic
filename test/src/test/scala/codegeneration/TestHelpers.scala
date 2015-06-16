@@ -23,17 +23,23 @@ trait CodeComparison extends Specification with ContextMock {
   import contextMock.universe._
   import magic._
 
+  implicit def TreeToString(t:Tree):String = showCode(t)
+
   val wildcardRegex = "_\\$\\d+".r
   def comparableWildcards(code: String) = wildcardRegex.replaceAllIn(code, "_")
   def withoutSpaces(code: String) = code.replaceAll("\\s", "")
-  def comparable(code: Tree) = withoutSpaces(comparableWildcards(showCode(code)))
-  def containCode(c1: Tree, c: Tree*) = c.map { c2 => comparable(c1) must contain(comparable(c2)) }
+  def comparable(code: String) = withoutSpaces(comparableWildcards(code))
+  def containCode(source:Tree, generated: Tree, snippets: String*) = snippets.map { snippet =>
+    comparable(showCode(generated)) must (contain(comparable(snippet))).setMessage(
+      comparableWildcards(showCode(source)) +
+      "\n--- generates: ---\n" +
+      comparableWildcards(showCode(generated)) +
+      "\n--- which doesn't contain: ---\n" +
+      comparableWildcards(snippet) +
+      "\n----------\n"
+    )
+  }
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))
-  def generatedContainsCode(c1: Tree, c: Tree*) = containCode(generate(c1), c: _*)
-  def generatedContainsCodePrint(c1: Tree, c: Tree*) = containCode({
-    val g = generate(c1);
-    println(showCode(c1) + "\n--- generates: ---\n" + showCode(g) + "\n----------\n");
-    g 
-  }, c: _*)
+  def generatedContainsCode(source: Tree, snippets: String*) = containCode(source, generate(source), snippets: _*)
 }
 

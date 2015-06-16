@@ -22,7 +22,7 @@ class RelationTraitFactorySpec extends Specification with CodeComparison {
       q"""trait TFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
                 extends AbstractRelationFactory[START, RELATION, END] {
               def localT(startNode: START, endNode: END, p: String): RELATION
-      };"""
+      }"""
     )
   }
 

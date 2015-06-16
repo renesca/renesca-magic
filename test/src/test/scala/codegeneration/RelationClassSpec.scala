@@ -10,7 +10,7 @@ class RelationClassSpec extends Specification with CodeComparison {
   "simple class" >> {
     generatedContainsCode(
       q"object A {@Relation class R(startNode:A, endNode:B)}",
-      q"""case class R(startNode: A, relation: raw.Relation, endNode: B) extends Relation[A, B];"""
+      """case class R(startNode: A, relation: raw.Relation, endNode: B) extends Relation[A, B]  }"""
     )
   }
   "preserve custom code" >> {
@@ -22,7 +22,7 @@ class RelationClassSpec extends Specification with CodeComparison {
   "with super types" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
-      q"""case class R(startNode: A, relation: raw.Relation, endNode: B) extends Relation[A, B] with T[A, B]"""
+      """case class R(startNode: A, relation: raw.Relation, endNode: B) extends Relation[A, B] with T[A, B]  }"""
     )
   }
 }

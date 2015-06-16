@@ -41,7 +41,7 @@ class GroupClassSpec extends Specification with CodeComparison {
       q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M}",
       q"""def ns: Set[N] = nodesAs(N);""",
       q"""def ms: Set[M] = nodesAs(M);""",
-      q"""def nodes: Set[Node] = ns.++(ms.++(Set.empty));"""
+      """def nodes: Set[Node] = ns.++(ms.++(Set.empty));"""
     )
   }
   "with relations" >> {
@@ -49,16 +49,16 @@ class GroupClassSpec extends Specification with CodeComparison {
       q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
       q"""def rs: Set[R] = relationsAs(R);""",
       q"""def s: Set[S] = relationsAs(S);""",
-      q"""def relations: (Set[_$$629] forSome { 
-            type _$$629 <: (Relation[_$$637, _$$635] forSome { 
-              type _$$637;
-              type _$$635
+      """def relations: (Set[_] forSome { 
+            type _ <: (Relation[_, _] forSome { 
+              type _;
+              type _
             })
-          }) = rs++(s.++(Set.empty));""",
-      q"""def abstractRelations: (Set[_$$563] forSome { 
-            type _$$563 <: (AbstractRelation[_$$566, _$$564] forSome { 
-              type _$$566;
-              type _$$564
+          }) = rs.++(s.++(Set.empty));""",
+      """def abstractRelations: (Set[_] forSome { 
+            type _ <: (AbstractRelation[_, _] forSome { 
+              type _;
+              type _
             })
           }) = rs.++(s.++(Set.empty));"""
     )
@@ -67,19 +67,19 @@ class GroupClassSpec extends Specification with CodeComparison {
     generatedContainsCode(
       q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
       q"""def rs: Set[R] = hyperRelationsAs(R);""",
-      q"""def hyperRelations: (Set[_$$1386] forSome { 
-            type _$$1386 <: (HyperRelation[_$$1385, _$$1381, _$$1380, _$$1384, _$$1382] forSome { 
-              type _$$1385;
-              type _$$1381;
-              type _$$1380;
-              type _$$1384;
-              type _$$1382
+      """def hyperRelations: (Set[_] forSome { 
+            type _ <: (HyperRelation[_, _, _, _, _] forSome { 
+              type _;
+              type _;
+              type _;
+              type _;
+              type _
             })
           }) = rs.++(Set.empty) """,
-      q"""def abstractRelations: (Set[_$$551] forSome { 
-            type _$$551 <: (AbstractRelation[_$$554, _$$552] forSome { 
-              type _$$554;
-              type _$$552
+      """def abstractRelations: (Set[_] forSome { 
+            type _ <: (AbstractRelation[_, _] forSome { 
+              type _;
+              type _
             })
           }) = rs.++(Set.empty); """
     )
@@ -88,24 +88,24 @@ class GroupClassSpec extends Specification with CodeComparison {
   "with node trait and one node" >> {
     generatedContainsCode(
       q"object A {@Group trait G {List(N)}; @Node trait T; @Node class N extends T;}",
-      q"""def ts: Set[T] = ns.++(Set.empty);""", // tNodes
-      q"""def tRelations: (Set[_$$194] forSome { 
-            type _$$194 <: Relation[T, T]
+      """def ts: Set[T] = ns.++(Set.empty);""", // tNodes
+      """def tRelations: (Set[_] forSome { 
+            type _ <: Relation[T, T]
           }) = Set.empty;""",
-      q"""def tAbstractRelations: (Set[_$$195] forSome { 
-            type _$$195 <: AbstractRelation[T, T]
+      """def tAbstractRelations: (Set[_] forSome { 
+            type _ <: AbstractRelation[T, T]
           }) = Set.empty;""",
-      q"""def tHyperRelations: Set[(HyperRelation[T, _$$196, _$$201, _$$199, T] forSome { 
-            type _$$196 <: (Relation[T, _$$203] forSome { 
-              type _$$203
+      """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome { 
+            type _ <: (Relation[T, _] forSome { 
+              type _
             });
-            type _$$201 <: (HyperRelation[T, _$$198, _$$202, _$$200, T] forSome { 
-              type _$$198;
-              type _$$202;
-              type _$$200
+            type _ <: (HyperRelation[T, _, _, _, T] forSome { 
+              type _;
+              type _;
+              type _
             });
-            type _$$199 <: (Relation[_$$197, T] forSome { 
-              type _$$197
+            type _ <: (Relation[_, T] forSome { 
+              type _
             })
           })] = Set.empty;"""
     )
@@ -118,11 +118,11 @@ class GroupClassSpec extends Specification with CodeComparison {
         @Node class M extends T;
         @Relation class R(startNode:N, endNode:M)
       }""",
-      q"""def tRelations: (Set[_$$1272] forSome { 
-            type _$$1272 <: Relation[T, T]
+      """def tRelations: (Set[_] forSome { 
+            type _ <: Relation[T, T]
           }) = rs.++(Set.empty);""",
-      q"""def tAbstractRelations: (Set[_$$1273] forSome { 
-            type _$$1273 <: AbstractRelation[T, T]
+      """def tAbstractRelations: (Set[_] forSome { 
+            type _ <: AbstractRelation[T, T]
           }) = rs.++(Set.empty);"""
     )
   }
@@ -141,11 +141,11 @@ class GroupClassSpec extends Specification with CodeComparison {
         @Relation class R3(startNode:N, endNode:P)
         @Relation class R4(startNode:N, endNode:Q)
       }""",
-      q"""def tRelations: (Set[_$$1272] forSome { 
-            type _$$1272 <: Relation[T, T]
+      """def tRelations: (Set[_] forSome { 
+            type _ <: Relation[T, T]
           }) = rs.++(Set.empty);""",
-      q"""def tAbstractRelations: (Set[_$$1273] forSome { 
-            type _$$1273 <: AbstractRelation[T, T]
+      """def tAbstractRelations: (Set[_] forSome { 
+            type _ <: AbstractRelation[T, T]
           }) = rs.++(Set.empty);"""
     )
   }
@@ -164,20 +164,20 @@ class GroupClassSpec extends Specification with CodeComparison {
         @HyperRelation class R3(startNode:N, endNode:P)
         @HyperRelation class R4(startNode:N, endNode:Q)
       }""",
-    q"""def tAbstractRelations: (Set[_$$418] forSome { 
-          type _$$418 <: AbstractRelation[T, T]
+    """def tAbstractRelations: (Set[_] forSome { 
+          type _ <: AbstractRelation[T, T]
         }) = rs.++(Set.empty);""",
-    q"""def tHyperRelations: Set[(HyperRelation[T, _$$427, _$$426, _$$425, T] forSome { 
-          type _$$427 <: (Relation[T, _$$423] forSome { 
-            type _$$423
+    """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome { 
+          type _ <: (Relation[T, _] forSome { 
+            type _
           });
-          type _$$426 <: (HyperRelation[T, _$$424, _$$422, _$$420, T] forSome { 
-            type _$$424;
-            type _$$422;
-            type _$$420
+          type _ <: (HyperRelation[T, _, _, _, T] forSome { 
+            type _;
+            type _;
+            type _
           });
-          type _$$425 <: (Relation[_$$421, T] forSome { 
-            type _$$421
+          type _ <: (Relation[_, T] forSome { 
+            type _
           })
         })] = rs.++(Set.empty);"""
     )
@@ -195,17 +195,17 @@ class GroupClassSpec extends Specification with CodeComparison {
         @HyperRelation class R2(startNode:N, endNode:O) extends X
         @HyperRelation class R3(startNode:N, endNode:P) extends X
       }""",
-    q"""def tHyperRelations: Set[(HyperRelation[T, _$$3584, _$$3587, _$$3585, T] forSome { 
-          type _$$3584 <: (Relation[T, _$$3590] forSome { 
-            type _$$3590
+    """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome { 
+          type _ <: (Relation[T, _] forSome { 
+            type _
           });
-          type _$$3587 <: (HyperRelation[T, _$$3591, _$$3589, _$$3586, T] forSome { 
-            type _$$3591;
-            type _$$3589;
-            type _$$3586
+          type _ <: (HyperRelation[T, _, _, _, T] forSome { 
+            type _;
+            type _;
+            type _
           }) with X;
-          type _$$3585 <: (Relation[_$$3588, T] forSome { 
-            type _$$3588
+          type _ <: (Relation[_, T] forSome { 
+            type _
           })
         }) with X] = rs.++(r2s.++(r3s.++(Set.empty)));"""
 
@@ -226,17 +226,17 @@ class GroupClassSpec extends Specification with CodeComparison {
         @HyperRelation class R2(startNode:N, endNode:O) extends X
         @HyperRelation class R3(startNode:N, endNode:P) extends Z with X
       }""",
-    q"""def tHyperRelations: Set[(HyperRelation[T, _$$427, _$$426, _$$425, T] forSome { 
-          type _$$427 <: (Relation[T, _$$423] forSome { 
-            type _$$423
+    """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome { 
+          type _ <: (Relation[T, _] forSome { 
+            type _
           });
-          type _$$426 <: (HyperRelation[T, _$$424, _$$422, _$$420, T] forSome { 
-            type _$$424;
-            type _$$422;
-            type _$$420
+          type _ <: (HyperRelation[T, _, _, _, T] forSome { 
+            type _;
+            type _;
+            type _
           });
-          type _$$425 <: (Relation[_$$421, T] forSome { 
-            type _$$421
+          type _ <: (Relation[_, T] forSome { 
+            type _
           })
         })] = rs.++(Set.empty);"""
     )

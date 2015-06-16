@@ -28,5 +28,4 @@ class SchemaSpec extends Specification with CodeComparison {
 
     //TODO: custom code
   }
-
 }

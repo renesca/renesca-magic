@@ -10,7 +10,8 @@ class NodeClassSpec extends Specification with CodeComparison {
   "simple class" >> {
     generatedContainsCode(
       q"object A {@Node class N}",
-      q"""case class N(node: raw.Node) extends Node"""
+      // } is a closing bracket from the outer statement. It ensures that N does not extend anything:
+      """case class N(node: raw.Node) extends Node  }"""
     )
   }
   "preserve custom code" >> {
@@ -21,20 +22,20 @@ class NodeClassSpec extends Specification with CodeComparison {
   "with super types" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
-      q"""case class N(node: raw.Node) extends T;"""
+      """case class N(node: raw.Node) extends T  }"""
     )
   }
   "with multiple super types" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
-      q"""case class N(node: raw.Node) extends T with S;"""
+      """case class N(node: raw.Node) extends T with S  }"""
     )
   }
   //TODO: which other supertype constellations can appear?
   "with external super types (no nodeTraits)" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T with Ext}",
-      q"""case class N(node: raw.Node) extends T with Ext;"""
+      """case class N(node: raw.Node) extends T with Ext  }"""
     )
   }
   "direct neighbour accessors" >> {
@@ -67,23 +68,23 @@ class NodeClassSpec extends Specification with CodeComparison {
             @Relation class R(startNode:L,endNode:T);
         }""",
       q"""case class L(node: raw.Node) extends Node {
-              def rNs: Set[N] = successorsAs(N, R);
+              def rNs: Set[N] = successorsAs(N, R)
               def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[T] = rNs.++(rMs.++(Set.empty));
-            };"""
+              def rs: Set[T] = rNs.++(rMs.++(Set.empty))
+            }"""
     )
   }
   "accessors for super successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait V; @Node trait T extends V;
-            @Node class N extends T; @Node class M extends T;
-            @Node class L;
-            @Relation class R(startNode:L,endNode:V);
+            @Node class N extends T; @Node class M extends T
+            @Node class L
+            @Relation class R(startNode:L,endNode:V)
         }""",
       q"""case class L(node: raw.Node) extends Node {
-              def rNs: Set[N] = successorsAs(N, R);
+              def rNs: Set[N] = successorsAs(N, R)
               def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[V] = rNs.++(rMs.++(Set.empty));
+              def rs: Set[V] = rNs.++(rMs.++(Set.empty))
             };"""
     )
   }

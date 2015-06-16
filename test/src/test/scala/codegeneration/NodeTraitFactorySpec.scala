@@ -16,7 +16,7 @@ class NodeTraitFactorySpec extends Specification with CodeComparison {
   "with own factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
-      q"""object T extends RootNodeTraitFactory[T]"""
+      """object T extends RootNodeTraitFactory[T];"""
     )
   }
   //TODO: no own factory, when there is no node extending the trait
