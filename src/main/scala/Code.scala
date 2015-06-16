@@ -31,7 +31,7 @@ trait Code extends Context with Generators {
   def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
     val factoryName = TypeName(traitFactoryName(name))
     val localInterface = if(hasOwnFactory) q"def ${ TermName(traitFactoryLocal(name)) } (..${ parameterList.toParamCode }): NODE" else q""
-    val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${TypeName(traitFactoryName(t))}[NODE]")
+    val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[NODE]")
     val locals = superTypes.map(t => forwardLocalMethod(parameterList, traitFactoryParameterList, t, traitFactoryLocal(name), tq"NODE"))
 
     List(
@@ -53,7 +53,7 @@ trait Code extends Context with Generators {
     val startEndlocalParams = List(q"val startNode:START", q"val endNode:END") ::: parameterList.toParamCode
     val factoryName = TypeName(traitFactoryName(name))
     val localInterface = if(hasOwnFactory) q" def ${ TermName(traitFactoryLocal(name)) } (..$startEndlocalParams): RELATION " else q""
-    val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[START,RELATION,END]") else superTypes.map(t => tq"${TypeName(traitFactoryName(t))}[START,RELATION,END]")
+    val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[START,RELATION,END]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[START,RELATION,END]")
     val locals = superTypes.map(t => forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, t, traitFactoryLocal(name), tq"RELATION", tq"START", tq"END"))
     q"""
            trait $factoryName [START <: Node, +RELATION <: AbstractRelation[START,END], END <: Node] extends ..$superFactories {
@@ -83,7 +83,7 @@ trait Code extends Context with Generators {
   //TODO: what happens with name clashes?
   // @Node trait traitA { val name: String }; @Node trait traitB extends traitA { val name: String }
   def nodeFactories(schema: Schema): List[Tree] = schema.nodes.map { node => import node._
-    val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[$name_type]") else superTypes.map(t => tq"${TypeName(traitFactoryName(t))}[$name_type]")
+    val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[$name_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$name_type]")
     val locals = superTypes.map(t => forwardLocalMethod(parameterList, traitFactoryParameterList, t, "local", tq"$name_type"))
 
     // Extending superFactory is enough, because NodeFactory is pulled in every case.
@@ -104,8 +104,9 @@ trait Code extends Context with Generators {
 
   def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
     val traitName = TypeName(nodeTrait)
-    val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.foldRight[Tree](q"Set.empty") { case (name,q"$all") => q"${ TermName(name) } ++ $all " }
-    q""" def $relationPlural:Set[$traitName] = $successors"""
+    val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.map(s => q"${ TermName(s) }")
+    val combined = successors.reduceOption[Tree]((a, b) => q"$a ++ $b").getOrElse(q"Set.empty")
+    q""" def $relationPlural:Set[$traitName] = $combined"""
   }
 
   def nodeClasses(schema: Schema): List[Tree] = schema.nodes.map { node => import node._
@@ -145,7 +146,7 @@ trait Code extends Context with Generators {
   }
 
   def relationFactories(schema: Schema): List[Tree] = schema.relations.map { relation => import relation._
-    val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[$startNode_type, $name_type, $endNode_type]") else superTypes.map(t => tq"${TypeName(traitFactoryName(t))}[$startNode_type, $name_type, $endNode_type]")
+    val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[$startNode_type, $name_type, $endNode_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$startNode_type, $name_type, $endNode_type]")
     val locals = superTypes.map(t => forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, t, "local", tq"$name_type", tq"$startNode_type", tq"$endNode_type"))
 
     q"""
@@ -181,7 +182,7 @@ trait Code extends Context with Generators {
 
 
   def hyperRelationFactories(schema: Schema): List[Tree] = schema.hyperRelations.map { hyperRelation => import hyperRelation._
-    val superFactories = if(superTypes.isEmpty) List(tq"HyperRelationFactory[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type]") else superTypes.map(t => tq"${TypeName(traitFactoryName(t))}[$startNode_type, $name_type, $endNode_type]")
+    val superFactories = if(superTypes.isEmpty) List(tq"HyperRelationFactory[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$startNode_type, $name_type, $endNode_type]")
     val locals = superTypes.map(t => forwardLocalMethodStartEnd(parameterList, traitFactoryParameterList, t, "local", tq"$name_type", tq"$startNode_type", tq"$endNode_type"))
 
     q"""
@@ -262,7 +263,7 @@ trait Code extends Context with Generators {
     // TODO: create subgroups
 
     def itemSets(nameAs: String, names: List[String]) = names.map { name => q""" def ${ TermName(nameToPlural(name)) }: Set[${ TypeName(name) }] = ${ TermName(nameAs) }(${ TermName(name) }) """ }
-    def allOf(items: List[String]) = items.foldRight[Tree](q"Set.empty") { case (name,q"$all") => q"${ TermName(nameToPlural(name)) } ++ $all" }
+    def allOf(items: List[String]) = items.map(s =>  q"${ TermName(nameToPlural(s))}" ).reduceOption[Tree]((a, b) => q"$a ++ $b").getOrElse(q"Set.empty")
 
     val nodeSets = itemSets("nodesAs", nodes)
     val relationSets = itemSets("relationsAs", relations)
@@ -289,7 +290,7 @@ trait Code extends Context with Generators {
               = ${ allOf(subHyperRelations.intersect(hyperRelations)) }"""
     }
 
-  //TODO: Common traits for nodes, relations, abstractRelations, hyperRelations
+    //TODO: Common traits for nodes, relations, abstractRelations, hyperRelations
     q"""
            case class $name_type(graph: raw.Graph) extends Graph {
              ..$nodeSets

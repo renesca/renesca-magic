@@ -42,7 +42,7 @@ class HyperRelationFactorySpec extends Specification with CodeComparison {
       """object R extends TFactory[A, R, B] {""",
       q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
     )
-  }.pendingUntilFixed()
+  }
 
   "with properties" >> {
     generatedContainsCode(
