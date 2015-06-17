@@ -2,7 +2,7 @@ import codegeneration.CodeComparison
 import org.specs2.mutable.Specification
 
 class SchemaSpec extends Specification with CodeComparison {
-  // sequential 
+   
 
   import contextMock.universe._
 

@@ -3,7 +3,7 @@ package codegeneration
 import org.specs2.mutable.Specification
 
 class HyperRelationFactorySpec extends Specification with CodeComparison {
-  // sequential 
+   
 
   import contextMock.universe._
 
@@ -32,14 +32,14 @@ class HyperRelationFactorySpec extends Specification with CodeComparison {
   "with node super factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      """not implemented"""
+      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[R] {"""
     )
-  }.pendingUntilFixed("does it make sense to inherit from node trait factories?")
+  }
 
   "with relation super factory" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      """object R extends TFactory[A, R, B] {""",
+      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
       q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
     )
   }

@@ -3,7 +3,7 @@ package codegeneration
 import org.specs2.mutable.Specification
 
 class NodeTraitSpec extends Specification with CodeComparison {
-  // sequential 
+   
 
   import contextMock.universe._
 

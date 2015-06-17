@@ -3,8 +3,6 @@ package codegeneration
 import org.specs2.mutable.Specification
 
 class GroupClassSpec extends Specification with CodeComparison {
-  // sequential 
-
   import contextMock.universe._
 
   "simple class" >> {
@@ -234,13 +232,13 @@ class GroupClassSpec extends Specification with CodeComparison {
             type _;
             type _;
             type _
-          });
+          }) with X;
           type _ <: (Relation[_, T] forSome { 
             type _
           })
-        })] = rs;"""
+        }) with X] = rs.++(r2s).++(r3s);"""
     )
-  }.pendingUntilFixed
+  }
 
   // TODO: Should hyperRelations be listed in Groups?
 

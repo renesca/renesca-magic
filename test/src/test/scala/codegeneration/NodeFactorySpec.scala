@@ -3,7 +3,6 @@ package codegeneration
 import org.specs2.mutable.Specification
 
 class NodeFactorySpec extends Specification with CodeComparison {
-  // sequential 
 
   import contextMock.universe._
 
@@ -32,6 +31,13 @@ class NodeFactorySpec extends Specification with CodeComparison {
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
       """object N extends TFactory[N] with SFactory[N] {""",
       q"""def localT(): N = local()""",
+      q"""def localS(): N = local()"""
+    )
+  }
+  "with multiple super factories (chain)" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T; @Node trait S extends T; @Node class N extends S}",
+      """object N extends SFactory[N] {""",
       q"""def localS(): N = local()"""
     )
   }
@@ -79,36 +85,37 @@ class NodeFactorySpec extends Specification with CodeComparison {
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
-          }""",
-      q""" def localT(p: String, x: Int): N = local(p, x) """
+          }"""
     )
-  }.pendingUntilFixed("does localT/localS make sense here?")
-  //TODO: different local/localT
+  }
+
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T; @Node class N extends X}",
-      q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(List(label)));
-            node.node.properties.update("p", p);
-            node.node.properties.update("x", x);
-            node
-          }""",
-      q""" def localX(p: String, x: Int): N = local(p, x) """
-      //TOOD: why no localT?
+      q""" def localX(p: String, x: Int): N = local(p, x) """,
+      q""" def localT(p: String, x: Int): NODE = localX(p, x) """
+    )
+  }
+  "with indirectly inherited properties and default properties" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
+      q""" def localX(p: String, x: Int, q: Boolean = true): N = local(p, x, q) """,
+      q""" def localT(p: String, x: Int): NODE = localX(p, x, true) """
+    )
+  }
+  "with indirectly inherited properties and optional properties" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
+      q""" def localX(p: String, x: Int, q: Option[Boolean] = None): N = local(p, x, q) """,
+      q""" def localT(p: String, x: Int): NODE = localX(p, x, None) """
     )
   }
   "with indirectly inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
-      q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(List(label)));
-            node.node.properties.update("p", p);
-            node.node.properties.update("x", x);
-            node
-          }""",
       q""" def localX(p: String, x: Int): N = local(p, x) """
-      //TOOD: why no localT?
+    //TODO: not containts localT/localS
     )
-  }.pendingUntilFixed("does localT/localS make sense here?")
+  }
   // TODO one direct + one indirect
 }

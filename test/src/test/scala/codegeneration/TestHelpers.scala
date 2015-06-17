@@ -18,25 +18,27 @@ trait ContextMock extends Mockito {
 }
 
 trait CodeComparison extends Specification with ContextMock {
+  sequential
+
   val magic = new Patterns with Generators with Code {val context: contextMock.type = contextMock }
 
   import contextMock.universe._
   import magic._
 
-  implicit def TreeToString(t:Tree):String = showCode(t)
+  implicit def TreeToString(t: Tree): String = showCode(t)
 
   val wildcardRegex = "_\\$\\d+".r
   def comparableWildcards(code: String) = wildcardRegex.replaceAllIn(code, "_")
   def withoutSpaces(code: String) = code.replaceAll("\\s", "")
   def comparable(code: String) = withoutSpaces(comparableWildcards(code))
-  def containCode(source:Tree, generated: Tree, snippets: String*) = snippets.map { snippet =>
+  def containCode(source: Tree, generated: Tree, snippets: String*) = snippets.map { snippet =>
     comparable(showCode(generated)) must (contain(comparable(snippet))).setMessage(
       comparableWildcards(showCode(source)) +
-      "\n--- generates: ---\n" +
-      comparableWildcards(showCode(generated)) +
-      "\n--- which doesn't contain: ---\n" +
-      comparableWildcards(snippet) +
-      "\n----------\n"
+        "\n--- generates: ---\n" +
+        comparableWildcards(showCode(generated)) +
+        "\n--- which doesn't contain: ---\n" +
+        comparableWildcards(snippet) +
+        "\n----------\n"
     )
   }
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))

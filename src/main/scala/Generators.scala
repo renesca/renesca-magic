@@ -107,30 +107,32 @@ trait Generators extends Context with Patterns {
         relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
       )
       val groups = groupPatterns.map { groupPattern =>
-          val groupedElements = groupToNodes(groupPatterns, groupPattern)
-          val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
-            .flatMap(_.superTypes).distinct
-            .intersect(nodeTraitPatterns.map(_.name))
-            .map(nameToPattern(nodeTraitPatterns, _))
-          Group(groupPattern,
-            nodes = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
-            nodesWithHyperNodes = groupedElements,
-            relations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, groupPattern),
-            relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, groupPattern),
-            hyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, groupPattern),
-            nodeTraits = groupedTraits.map(nodeTraitPattern =>
-              NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
-                selectedNodePatterns = groupedElements.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
-                selectedHyperRelationPatterns = (nodeNamesToRelations(groupedElements, hyperRelationPatterns) ::: groupedElements.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
-                relationPatterns, hyperRelationPatterns))
-          )
-        }
+        val groupedElements = groupToNodes(groupPatterns, groupPattern)
+        val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
+          .flatMap(_.superTypes).distinct
+          .intersect(nodeTraitPatterns.map(_.name))
+          .map(nameToPattern(nodeTraitPatterns, _))
+        Group(groupPattern,
+          nodes = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
+          nodesWithHyperNodes = groupedElements,
+          relations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, groupPattern),
+          relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, groupPattern),
+          hyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, groupPattern),
+          nodeTraits = groupedTraits.map(nodeTraitPattern =>
+            NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
+              selectedNodePatterns = groupedElements.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
+              selectedHyperRelationPatterns = (nodeNamesToRelations(groupedElements, hyperRelationPatterns) ::: groupedElements.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
+              relationPatterns, hyperRelationPatterns))
+        )
+      }
       val hyperRelations = hyperRelationPatterns.map(hyperRelationPattern => HyperRelation(hyperRelationPattern, filterSuperTypes(nodeTraitPatterns, hyperRelationPattern), filterSuperTypes(relationTraitPatterns, hyperRelationPattern), flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern), findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits)))
       val relations = relationPatterns.map(relationPattern => Relation(relationPattern, flatSuperStatements(relationTraitPatterns, relationPattern), findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits)))
       Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, groups, statements)
     }
 
-    def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): Option[ParameterList] = patternToNameClasses(patternToFlatSuperTypesWithoutSelf(patterns, pattern), nameClasses).find(_.hasOwnFactory).map(_.parameterList)
+    def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): List[ParameterList] = {
+      patternToNameClasses(patternToFlatSuperTypesWithoutSelf(patterns, pattern), nameClasses).filter(_.hasOwnFactory).map(_.parameterList)
+    }
 
     def patternToNameClasses[P <: Named with HasOwnFactory](patterns: List[_ <: NamePattern], nameClasses: List[P]): List[P] = nameClasses.filter(nameClass => patterns.map(_.name).contains(nameClass.name))
 
@@ -290,6 +292,8 @@ trait Generators extends Context with Patterns {
 
     def traitCanHaveOwnFactory(hierarchyPatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], currentTrait: NamePattern with SuperTypesPattern): Boolean = {
       val children = patternToFlatSubTypes(hierarchyPatterns, currentTrait)
+      val childrenWithFlatParents = children.flatMap(patternToFlatSuperTypesWithSelf(hierarchyPatterns, _)).distinct
+      val subWithoutSuper = childrenWithFlatParents diff patternToFlatSuperTypesWithSelf(hierarchyPatterns, currentTrait)
       // if we currently are at NodeTrait, we need to check whether one of its
       // children is a HyperRelation. If that is the case, a factory cannot be
       // generated, as the HyperRelation additionally needs Start-/EndNode in
@@ -299,15 +303,15 @@ trait Generators extends Context with Patterns {
       if(isNodeTrait && hasHyperRelationChild)
         return false
 
-      val statements = children.flatMap(_.statements)
-      !statements.exists {
-        case q"val $x:Option[$propertyType]" => false
-        case q"var $x:Option[$propertyType]" => false
-        case q"val $x:$propertyType = $y"    => false
-        case q"var $x:$propertyType = $y"    => false
-        case q"val $x:$propertyType"         => true
-        case q"var $x:$propertyType"         => true
-        case _                               => false
+      val statements = subWithoutSuper.flatMap(_.statements)
+      statements.forall {
+        case q"val $x:Option[$propertyType]" => true
+        case q"var $x:Option[$propertyType]" => true
+        case q"val $x:$propertyType = $y"    => true
+        case q"var $x:$propertyType = $y"    => true
+        case q"val $x:$propertyType"         => false
+        case q"var $x:$propertyType"         => false
+        case _                               => true // custom statements
       }
     }
   }
@@ -352,7 +356,7 @@ trait Generators extends Context with Patterns {
     val parameterList = ParameterList.create(flatStatements)
 
     //TODO: do not use mutable property
-    var traitFactoryParameterList: Option[ParameterList] = None
+    var traitFactoryParameterList: List[ParameterList] = Nil
   }
 
   object NodeTrait {
@@ -386,12 +390,9 @@ trait Generators extends Context with Patterns {
                             flatStatements: List[Tree],
                             hasOwnFactory: Boolean
                             ) extends Named with SuperTypes with Statements with HasOwnFactory {
-    if(pattern.superTypes.size > 1)
-      context.abort(NoPosition, "Currently RelationTraits are restricted to only extend one trait")
-
     val parameterList = ParameterList.create(flatStatements)
 
-    var traitFactoryParameterList: Option[ParameterList] = None
+    var traitFactoryParameterList: List[ParameterList] = Nil //TODO: no var
   }
 
   case class Node(
@@ -403,7 +404,7 @@ trait Generators extends Context with Patterns {
                    outRelationsToTrait: List[(String, String)],
                    inRelationsFromTrait: List[(String, String)],
                    flatStatements: List[Tree],
-                   traitFactoryParameterList: Option[ParameterList]
+                   traitFactoryParameterList: List[ParameterList]
                    ) extends Named with SuperTypes with Statements {
     val parameterList = ParameterList.create(flatStatements)
     def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
@@ -417,11 +418,8 @@ trait Generators extends Context with Patterns {
   case class Relation(
                        pattern: RelationPattern,
                        flatStatements: List[Tree], // TODO: rename to flatSuperStatements (same for node etc)
-                       traitFactoryParameterList: Option[ParameterList]
+                       traitFactoryParameterList: List[ParameterList]
                        ) extends Named with StartEndNode with SuperTypes with Statements {
-    if(superTypes.size > 1)
-      context.abort(NoPosition, "Currently Relations are restricted to only extend one trait")
-
     val parameterList = ParameterList.create(flatStatements)
   }
 
@@ -430,11 +428,8 @@ trait Generators extends Context with Patterns {
                             superNodeTypes: List[String],
                             superRelationTypes: List[String],
                             flatSuperStatements: List[Tree],
-                            traitFactoryParameterList: Option[ParameterList]
+                            traitFactoryParameterList: List[ParameterList]
                             ) extends Named with SuperTypes with StartEndNode with Statements with StartEndRelation {
-    if(superNodeTypes.size > 1 || superRelationTypes.size > 1)
-      context.abort(NoPosition, "Currently HyperRelations are restricted to only extend one trait")
-
     val parameterList = ParameterList.create(flatSuperStatements)
   }
 
