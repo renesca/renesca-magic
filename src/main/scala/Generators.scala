@@ -125,13 +125,25 @@ trait Generators extends Context with Patterns {
               relationPatterns, hyperRelationPatterns))
         )
       }
-      val hyperRelations = hyperRelationPatterns.map(hyperRelationPattern => HyperRelation(hyperRelationPattern, filterSuperTypes(nodeTraitPatterns, hyperRelationPattern), filterSuperTypes(relationTraitPatterns, hyperRelationPattern), flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern), findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits)))
-      val relations = relationPatterns.map(relationPattern => Relation(relationPattern, flatSuperStatements(relationTraitPatterns, relationPattern), findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits)))
+      val hyperRelations = hyperRelationPatterns.map(hyperRelationPattern =>
+        HyperRelation(
+          pattern = hyperRelationPattern,
+          superNodeTypes = filterSuperTypes(nodeTraitPatterns, hyperRelationPattern),
+          superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
+          flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
+          traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
+      )
+      val relations = relationPatterns.map(relationPattern =>
+        Relation(
+          pattern = relationPattern,
+          flatStatements = flatSuperStatements(relationTraitPatterns, relationPattern),
+          traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits))
+      )
       Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, groups, statements)
     }
 
     def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): List[ParameterList] = {
-      patternToNameClasses(patternToFlatSuperTypesWithoutSelf(patterns, pattern), nameClasses).filter(_.hasOwnFactory).map(_.parameterList)
+      patternToNameClasses(pattern.superTypes.map(nameToPattern(patterns, _)), nameClasses).filter(_.hasOwnFactory).map(_.parameterList)
     }
 
     def patternToNameClasses[P <: Named with HasOwnFactory](patterns: List[_ <: NamePattern], nameClasses: List[P]): List[P] = nameClasses.filter(nameClass => patterns.map(_.name).contains(nameClass.name))

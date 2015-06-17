@@ -64,17 +64,25 @@ class RelationFactorySpec extends Specification with CodeComparison {
       q""" def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x) """
     )
   }
+  "with inherited properties from two traits" >> {
+    generatedContainsCode(
+      q"object A {@Relation trait T {val p:String}; @Relation trait S {var x:Int}; @Relation class R(startNode:A, endNode:B) extends T with S}",
+      Not(""" def localT(startNode: A, endNode: B, p: String"""),
+      Not(""" def localS(startNode: A, endNode: B, p: String""")
+    )
+  }
   "with indirectly inherited properties" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends T}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node));
-            relation.relation.properties.update("p", p);
-            relation.relation.properties.update("x", x);
-            relation
-          } """,
-      q""" def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
-      //TOOD: concrete implementation of def localT?
+      q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
+      q""" def localT(startNode: START, endNode: END, p: String, x: Int): RELATION = localX(startNode, endNode, p, x)""",
+      q""" def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
+    )
+  }
+  "with indirectly inherited properties in chain" >> {
+    generatedContainsCode(
+      q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
+      q""" def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)""",
+      Not(""" def localT(startNode: A, endNode: B, p: String""")
     )
   }
 }
