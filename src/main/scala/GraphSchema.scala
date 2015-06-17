@@ -13,6 +13,7 @@ class Aborter(context: whitebox.Context) {
 trait Context {
   val context: whitebox.Context
   val aborter: Aborter
+  def abort(msg: String) = aborter.abort(msg)
 }
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")

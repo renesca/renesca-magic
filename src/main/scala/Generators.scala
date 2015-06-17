@@ -72,20 +72,36 @@ trait Generators extends Context with Patterns {
       val groupPatterns: List[GroupPattern] = schemaPattern.statements.collect { case GroupPattern(groupPattern) => groupPattern }
       val allRelationPatterns = relationPatterns ::: hyperRelationPatterns
 
-      val nodeTraits = nodeTraitPatterns.map(nodeTraitPattern =>
-        NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns))
+      def abortIfInheritsFrom(childItem: String, childType: String, child: NamePattern with SuperTypesPattern, parentItem: String, parentType: String, parents: List[NamePattern]): Unit = {
+        for(childSuperTypeName <- child.superTypes; parentName <- parents.map(_.name) if childSuperTypeName == parentName)
+          abort(s"$childItem $childType `${ child.name }` cannot inherit from $parentItem $parentType `$parentName`.")
+      }
+
+      val nodeTraits = nodeTraitPatterns.map { nodeTraitPattern =>
+        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "trait", relationTraitPatterns)
+        NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
+      }
       nodeTraits.foreach(nodeTrait =>
         nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
       )
-      val relationTraits = relationTraitPatterns.map(relationTraitPattern =>
+      val relationTraits = relationTraitPatterns.map { relationTraitPattern =>
+        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "trait", nodeTraitPatterns)
         RelationTrait(relationTraitPattern,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
-          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
+          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
+      }
       relationTraits.foreach(relationTrait =>
         relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
       )
       val nodes = nodePatterns.map { rawNodePattern => {
-                if(rawNodePattern.superTypes.exists(relationTraitPatterns.map(_.name).contains(_))) aborter.abort("Nodes cannot inherit from Relation traits.")
+        abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
+
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
         import nodePattern._
         Node(nodePattern,
@@ -108,6 +124,10 @@ trait Generators extends Context with Patterns {
       }
       }
       val groups = groupPatterns.map { groupPattern =>
+        abortIfInheritsFrom("Group", "trait", groupPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Group", "trait", groupPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Group", "trait", groupPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Group", "trait", groupPattern, "Relation", "trait", relationTraitPatterns)
         val groupedElements = groupToNodes(groupPatterns, groupPattern)
         val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
@@ -134,12 +154,16 @@ trait Generators extends Context with Patterns {
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
       )
-      val relations = relationPatterns.map(relationPattern =>
+      val relations = relationPatterns.map { relationPattern =>
+        abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "trait", nodeTraitPatterns)
+
         Relation(
           pattern = relationPattern,
           flatStatements = flatSuperStatements(relationTraitPatterns, relationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits))
-      )
+      }
       Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, groups, statements)
     }
 

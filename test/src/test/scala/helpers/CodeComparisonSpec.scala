@@ -15,12 +15,13 @@ trait CodeComparisonSpec extends Specification with ContextMock {
 
   val magic = new Patterns with Generators with Code {
     val context: contextMock.type = contextMock
-    val aborter = mock[Aborter]
+    val aborter = mock[Aborter].smart
+    aborter.abort(anyString) throws (new RuntimeException("aborted"))
   }
 
   import contextMock.universe._
 
-  import magic.{schema,Schema,SchemaPattern}
+  import magic.{schema, Schema, SchemaPattern}
 
   implicit def TreeToString(t: Tree): String = showCode(t)
   implicit def TreeToWith(t: Tree): With = With(showCode(t))
