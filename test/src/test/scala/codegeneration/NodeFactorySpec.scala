@@ -113,8 +113,15 @@ class NodeFactorySpec extends Specification with CodeComparison {
   "with indirectly inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
-      q""" def localX(p: String, x: Int): N = local(p, x) """
-    //TODO: not containts localT/localS
+      q""" def localX(p: String, x: Int): N = local(p, x) """,
+      Not("def localS("),
+      Not("def localT(")
+    )
+  }
+  "diamond inheritance" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String }; @Node trait L extends T; @Node trait R extends T; @Node trait X extends L with R; @Node class N extends X}",
+      q""" def local(p: String): N"""
     )
   }
   // TODO one direct + one indirect
