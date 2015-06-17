@@ -23,7 +23,8 @@ lazy val test = (project in file("test")).settings(
     "com.github.renesca" %% "renesca" % "0.2.4"
   ),
   addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
-  scalacOptions in Test ++= Seq("-Yrangepos") // specs2
+  scalacOptions in Test ++= Seq("-Yrangepos"), // specs2
+  parallelExecution in Test := false
 ).dependsOn(renescamagic)
 
 
