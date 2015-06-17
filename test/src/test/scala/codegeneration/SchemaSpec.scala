@@ -1,8 +1,9 @@
-import codegeneration.CodeComparison
-import org.specs2.mutable.Specification
+package codegeneration
 
-class SchemaSpec extends Specification with CodeComparison {
-   
+import helpers.CodeComparisonSpec
+
+class SchemaSpec extends CodeComparisonSpec {
+
 
   import contextMock.universe._
 

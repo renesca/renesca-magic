@@ -1,8 +1,8 @@
 package codegeneration
 
-import org.specs2.mutable.Specification
+import helpers.CodeComparisonSpec
 
-class PropertiesSpec extends Specification with CodeComparison {
+class PropertiesSpec extends CodeComparisonSpec {
    
 
   import contextMock.universe._

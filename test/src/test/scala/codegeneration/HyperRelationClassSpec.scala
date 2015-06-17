@@ -1,9 +1,9 @@
 package codegeneration
 
-import org.specs2.mutable.Specification
+import helpers.CodeComparisonSpec
 
-class HyperRelationClassSpec extends Specification with CodeComparison {
-   
+class HyperRelationClassSpec extends CodeComparisonSpec {
+
 
   import contextMock.universe._
 

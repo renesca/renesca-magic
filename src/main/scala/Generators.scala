@@ -77,7 +77,15 @@ trait Generators extends Context with Patterns {
       nodeTraits.foreach(nodeTrait =>
         nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
       )
+      val relationTraits = relationTraitPatterns.map(relationTraitPattern =>
+        RelationTrait(relationTraitPattern,
+          flatSuperStatements(relationTraitPatterns, relationTraitPattern),
+          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
+      relationTraits.foreach(relationTrait =>
+        relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
+      )
       val nodes = nodePatterns.map { rawNodePattern => {
+                if(rawNodePattern.superTypes.exists(relationTraitPatterns.map(_.name).contains(_))) aborter.abort("Nodes cannot inherit from Relation traits.")
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
         import nodePattern._
         Node(nodePattern,
@@ -99,13 +107,6 @@ trait Generators extends Context with Patterns {
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
       }
       }
-      val relationTraits = relationTraitPatterns.map(relationTraitPattern =>
-        RelationTrait(relationTraitPattern,
-          flatSuperStatements(relationTraitPatterns, relationTraitPattern),
-          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern))) //TODO: why nodeTraitPatterns
-      relationTraits.foreach(relationTrait =>
-        relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
-      )
       val groups = groupPatterns.map { groupPattern =>
         val groupedElements = groupToNodes(groupPatterns, groupPattern)
         val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))

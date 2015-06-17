@@ -4,8 +4,15 @@ import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
+class Aborter(context: whitebox.Context) {
+  def abort(msg: String) {
+    context.abort(context.universe.NoPosition, msg)
+  }
+}
+
 trait Context {
   val context: whitebox.Context
+  val aborter: Aborter
 }
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")
@@ -20,7 +27,10 @@ object GraphSchemaMacro {
   // TODO: compile error when nodes inherit not only from nodeTraits
 
   def graphSchema(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val env = new Patterns with Generators with Code {val context: c.type = c }
+    val env = new Patterns with Generators with Code {
+      val context: c.type = c
+      val aborter = new Aborter(c)
+    }
     import env._
 
     c.Expr[Any](annottees.map(_.tree).toList match {

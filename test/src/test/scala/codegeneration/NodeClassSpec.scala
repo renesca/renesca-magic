@@ -1,8 +1,8 @@
 package codegeneration
 
-import org.specs2.mutable.Specification
+import helpers.CodeComparisonSpec
 
-class NodeClassSpec extends Specification with CodeComparison {
+class NodeClassSpec extends CodeComparisonSpec {
    
 
   import contextMock.universe._
