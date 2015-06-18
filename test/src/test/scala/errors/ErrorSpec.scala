@@ -140,7 +140,31 @@ class ErrorSpec extends CodeComparisonSpec {
     }
   }
 
-  //TODO: nonexistant
-  //TODO: @Relation class without start/end, hyerrel trait, group class
+  "not allowed class/object/trait" >> {
+    "Group class" >> {
+      generatedAborts(q"object A {@Group class G}",
+        "Group class `G` is not allowed. Use a trait instead.")
+    }
+    "Group object" >> {
+      generatedAborts(q"object A {@Group object G}",
+        "Group object `G` is not allowed. Use a trait instead.")
+    }
+    "Node object" >> {
+      generatedAborts(q"object A {@Node object N}",
+        "Node object `N` is not allowed. Use a class or trait instead.")
+    }
+    "Relation object" >> {
+      generatedAborts(q"object A {@Relation object R}",
+        "Relation object `R` is not allowed. Use a class or trait instead.")
+    }
+    "HyperRelation object" >> {
+      generatedAborts(q"object A {@HyperRelation object R}",
+        "HyperRelation object `R` is not allowed. Use a class instead.")
+    }
+    "HyperRelation trait" >> {
+      generatedAborts(q"object A {@HyperRelation trait R}",
+        "HyperRelation trait `R` is not allowed. Use a class instead.")
+    }
 
+  }
 }

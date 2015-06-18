@@ -53,13 +53,22 @@ trait Patterns extends Context with PatternTraits {
       case q""" $mods trait $name extends ..$superTypes { List(..$groupNodes) }""" if mods.annotations.collectFirst {
         case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get =>
-        GroupPattern(name, superTypes, groupNodes)
+      }.get => GroupPattern(name, superTypes, groupNodes)
+
       case q""" $mods trait $name extends ..$superTypes""" if mods.annotations.collectFirst {
         case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get =>
-        GroupPattern(name, superTypes, Nil)
+      }.get => GroupPattern(name, superTypes, Nil)
+
+      case q""" $mods class $name extends ..$superTypes { ..$statements }""" if mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+        case _                                                                        => false
+      }.get => abort(s"Group class `$name` is not allowed. Use a trait instead.")
+
+      case q""" $mods object $name extends ..$superTypes { ..$statements }""" if mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+        case _                                                                        => false
+      }.get => abort(s"Group object `$name` is not allowed. Use a trait instead.")
     }
   }
 
@@ -92,8 +101,10 @@ trait Patterns extends Context with PatternTraits {
 
   object NodePattern {
     def unapply(tree: Tree): Option[NodePattern] = condOpt(tree) {
-      case q"""@Node class $name extends ..${superTypes} { ..$statements }""" =>
+      case q"""@Node class $name extends ..${superTypes} { ..$statements }"""  =>
         NodePattern(name, superTypes, statements)
+      case q"""@Node object $name extends ..${superTypes} { ..$statements }""" =>
+        abort(s"Node object `$name` is not allowed. Use a class or trait instead.")
     }
   }
 
@@ -103,8 +114,11 @@ trait Patterns extends Context with PatternTraits {
     def unapply(tree: Tree): Option[RelationPattern] = condOpt(tree) {
       case q"""@Relation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
         RelationPattern(name, startNode, endNode, superTypes, statements)
-      case q"""@Relation class $name extends ..$superTypes {..$statements}"""                                          =>
+
+      case q"""@Relation class $name extends ..$superTypes {..$statements}"""   =>
         abort(s"Relation class `$name` needs startNode and endNode.")
+      case q"""@Relation object $name  extends ..$superTypes {..$statements}""" =>
+        abort(s"Relation object `$name` is not allowed. Use a class or trait instead.")
     }
   }
 
@@ -114,8 +128,16 @@ trait Patterns extends Context with PatternTraits {
     def unapply(tree: Tree): Option[HyperRelationPattern] = condOpt(tree) {
       case q"""@HyperRelation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
         HyperRelationPattern(name, startNode, endNode, superTypes, statements)
-      case q"""@HyperRelation class $name extends ..$superTypes {..$statements}"""                                          =>
+
+      case q"""@HyperRelation class $name extends ..$superTypes {..$statements}"""  =>
         abort(s"HyperRelation class `$name` needs startNode and endNode.")
+      case q"""@HyperRelation object $name extends ..$superTypes {..$statements}""" =>
+        abort(s"HyperRelation object `$name` is not allowed. Use a class instead.")
+      case q"""$mods trait $name extends ..$superTypes {..$statements}""" if mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(TypeName("HyperRelation"))), termNames.CONSTRUCTOR), Nil) => true
+        case _                                                                                => false
+      }.get                                                                         =>
+        abort(s"HyperRelation trait `$name` is not allowed. Use a class instead.")
     }
   }
 
