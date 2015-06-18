@@ -34,6 +34,10 @@ class ErrorSpec extends CodeComparisonSpec {
                 "Node class `N` cannot inherit from Relation trait `T`.")
             }
           }
+          "Group trait" >> {
+            generatedAborts(q"object A {@Group trait T; @Node class N extends T}",
+              "Node class `N` cannot inherit from Group trait `T`.")
+          }
         }
 
       }
@@ -54,6 +58,10 @@ class ErrorSpec extends CodeComparisonSpec {
               generatedAborts(q"object A {@Relation trait T; @Node trait N extends T}",
                 "Node trait `N` cannot inherit from Relation trait `T`.")
             }
+          }
+          "Group trait" >> {
+            generatedAborts(q"object A {@Group trait T; @Node trait N extends T}",
+              "Node trait `N` cannot inherit from Group trait `T`.")
           }
         }
       }
@@ -77,6 +85,10 @@ class ErrorSpec extends CodeComparisonSpec {
                 "Relation class `N` cannot inherit from Relation class `T`.")
             }
           }
+          "Group trait" >> {
+            generatedAborts(q"object A {@Group trait T; @Relation class N(startNode:A, endNode:B) extends T}",
+              "Relation class `N` cannot inherit from Group trait `T`.")
+          }
         }
 
       }
@@ -98,10 +110,31 @@ class ErrorSpec extends CodeComparisonSpec {
                 "Relation trait `R` cannot inherit from Relation class `T`.")
             }
           }
+          "Group trait" >> {
+            generatedAborts(q"object A {@Group trait T; @Relation trait N extends T}",
+              "Relation trait `N` cannot inherit from Group trait `T`.")
+          }
         }
       }
-      //TODO: HyperRelation inherits
-      //TODO: no inheritance from Group
+    }
+    "HyperRelation" >> {
+      "class" >> {
+        "inherits from" >> {
+          "Node class" >> {
+            generatedAborts(q"object A {@Node class T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
+              "HyperRelation class `R` cannot inherit from Node class `T`.")
+          }
+          "Relation class" >> {
+            generatedAborts(q"object A {@Relation class T(startNode:A, endNode:B); @HyperRelation class N(startNode:A, endNode:B) extends T}",
+              "HyperRelation class `N` cannot inherit from Relation class `T`.")
+          }
+          "Group trait" >> {
+            generatedAborts(q"object A {@Group trait T; @HyperRelation class N(startNode:A, endNode:B) extends T}",
+              "HyperRelation class `N` cannot inherit from Group trait `T`.")
+          }
+        }
+
+      }
     }
     "Group" >> {
       "trait" >> {
@@ -170,7 +203,6 @@ class ErrorSpec extends CodeComparisonSpec {
         "HyperRelation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Group.")
     }
 
-    //TODO: start/endNode can only be nodes/nodeTraits
   }
 
   "not allowed class/object/trait" >> {

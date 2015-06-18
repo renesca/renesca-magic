@@ -81,6 +81,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "trait", relationTraitPatterns)
+        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Group", "trait", groupPatterns)
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
       nodeTraits.foreach(nodeTrait =>
@@ -90,6 +91,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Group", "trait", groupPatterns)
         RelationTrait(relationTraitPattern,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
@@ -101,6 +103,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
+        abortIfInheritsFrom("Node", "class", rawNodePattern, "Group", "trait", groupPatterns)
 
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
         import nodePattern._
@@ -147,6 +150,9 @@ trait Generators extends Context with Patterns {
         )
       }
       val hyperRelations = hyperRelationPatterns.map { hyperRelationPattern =>
+        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Group", "trait", groupPatterns)
         if(groupPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
         if(relationPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
@@ -165,6 +171,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Relation", "class", relationPattern, "Group", "trait", groupPatterns)
         if(groupPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
         if(relationPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
