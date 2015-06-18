@@ -138,6 +138,7 @@ class ErrorSpec extends CodeComparisonSpec {
       generatedAborts(q"object A {@HyperRelation class R}",
         "HyperRelation class `R` needs startNode and endNode.")
     }
+    //TODO: start/endNode can only be nodes/nodeTraits
   }
 
   "not allowed class/object/trait" >> {
@@ -167,4 +168,6 @@ class ErrorSpec extends CodeComparisonSpec {
     }
 
   }
+
+  //TODO: generics are not allowed
 }

@@ -190,7 +190,13 @@ trait Generators extends Context with Patterns {
     //        testNode
     //      ), testNode).map(_.toString).toSet,
     //      List(q"def titlex:String", q"def title:String", q"def titley:String").map(_.toString).toSet)
-    def nameToPattern[P <: NamePattern](patterns: List[P], name: String): P = patterns.find(_.name == name).get
+    def nameToPattern[P <: NamePattern](patterns: List[P], name: String): P = {
+      val found = patterns.find(_.name == name)
+      if(found.isEmpty)
+        abort(s"Cannot find `$name` in `${ patterns.map(_.name).mkString(", ") }`.")
+      else
+        found.get
+    }
     def neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val sources = (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern)).map(_.name)
       relations.filter(sources contains _.startNode).flatMap { r =>
