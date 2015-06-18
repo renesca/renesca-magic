@@ -13,7 +13,10 @@ class Aborter(context: whitebox.Context) {
 trait Context {
   val context: whitebox.Context
   val aborter: Aborter
-  def abort(msg: String): Nothing = { aborter.abort(msg); throw new RuntimeException("this should never happen") }
+  def abort(msg: String): Nothing = {
+    aborter.abort(msg)
+    throw new RuntimeException("This should never happen. It only forces the return of Nothing.")
+  }
 }
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")

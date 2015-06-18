@@ -146,18 +146,31 @@ trait Generators extends Context with Patterns {
               relationPatterns, hyperRelationPatterns))
         )
       }
-      val hyperRelations = hyperRelationPatterns.map(hyperRelationPattern =>
+      val hyperRelations = hyperRelationPatterns.map { hyperRelationPattern =>
+        if(groupPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(relationPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+        if(groupPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(relationPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+
         HyperRelation(
           pattern = hyperRelationPattern,
           superNodeTypes = filterSuperTypes(nodeTraitPatterns, hyperRelationPattern),
           superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
-      )
+      }
       val relations = relationPatterns.map { relationPattern =>
         abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "trait", nodeTraitPatterns)
+        if(groupPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(relationPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+        if(groupPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(relationPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
 
         Relation(
           pattern = relationPattern,

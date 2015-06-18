@@ -100,6 +100,8 @@ class ErrorSpec extends CodeComparisonSpec {
           }
         }
       }
+      //TODO: HyperRelation inherits
+      //TODO: no inheritance from Group
     }
     "Group" >> {
       "trait" >> {
@@ -138,6 +140,36 @@ class ErrorSpec extends CodeComparisonSpec {
       generatedAborts(q"object A {@HyperRelation class R}",
         "HyperRelation class `R` needs startNode and endNode.")
     }
+
+    "Relation only allows nodes,node traits and hyperRelations" >> {
+      generatedAborts(q"object A {@Relation class A(startNode:X, endNode:Y); @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+      generatedAborts(q"object A {@Relation trait A; @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      generatedAborts(q"object A {@Group trait A; @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Group.")
+      generatedAborts(q"object A {@Relation class B(startNode:X, endNode:Y); @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+      generatedAborts(q"object A {@Relation trait B; @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      generatedAborts(q"object A {@Group trait B; @Relation class R(startNode:A, endNode:B)}",
+        "Relation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Group.")
+    }
+    "HyperRelation only allows nodes,node traits and hyperRelations" >> {
+      generatedAborts(q"object A {@Relation class A(startNode:X, endNode:Y); @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+      generatedAborts(q"object A {@Relation trait A; @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      generatedAborts(q"object A {@Group trait A; @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs startNode `A` to be a Node, Node trait, or HyperRelation. Not a Group.")
+      generatedAborts(q"object A {@Relation class B(startNode:X, endNode:Y); @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+      generatedAborts(q"object A {@Relation trait B; @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      generatedAborts(q"object A {@Group trait B; @HyperRelation class R(startNode:A, endNode:B)}",
+        "HyperRelation class `R` needs endNode `B` to be a Node, Node trait, or HyperRelation. Not a Group.")
+    }
+
     //TODO: start/endNode can only be nodes/nodeTraits
   }
 
