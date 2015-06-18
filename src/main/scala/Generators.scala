@@ -105,10 +105,11 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Group", "trait", groupPatterns)
 
-        val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes.filter(nodeTraits.map(_.name) contains _))
+        val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes intersect nodeTraits.map(_.name))
         import nodePattern._
         Node(nodePattern,
           superTypes = nodePattern.superTypes,
+          flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name) intersect (nodePattern.name :: nodeTraits.map(_.name)),
           externalSuperTypes = rawNodePattern.superTypes.filterNot(nodeTraits.map(_.name) contains _),
           neighbours = neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
           rev_neighbours = rev_neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
@@ -163,6 +164,7 @@ trait Generators extends Context with Patterns {
         HyperRelation(
           pattern = hyperRelationPattern,
           superNodeTypes = filterSuperTypes(nodeTraitPatterns, hyperRelationPattern),
+          flatSuperNodeTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) intersect (hyperRelationPattern.name :: nodeTraits.map(_.name)),
           superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
@@ -404,6 +406,7 @@ trait Generators extends Context with Patterns {
 
   case class NodeTrait(
                         pattern: NodeTraitPattern,
+                        flatSuperTypesWithSelf: List[String], // only self and nodeTraits without external traits
                         subNodes: List[String],
                         subRelations: List[String],
                         subHyperRelations: List[String],
@@ -432,11 +435,12 @@ trait Generators extends Context with Patterns {
                relationPatterns: List[RelationPattern],
                hyperRelationPatterns: List[HyperRelationPattern]
                ) = {
-      import Schema.{childNodesOfNodeTrait, nodeNamesToRelations, nodeTraitToCommonHyperNodeTraits, flatSuperStatements, traitCanHaveOwnFactory}
+      import Schema.{childNodesOfNodeTrait, nodeNamesToRelations, nodeTraitToCommonHyperNodeTraits, flatSuperStatements, traitCanHaveOwnFactory, patternToFlatSuperTypesWithSelf}
       val childNodes = childNodesOfNodeTrait(nodeTraitPatterns, selectedNodePatterns ::: selectedHyperRelationPatterns, nodeTraitPattern)
       val childTraits = childNodesOfNodeTrait(nodeTraitPatterns, nodeTraitPatterns, nodeTraitPattern)
       new NodeTrait(
         nodeTraitPattern,
+        flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodeTraitPattern).map(_.name) intersect nodeTraitPatterns.map(_.name),
         subNodes = childNodes,
         subRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns ::: relationPatterns).map(_.name),
         subHyperRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns).map(_.name),
@@ -461,6 +465,7 @@ trait Generators extends Context with Patterns {
   case class Node(
                    pattern: NodePattern,
                    override val superTypes: List[String], // only nodeTraits
+                   flatSuperTypesWithSelf: List[String], // only self and nodeTraits without external traits
                    externalSuperTypes: List[String],
                    neighbours: List[(String, String, String)], // accessorName, relation, endNode
                    rev_neighbours: List[(String, String, String)], // accessorName, relation, startNode
@@ -489,6 +494,7 @@ trait Generators extends Context with Patterns {
   case class HyperRelation(
                             pattern: HyperRelationPattern,
                             superNodeTypes: List[String],
+                            flatSuperNodeTypesWithSelf: List[String], // only self and nodeTraits without external traits
                             superRelationTypes: List[String],
                             flatSuperStatements: List[Tree],
                             traitFactoryParameterList: List[ParameterList]

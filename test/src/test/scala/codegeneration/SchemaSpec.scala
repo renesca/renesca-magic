@@ -20,10 +20,10 @@ class SchemaSpec extends CodeComparisonSpec {
        val nodeLabelToFactory = Map[raw.Label,NodeFactory[_ <: Node]]()
 
        trait RootNodeTraitFactory[NODE <: Node] {
-         def wrap(node: raw.Node) = {
-           val factory = nodeLabelToFactory(node.labels.head).asInstanceOf[NodeFactory[NODE]]
-           factory.wrap(node)
-         }
+         val label:raw.Label
+         val labels:Set[raw.Label]
+         lazy val factory = nodeLabelToFactory(label).asInstanceOf[NodeFactory[NODE]];
+         def wrap(node: raw.Node) = factory.wrap(node)
        }
       } """)
 

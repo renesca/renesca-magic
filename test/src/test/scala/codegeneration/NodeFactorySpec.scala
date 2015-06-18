@@ -10,10 +10,11 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node class N}",
       q"""object N extends NodeFactory[N] {
-              def wrap(node: raw.Node) = new N(node);
               val label = raw.Label("N");
+              val labels = Set(raw.Label("N"));
+              def wrap(node: raw.Node) = new N(node);
               def local(): N = {
-                val node = wrap(raw.Node.local(List(label)));
+                val node = wrap(raw.Node.local(labels));
                 node
               }
             }"""
@@ -23,6 +24,17 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
       """object N extends TFactory[N] {""",
+      q"""val label = raw.Label("N")""",
+      q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
+      q"""def localT(): N = local()"""
+    )
+  }
+  "with super factory with external superType" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T; @Node class N extends T with E}",
+      """object N extends TFactory[N] {""",
+      q"""val label = raw.Label("N")""",
+      q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
       q"""def localT(): N = local()"""
     )
   }
@@ -30,6 +42,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
       """object N extends TFactory[N] with SFactory[N] {""",
+      q"""val label = raw.Label("N")""",
+      q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
       q"""def localT(): N = local()""",
       q"""def localS(): N = local()"""
     )
@@ -38,6 +52,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S extends T; @Node class N extends S}",
       """object N extends SFactory[N] {""",
+      q"""val label = raw.Label("N")""",
+      q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
       q"""def localS(): N = local()"""
     )
   }
@@ -45,7 +61,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node class N {val p:String; var x:Int}}",
       q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(List(label)));
+            val node = wrap(raw.Node.local(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
@@ -69,7 +85,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node class N extends T}",
       q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(List(label)));
+            val node = wrap(raw.Node.local(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
@@ -81,7 +97,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node class N extends T with S}",
       q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(List(label)));
+            val node = wrap(raw.Node.local(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node

@@ -3,7 +3,7 @@ package codegeneration
 import helpers.CodeComparisonSpec
 
 class HyperRelationFactorySpec extends CodeComparisonSpec {
-   
+
 
   import contextMock.universe._
 
@@ -12,9 +12,10 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
       // TODO: fail with compile error when start or endNode does not exist
       q"object A {@HyperRelation class R(startNode:A, endNode:B)}",
       q"""object R extends HyperRelationFactory[A, AToR, R, RToB, B] {
-            override def label = raw.Label("R");
-            override def startRelationType = raw.RelationType("ATOR");
-            override def endRelationType = raw.RelationType("RTOB");
+            override val label = raw.Label("R");
+            override val labels = Set(raw.Label("R"))
+            override val startRelationType = raw.RelationType("ATOR");
+            override val endRelationType = raw.RelationType("RTOB");
             override def wrap(node: raw.Node) = new R(node);
             override def wrap(startRelation: raw.Relation, middleNode: raw.Node, endRelation: raw.Relation) = {
               val hyperRelation = wrap(middleNode);
@@ -23,7 +24,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
               hyperRelation
             };
             def local(startNode: A, endNode: B): R = {
-              val middleNode = raw.Node.local(List(label));
+              val middleNode = raw.Node.local(labels);
               wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
             }
           } """
@@ -48,7 +49,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@HyperRelation class R(startNode:A, endNode:B) {val p:String; var x:Int}}",
       q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(List(label));
+            val middleNode = raw.Node.local(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
@@ -60,7 +61,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @HyperRelation class R(startNode:A, endNode:B) extends T}",
       q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(List(label));
+            val middleNode = raw.Node.local(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
@@ -72,7 +73,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @HyperRelation class R(startNode:A, endNode:B) extends X}",
       q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(List(label));
+            val middleNode = raw.Node.local(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))

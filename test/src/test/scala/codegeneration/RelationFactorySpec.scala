@@ -3,7 +3,7 @@ package codegeneration
 import helpers.CodeComparisonSpec
 
 class RelationFactorySpec extends CodeComparisonSpec {
-   
+
 
   import contextMock.universe._
 
@@ -12,7 +12,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
       // TODO: fail with compile error when start or endNode does not exist
       q"object A {@Relation class R(startNode:A, endNode:B)}",
       q"""object R extends RelationFactory[A, R, B] with AbstractRelationFactory[A, R, B] {
-            def relationType = raw.RelationType("R");
+            val relationType = raw.RelationType("R");
             def wrap(relation: raw.Relation) = R(A.wrap(relation.startNode), relation, B.wrap(relation.endNode));
             def local(startNode: A, endNode: B): R = {
               val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node));
@@ -67,8 +67,8 @@ class RelationFactorySpec extends CodeComparisonSpec {
   "with inherited properties from two traits" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String}; @Relation trait S {var x:Int}; @Relation class R(startNode:A, endNode:B) extends T with S}",
-      Not(""" def localT(startNode: A, endNode: B, p: String"""),
-      Not(""" def localS(startNode: A, endNode: B, p: String""")
+      Not( """ def localT(startNode: A, endNode: B, p: String"""),
+      Not( """ def localS(startNode: A, endNode: B, p: String""")
     )
   }
   "with indirectly inherited properties" >> {
@@ -82,7 +82,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
       q""" def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)""",
-      Not(""" def localT(startNode: A, endNode: B, p: String""")
+      Not( """ def localT(startNode: A, endNode: B, p: String""")
     )
   }
 }
