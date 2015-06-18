@@ -103,6 +103,8 @@ trait Patterns extends Context with PatternTraits {
     def unapply(tree: Tree): Option[RelationPattern] = condOpt(tree) {
       case q"""@Relation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
         RelationPattern(name, startNode, endNode, superTypes, statements)
+      case q"""@Relation class $name extends ..$superTypes {..$statements}"""                                          =>
+        abort(s"Relation class `$name` needs startNode and endNode.")
     }
   }
 
@@ -112,6 +114,8 @@ trait Patterns extends Context with PatternTraits {
     def unapply(tree: Tree): Option[HyperRelationPattern] = condOpt(tree) {
       case q"""@HyperRelation class $name (startNode:$startNode, endNode:$endNode) extends ..$superTypes {..$statements}""" =>
         HyperRelationPattern(name, startNode, endNode, superTypes, statements)
+      case q"""@HyperRelation class $name extends ..$superTypes {..$statements}"""                                          =>
+        abort(s"HyperRelation class `$name` needs startNode and endNode.")
     }
   }
 

@@ -128,7 +128,19 @@ class ErrorSpec extends CodeComparisonSpec {
       }
     }
   }
+
+  "needs startNode and endNode" >> {
+    "Relation" >> {
+      generatedAborts(q"object A {@Relation class R}",
+        "Relation class `R` needs startNode and endNode.")
+    }
+    "HyperRelation" >> {
+      generatedAborts(q"object A {@HyperRelation class R}",
+        "HyperRelation class `R` needs startNode and endNode.")
+    }
+  }
+
   //TODO: nonexistant
-  //TODO: @Relation class without start/end
+  //TODO: @Relation class without start/end, hyerrel trait, group class
 
 }
