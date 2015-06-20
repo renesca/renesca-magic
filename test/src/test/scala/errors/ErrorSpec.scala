@@ -63,6 +63,7 @@ class ErrorSpec extends CodeComparisonSpec {
             generatedAborts(q"object A {@Group trait T; @Node trait N extends T}",
               "Node trait `N` cannot inherit from Group trait `T`.")
           }
+          "Itself" >> todo
         }
       }
     }
@@ -114,6 +115,7 @@ class ErrorSpec extends CodeComparisonSpec {
             generatedAborts(q"object A {@Group trait T; @Relation trait N extends T}",
               "Relation trait `N` cannot inherit from Group trait `T`.")
           }
+          "Itself" >> todo
         }
       }
     }

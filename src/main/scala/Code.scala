@@ -355,10 +355,10 @@ trait Code extends Context with Generators {
              val nodeLabelToFactory = ${ nodeLabelToFactoryMap(schema) }
 
              trait RootNodeTraitFactory[NODE <: Node] {
-               val label:raw.Label
-               val labels:Set[raw.Label]
-               lazy val factory = nodeLabelToFactory(label).asInstanceOf[NodeFactory[NODE]];
-               def wrap(node: raw.Node) = factory.wrap(node)
+               val nodeLabels:Set[raw.Label] = Set(..${schema.nodes.map(_.name_label) ::: schema.hyperRelations.map(_.name_label)})
+               def nodeLabel(node:raw.Node):raw.Label = (nodeLabels intersect node.labels).head
+               def factory(node:raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
+               def wrap(node: raw.Node) = factory(node).wrap(node)
              }
 
              ..${ nodeTraitFactories(schema) }
