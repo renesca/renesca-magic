@@ -1,7 +1,7 @@
 package helpers
 
 import org.specs2.mutable.Specification
-import renesca.schema.macros.{Code, Generators, Patterns, Aborter}
+import renesca.schema.macros.{Code, Generators, Patterns, Aborter, Warner}
 
 
 trait CodeComparisonSpec extends Specification with ContextMock {
@@ -17,6 +17,8 @@ trait CodeComparisonSpec extends Specification with ContextMock {
     val context: contextMock.type = contextMock
     val aborter = mock[Aborter].smart
     aborter.abort(anyString) answers { msg => throw new RuntimeException(msg.toString) }
+    val warner = mock[Warner].smart
+    warner.warning(anyString) answers { msg => throw new RuntimeException(msg.toString) }
   }
 
   import contextMock.universe._

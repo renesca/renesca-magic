@@ -10,11 +10,22 @@ class Aborter(context: whitebox.Context) {
   }
 }
 
+class Warner(context: whitebox.Context) {
+  def warning(msg: String) {
+    context.warning(context.universe.NoPosition, msg)
+  }
+}
+
 trait Context {
   val context: whitebox.Context
   val aborter: Aborter
   def abort(msg: String): Nothing = {
     aborter.abort(msg)
+    throw new RuntimeException("This should never happen. It only forces the return of Nothing.")
+  }
+  val warner: Warner
+  def warning(msg: String): Nothing = {
+    warner.warning(msg)
     throw new RuntimeException("This should never happen. It only forces the return of Nothing.")
   }
 }
@@ -34,6 +45,7 @@ object GraphSchemaMacro {
     val env = new Patterns with Generators with Code {
       val context: c.type = c
       val aborter = new Aborter(c)
+      val warner = new Warner(c)
     }
     import env._
 
