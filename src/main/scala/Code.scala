@@ -316,7 +316,7 @@ trait Code extends Context with Generators {
              ..$abstractRelationTraitSets
              ..$hyperRelationTraitSets
 
-             def nodes: Set[Node] = ${ allOf(nodesWithHyperNodes) }
+             def nodes: Set[Node] = ${ allOf(nodes) }
              def relations: Set[_ <: Relation[_,_]] = ${ allOf(relations) }
              def abstractRelations: Set[_ <: AbstractRelation[_,_]] = ${ allOf(relationsWithHyperRelations) }
              def hyperRelations: Set[_ <: HyperRelation[_,_,_,_,_]] = ${ allOf(hyperRelations) }

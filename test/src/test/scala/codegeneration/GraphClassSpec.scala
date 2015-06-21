@@ -43,6 +43,51 @@ class GraphClassSpec extends CodeComparisonSpec {
       """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
     )
   }
+  "with nodes inserted by traits" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N
+            @Node trait T
+            @Node class M extends T
+            @Node class O extends T
+            @Graph trait G {Nodes(N,T)}
+          }""",
+      q"""def nodes: Set[Node] = Set.empty.++(ns).++(ms).++(os)"""
+    )
+  }
+  "with relations inserted by inherited traits" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node trait T
+            @Node trait S
+            @Node class N extends T
+            @Node class M extends S
+            @Relation class R1(startNode:N, endNode:M)
+            @Relation class R2(startNode:T, endNode:S)
+            @Relation class R3(startNode:N, endNode:S)
+            @Graph trait G {Nodes(T,S)}
+          }""",
+      q"""def r1s: Set[R1] = relationsAs(R1);""",
+      q"""def r2s: Set[R2] = relationsAs(R2);""",
+      q"""def r3s: Set[R3] = relationsAs(R3);"""
+    )
+  }
+  "with nodes inserted by inherited traits" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node trait T
+            @Node trait S extends T
+            @Node trait X extends T
+            @Node class M extends S
+            @Node class O extends S
+            @Node class N
+            @Graph trait G {Nodes(N,S)}
+          }""",
+      q"""def ns: Set[N] = nodesAs(N);""",
+      q"""def ms: Set[M] = nodesAs(M);""",
+      q"""def os: Set[O] = nodesAs(O);"""
+    )
+  }
   "with duplicate nodes" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M,N)}; @Node class N; @Node class M}",
@@ -220,7 +265,6 @@ class GraphClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
-  //TODO: diamond, multiple, same from two
   "with relations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
@@ -238,6 +282,31 @@ class GraphClassSpec extends CodeComparisonSpec {
               type _
             })
           }) = Set.empty.++(rs).++(s);"""
+    )
+  }
+  "with relations between chained super trait" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Graph trait G {Nodes(N,M)}
+            @Node class N
+            @Node trait S
+            @Node trait T extends S
+            @Node class M extends T
+            @Relation class R(startNode:N, endNode: S)
+          }""",
+      q"""def rs: Set[R] = relationsAs(R);""",
+      """def relations: (Set[_] forSome { 
+            type _ <: (Relation[_, _] forSome { 
+              type _;
+              type _
+            })
+          }) = Set.empty.++(rs);""",
+      """def abstractRelations: (Set[_] forSome { 
+            type _ <: (AbstractRelation[_, _] forSome { 
+              type _;
+              type _
+            })
+          }) = Set.empty.++(rs);"""
     )
   }
   "with hyperRelations" >> {

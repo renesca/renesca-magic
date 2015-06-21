@@ -135,21 +135,23 @@ trait Generators extends Context with Patterns {
         val notAllowed = graphPattern.nodes.distinct diff (nodePatterns ++ nodeTraitPatterns).map(_.name)
         if( notAllowed.nonEmpty ) abort(s"Graph `${graphPattern.name}` cannot contain ${notAllowed.mkString("`","`, `", "`")}. Only Node classes and traits are allowed.")
 
-        val graphedElements = graphToNodes(graphPatterns, graphPattern).distinct
-        val graphedTraits = graphedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
+        val traits = graphToNodes(graphPatterns, graphPattern).distinct intersect nodeTraits.map(_.name)
+        val expandedTraits = traits.flatMap(t => patternToFlatSubTypesWithoutSelf(nodeTraitPatterns ::: nodePatterns,nameToPattern(nodeTraitPatterns, t))).map(_.name)
+        val nodes = (graphToNodes(graphPatterns, graphPattern) ++ expandedTraits).distinct diff nodeTraits.map(_.name)
+        val graphedTraits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
           .intersect(nodeTraitPatterns.map(_.name))
           .map(nameToPattern(nodeTraitPatterns, _))
         Graph(graphPattern,
-          nodes = graphedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
-          nodesWithHyperNodes = graphedElements,
-          relations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, graphPattern),
-          relationsWithHyperRelations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, graphPattern),
-          hyperRelations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, graphPattern),
+          nodes = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
+          nodesWithHyperNodes = nodes,
+          relations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, relationPatterns),
+          relationsWithHyperRelations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, allRelationPatterns),
+          hyperRelations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, hyperRelationPatterns),
           nodeTraits = graphedTraits.map(nodeTraitPattern =>
             NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
-              selectedNodePatterns = graphedElements.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
-              selectedHyperRelationPatterns = (nodeNamesToRelations(graphedElements, hyperRelationPatterns) ::: graphedElements.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
+              selectedNodePatterns = nodes.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
+              selectedHyperRelationPatterns = (nodeNamesToRelations(nodes, hyperRelationPatterns) ::: nodes.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
               relationPatterns, hyperRelationPatterns))
         )
       }
@@ -281,13 +283,16 @@ trait Generators extends Context with Patterns {
       pattern :: patternToFlatSuperTypesWithoutSelf(patterns, pattern)
     }
     def patternToSubTypes[P <: NamePattern with SuperTypesPattern](patterns: List[P], pattern: P): List[P] = patterns.filter(_.superTypes.contains(pattern.name))
-    def patternToFlatSubTypes[P <: NamePattern with SuperTypesPattern, SUB <: P](patterns: List[SUB], pattern: P): List[SUB] = {
+    def patternToFlatSubTypesWithoutSelf[P <: NamePattern with SuperTypesPattern, SUB <: P](patterns: List[SUB], pattern: P): List[SUB] = {
       patterns.filter { subPattern => isDeepSuperType(patterns, subPattern, pattern) }
+    }
+    def patternToFlatSubTypesWithSelf[P <: NamePattern with SuperTypesPattern, SUB <: P](patterns: List[SUB], pattern: P): List[P] = {
+      pattern :: patternToFlatSubTypesWithoutSelf(patterns, pattern)
     }
 
     // TODO: check usages if other callers also need intermediate traits
     def childNodesOfNodeTrait(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
-      (nodeTrait :: patternToFlatSubTypes(nodeTraits, nodeTrait)).flatMap { subTrait =>
+      (patternToFlatSubTypesWithSelf(nodeTraits, nodeTrait)).flatMap { subTrait =>
         nodePatterns.filter(_.superTypes contains subTrait.name)
       }.distinct.map(_.name)
     }
@@ -305,7 +310,7 @@ trait Generators extends Context with Patterns {
     //    ), List("nodeC", "nodeD"))
 
     def childNodesOfNodeTraitsWithTraits(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
-      (nodeTrait :: patternToFlatSubTypes(nodeTraits, nodeTrait)).flatMap { subTrait =>
+      (nodeTrait :: patternToFlatSubTypesWithoutSelf(nodeTraits, nodeTrait)).flatMap { subTrait =>
         subTrait :: nodePatterns.filter(_.superTypes contains subTrait.name)
       }.distinct.map(_.name)
     }
@@ -352,14 +357,13 @@ trait Generators extends Context with Patterns {
     //      GraphPattern("graphB", List("graphA"), List("nodeC", "nodeD"))
     //    ), GraphPattern("graphA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
 
-    def graphToRelations(graphPatterns: List[GraphPattern], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern], graphPattern: GraphPattern): List[String] = {
-      val nodes = graphToNodes(graphPatterns, graphPattern)
-      val traits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).flatMap(_.superTypes).distinct
+    def inducedRelations(nodes:List[String], nodePatterns: List[NodePattern], nodeTraitPatterns:List[NodeTraitPattern],  hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern]): List[String] = {
+      val traits = nodes.map(nameToPattern(nodePatterns, _)).flatMap(patternToFlatSuperTypesWithSelf(nodeTraitPatterns, _)).distinct.map(_.name)
       nodeNamesToRelations(nodes ::: traits ::: hyperRelationPatterns.map(_.name), relations).map(_.name)
     }
 
     def traitCanHaveOwnFactory(hierarchyPatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], currentTrait: NamePattern with SuperTypesPattern): Boolean = {
-      val children = patternToFlatSubTypes(hierarchyPatterns, currentTrait)
+      val children = patternToFlatSubTypesWithoutSelf(hierarchyPatterns, currentTrait)
       val childrenWithFlatParents = children.flatMap(patternToFlatSuperTypesWithSelf(hierarchyPatterns, _)).distinct
       val subWithoutSuper = childrenWithFlatParents diff patternToFlatSuperTypesWithSelf(hierarchyPatterns, currentTrait)
       // if we currently are at NodeTrait, we need to check whether one of its
