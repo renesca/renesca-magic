@@ -43,6 +43,184 @@ class GraphClassSpec extends CodeComparisonSpec {
       """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
     )
   }
+  "with duplicate nodes" >> {
+    generatedContainsCode(
+      q"object A {@Graph trait G {Nodes(N,M,N)}; @Node class N; @Node class M}",
+      q"""def ns: Set[N] = nodesAs(N);""",
+      q"""def ms: Set[M] = nodesAs(M);""",
+      """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
+    )
+  }
+  "with inherited nodes" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N; @Node class M; @Node class O
+            @Graph trait T{Nodes(O)}
+            @Graph trait G extends T {Nodes(N,M)}
+          }""",
+      q"""case class T(graph: raw.Graph) extends Graph {
+            def os: Set[O] = nodesAs(O);
+            def nodes: Set[Node] = Set.empty.++(os);
+            def relations: (Set[_$$18] forSome { 
+              type _$$18 <: (Relation[_$$26, _$$24] forSome { 
+                type _$$26;
+                type _$$24
+              })
+            }) = Set.empty;
+            def abstractRelations: (Set[_$$22] forSome { 
+              type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
+                type _$$25;
+                type _$$23
+              })
+            }) = Set.empty;
+            def hyperRelations: (Set[_$$21] forSome { 
+              type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
+                type _$$20;
+                type _$$16;
+                type _$$15;
+                type _$$19;
+                type _$$17
+              })
+            }) = Set.empty
+          };""",
+      q"""case class G(graph: raw.Graph) extends Graph {
+            def ns: Set[N] = nodesAs(N);
+            def ms: Set[M] = nodesAs(M);
+            def os: Set[O] = nodesAs(O);
+            def nodes: Set[Node] = Set.empty.++(ns).++(ms).++(os);
+            def relations: (Set[_$$18] forSome { 
+              type _$$18 <: (Relation[_$$26, _$$24] forSome { 
+                type _$$26;
+                type _$$24
+              })
+            }) = Set.empty;
+            def abstractRelations: (Set[_$$22] forSome { 
+              type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
+                type _$$25;
+                type _$$23
+              })
+            }) = Set.empty;
+            def hyperRelations: (Set[_$$21] forSome { 
+              type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
+                type _$$20;
+                type _$$16;
+                type _$$15;
+                type _$$19;
+                type _$$17
+              })
+            }) = Set.empty
+          }"""
+    )
+  }
+  "with inherited nodes from two graphs" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N; @Node class M; @Node class O
+            @Graph trait T{Nodes(O)}
+            @Graph trait S{Nodes(M)}
+            @Graph trait G extends T with S {Nodes(N)}
+          }""",
+      q"""case class G(graph: raw.Graph) extends Graph {
+            def ns: Set[N] = nodesAs(N);
+            def os: Set[O] = nodesAs(O);
+            def ms: Set[M] = nodesAs(M);
+            def nodes: Set[Node] = Set.empty.++(ns).++(os).++(ms);
+            def relations: (Set[_$$18] forSome { 
+              type _$$18 <: (Relation[_$$26, _$$24] forSome { 
+                type _$$26;
+                type _$$24
+              })
+            }) = Set.empty;
+            def abstractRelations: (Set[_$$22] forSome { 
+              type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
+                type _$$25;
+                type _$$23
+              })
+            }) = Set.empty;
+            def hyperRelations: (Set[_$$21] forSome { 
+              type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
+                type _$$20;
+                type _$$16;
+                type _$$15;
+                type _$$19;
+                type _$$17
+              })
+            }) = Set.empty
+          }"""
+    )
+  }
+  "with same inherited node from two graphs" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N
+            @Graph trait T{Nodes(N)}
+            @Graph trait S{Nodes(N)}
+            @Graph trait G extends T with S {Nodes()}
+          }""",
+      q"""case class G(graph: raw.Graph) extends Graph {
+            def ns: Set[N] = nodesAs(N);
+            def nodes: Set[Node] = Set.empty.++(ns);
+            def relations: (Set[_$$18] forSome { 
+              type _$$18 <: (Relation[_$$26, _$$24] forSome { 
+                type _$$26;
+                type _$$24
+              })
+            }) = Set.empty;
+            def abstractRelations: (Set[_$$22] forSome { 
+              type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
+                type _$$25;
+                type _$$23
+              })
+            }) = Set.empty;
+            def hyperRelations: (Set[_$$21] forSome { 
+              type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
+                type _$$20;
+                type _$$16;
+                type _$$15;
+                type _$$19;
+                type _$$17
+              })
+            }) = Set.empty
+          }"""
+    )
+  }
+  "with same inherited node from diamond inheritance" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node class N
+            @Graph trait A{Nodes(N)}
+            @Graph trait T extends A
+            @Graph trait S extends A
+            @Graph trait G extends T with S
+          }""",
+      q"""case class G(graph: raw.Graph) extends Graph {
+            def ns: Set[N] = nodesAs(N);
+            def nodes: Set[Node] = Set.empty.++(ns);
+            def relations: (Set[_$$18] forSome { 
+              type _$$18 <: (Relation[_$$26, _$$24] forSome { 
+                type _$$26;
+                type _$$24
+              })
+            }) = Set.empty;
+            def abstractRelations: (Set[_$$22] forSome { 
+              type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
+                type _$$25;
+                type _$$23
+              })
+            }) = Set.empty;
+            def hyperRelations: (Set[_$$21] forSome { 
+              type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
+                type _$$20;
+                type _$$16;
+                type _$$15;
+                type _$$19;
+                type _$$17
+              })
+            }) = Set.empty
+          }"""
+    )
+  }
+  //TODO: diamond, multiple, same from two
   "with relations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
@@ -240,7 +418,4 @@ class GraphClassSpec extends CodeComparisonSpec {
         }) with X] = Set.empty.++(rs).++(r2s).++(r3s);"""
     )
   }
-
-  // TODO: Should hyperRelations be listed in Graphs?
-
 }

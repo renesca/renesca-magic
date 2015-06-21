@@ -132,12 +132,10 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "trait", nodeTraitPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "trait", relationTraitPatterns)
-        for(node <- graphPattern.nodes; relation <- relationPatterns.map(_.name) if node == relation) abort(s"Graph `${graphPattern.name}` cannot contain Relation class `$relation`. Only Node classes and traits are allowed.")
-        for(node <- graphPattern.nodes; relationTrait <- relationTraitPatterns.map(_.name) if node == relationTrait) abort(s"Graph `${graphPattern.name}` cannot contain Relation trait `$relationTrait`. Only Node classes and traits are allowed.")
-        for(node <- graphPattern.nodes; hyperRelation <- hyperRelationPatterns.map(_.name) if node == hyperRelation) abort(s"Graph `${graphPattern.name}` cannot contain HyperRelation class `$hyperRelation`. Only Node classes and traits are allowed.")
-        for(node <- graphPattern.nodes; graph <- graphPatterns.map(_.name) if node == graph) abort(s"Graph `${graphPattern.name}` cannot contain Graph trait `$graph`. Only Node classes and traits are allowed.")
+        val notAllowed = graphPattern.nodes.distinct diff (nodePatterns ++ nodeTraitPatterns).map(_.name)
+        if( notAllowed.nonEmpty ) abort(s"Graph `${graphPattern.name}` cannot contain ${notAllowed.mkString("`","`, `", "`")}. Only Node classes and traits are allowed.")
 
-        val graphedElements = graphToNodes(graphPatterns, graphPattern)
+        val graphedElements = graphToNodes(graphPatterns, graphPattern).distinct
         val graphedTraits = graphedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
           .intersect(nodeTraitPatterns.map(_.name))
@@ -347,7 +345,7 @@ trait Generators extends Context with Patterns {
     //    ).toSet, List("traitB", "traitC").toSet)
 
     def graphToNodes(graphPatterns: List[GraphPattern], graphPattern: GraphPattern): List[String] = {
-      (graphPattern :: patternToFlatSubTypes(graphPatterns, graphPattern)).flatMap(_.nodes)
+      patternToFlatSuperTypesWithSelf(graphPatterns, graphPattern).flatMap(_.nodes).distinct
     }
     //    assertX(graphToNodes(List(
     //      GraphPattern("graphA", Nil, List("nodeA", "nodeB")),
