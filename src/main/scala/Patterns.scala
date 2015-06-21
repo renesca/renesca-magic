@@ -50,7 +50,7 @@ trait Patterns extends Context with PatternTraits {
     //TODO: statements
     //TODO: extract modifier pattern
     def unapply(tree: Tree): Option[GraphPattern] = condOpt(tree) {
-      case q""" $mods trait $name extends ..$superTypes { List(..$graphNodes) }""" if mods.annotations.collectFirst {
+      case q""" $mods trait $name extends ..$superTypes { Nodes(..$graphNodes) }""" if mods.annotations.collectFirst {
         case Apply(Select(New(Ident(TypeName("Graph"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
       }.get => GraphPattern(name, superTypes, graphNodes)
