@@ -232,7 +232,17 @@ class ErrorSpec extends CodeComparisonSpec {
       generatedAborts(q"object A {@HyperRelation trait R}",
         "HyperRelation trait `R` is not allowed. Use a class instead.")
     }
+  }
 
+  "Graphs can only be induced on Nodes" >> {
+    generatedAborts(q"object A {@Graph trait G{Nodes(R)}; @Relation class R(startNode:A, endNode:B)}",
+        "Graph `G` cannot contain Relation class `R`. Only Node classes and traits are allowed.")
+    generatedAborts(q"object A {@Graph trait G{Nodes(R)}; @Relation trait R}",
+        "Graph `G` cannot contain Relation trait `R`. Only Node classes and traits are allowed.")
+    generatedAborts(q"object A {@Graph trait G{Nodes(R)}; @HyperRelation class R(startNode:A, endNode:B)}",
+        "Graph `G` cannot contain HyperRelation class `R`. Only Node classes and traits are allowed.")
+    generatedAborts(q"object A {@Graph trait G{Nodes(H)}; @Graph trait H}",
+        "Graph `G` cannot contain Graph trait `H`. Only Node classes and traits are allowed.")
   }
 
   //TODO: generics are not allowed
