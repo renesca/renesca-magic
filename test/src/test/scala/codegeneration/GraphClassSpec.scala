@@ -2,13 +2,13 @@ package codegeneration
 
 import helpers.CodeComparisonSpec
 
-class GroupClassSpec extends CodeComparisonSpec {
+class GraphClassSpec extends CodeComparisonSpec {
 
   import contextMock.universe._
 
   "simple class" >> {
     generatedContainsCode(
-      q"object A {@Group trait G}",
+      q"object A {@Graph trait G}",
       q"""case class G(graph: raw.Graph) extends Graph {
             def nodes: Set[Node] = Set.empty;
             def relations: (Set[_$$18] forSome { 
@@ -37,7 +37,7 @@ class GroupClassSpec extends CodeComparisonSpec {
   }
   "with nodes" >> {
     generatedContainsCode(
-      q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M}",
+      q"object A {@Graph trait G {List(N,M)}; @Node class N; @Node class M}",
       q"""def ns: Set[N] = nodesAs(N);""",
       q"""def ms: Set[M] = nodesAs(M);""",
       """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
@@ -45,7 +45,7 @@ class GroupClassSpec extends CodeComparisonSpec {
   }
   "with relations" >> {
     generatedContainsCode(
-      q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
+      q"object A {@Graph trait G {List(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
       q"""def rs: Set[R] = relationsAs(R);""",
       q"""def s: Set[S] = relationsAs(S);""",
       """def relations: (Set[_] forSome { 
@@ -64,7 +64,7 @@ class GroupClassSpec extends CodeComparisonSpec {
   }
   "with hyperRelations" >> {
     generatedContainsCode(
-      q"object A {@Group trait G {List(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
+      q"object A {@Graph trait G {List(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
       q"""def rs: Set[R] = hyperRelationsAs(R);""",
       """def hyperRelations: (Set[_] forSome { 
             type _ <: (HyperRelation[_, _, _, _, _] forSome { 
@@ -86,7 +86,7 @@ class GroupClassSpec extends CodeComparisonSpec {
 
   "with node trait and one node" >> {
     generatedContainsCode(
-      q"object A {@Group trait G {List(N)}; @Node trait T; @Node class N extends T;}",
+      q"object A {@Graph trait G {List(N)}; @Node trait T; @Node class N extends T;}",
       """def ts: Set[T] = Set.empty.++(ns);""", // tNodes
       """def tRelations: (Set[_] forSome { 
             type _ <: Relation[T, T]
@@ -112,7 +112,7 @@ class GroupClassSpec extends CodeComparisonSpec {
 
   "with node trait with relations" >> {
     generatedContainsCode(
-      q"""object A {@Group trait G {List(N,M)}; @Node trait T;
+      q"""object A {@Graph trait G {List(N,M)}; @Node trait T;
         @Node class N extends T;
         @Node class M extends T;
         @Relation class R(startNode:N, endNode:M)
@@ -125,9 +125,9 @@ class GroupClassSpec extends CodeComparisonSpec {
           }) = Set.empty.++(rs);"""
     )
   }
-  "list trait relations only if in group and trait" >> {
+  "list trait relations only if in Graph and trait" >> {
     generatedContainsCode(
-      q"""object A {@Group trait G {List(M,N,O,P)};
+      q"""object A {@Graph trait G {List(M,N,O,P)};
         @Node trait T;
         @Node trait S;
         @Node class M extends T;
@@ -148,9 +148,9 @@ class GroupClassSpec extends CodeComparisonSpec {
        }) = Set.empty.++(rs);"""
     )
   }
-  "list trait hyperrelations only if in group and trait" >> {
+  "list trait hyperrelations only if in Graph and trait" >> {
     generatedContainsCode(
-      q"""object A {@Group trait G {List(M,N,O,P)};
+      q"""object A {@Graph trait G {List(M,N,O,P)};
         @Node trait T;
         @Node trait S;
         @Node class M extends T;
@@ -183,7 +183,7 @@ class GroupClassSpec extends CodeComparisonSpec {
   }
   "common hyperRelation traits between nodes of trait" >> {
     generatedContainsCode(
-      q"""object A {@Group trait G {List(M,N,O,P)};
+      q"""object A {@Graph trait G {List(M,N,O,P)};
         @Node trait T;
         @Node class N extends T;
         @Node class M extends T;
@@ -212,7 +212,7 @@ class GroupClassSpec extends CodeComparisonSpec {
   }
   "common hyperRelation traits between nodes of trait (multiple inheritance)" >> {
     generatedContainsCode(
-      q"""object A {@Group trait G {List(M,N,O,P)};
+      q"""object A {@Graph trait G {List(M,N,O,P)};
         @Node trait T;
         @Node class N extends T;
         @Node class M extends T;
@@ -241,6 +241,6 @@ class GroupClassSpec extends CodeComparisonSpec {
     )
   }
 
-  // TODO: Should hyperRelations be listed in Groups?
+  // TODO: Should hyperRelations be listed in Graphs?
 
 }

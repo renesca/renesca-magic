@@ -3,14 +3,14 @@ package codegeneration
 import helpers.CodeComparisonSpec
 
 
-class GroupFactorySpec extends CodeComparisonSpec {
+class GraphFactorySpec extends CodeComparisonSpec {
 
 
   import contextMock.universe._
 
-  "simple group" >> {
+  "simple Graph" >> {
     generatedContainsCode(
-      q"object A {@Group trait G}",
+      q"object A {@Graph trait G}",
       q"""object G { def empty = new G(raw.Graph.empty) }"""
     )
   }

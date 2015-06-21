@@ -269,12 +269,12 @@ trait Code extends Context with Generators {
     q""" trait $name_type[+START <: Node,+END <: Node] extends ..$superTypesWithDefaultGenerics { ..$traitBody } """
   }
 
-  def groupFactories(schema: Schema): List[Tree] = schema.groups.map { group => import group._
+  def graphFactories(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._
     q""" object $name_term {def empty = new $name_type(raw.Graph.empty) } """
   }
 
-  def groupClasses(schema: Schema): List[Tree] = schema.groups.map { group => import group._
-    // TODO: create subgroups
+  def graphClasses(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._
+    // TODO: create subgraphs
 
     def itemSets(nameAs: String, names: List[String]) = names.map { name => q""" def ${ TermName(nameToPlural(name)) }: Set[${ TypeName(name) }] = ${ TermName(nameAs) }(${ TermName(name) }) """ }
     def allOf(items: List[String]) = (q"Set.empty" :: items.map(s => q"${ TermName(nameToPlural(s)) }")).reduce[Tree]((a, b) => q"$a ++ $b")
@@ -338,7 +338,7 @@ trait Code extends Context with Generators {
       HyperRelationPattern.unapply(statement).isDefined ||
       NodeTraitPattern.unapply(statement).isDefined ||
       RelationTraitPattern.unapply(statement).isDefined ||
-      GroupPattern.unapply(statement).isDefined
+      GraphPattern.unapply(statement).isDefined
   }
 
 
@@ -376,8 +376,8 @@ trait Code extends Context with Generators {
              ..${ hyperRelationFactories(schema) }
              ..${ hyperRelationClasses(schema) }
 
-             ..${ groupFactories(schema) }
-             ..${ groupClasses(schema) }
+             ..${ graphFactories(schema) }
+             ..${ graphClasses(schema) }
 
              ..${ otherStatements(schema) }
            }

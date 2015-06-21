@@ -46,33 +46,33 @@ trait Patterns extends Context with PatternTraits {
     }
   }
 
-  object GroupPattern {
+  object GraphPattern {
     //TODO: statements
     //TODO: extract modifier pattern
-    def unapply(tree: Tree): Option[GroupPattern] = condOpt(tree) {
-      case q""" $mods trait $name extends ..$superTypes { List(..$groupNodes) }""" if mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+    def unapply(tree: Tree): Option[GraphPattern] = condOpt(tree) {
+      case q""" $mods trait $name extends ..$superTypes { List(..$graphNodes) }""" if mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(TypeName("Graph"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get => GroupPattern(name, superTypes, groupNodes)
+      }.get => GraphPattern(name, superTypes, graphNodes)
 
       case q""" $mods trait $name extends ..$superTypes""" if mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+        case Apply(Select(New(Ident(TypeName("Graph"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get => GroupPattern(name, superTypes, Nil)
+      }.get => GraphPattern(name, superTypes, Nil)
 
       case q""" $mods class $name extends ..$superTypes { ..$statements }""" if mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+        case Apply(Select(New(Ident(TypeName("Graph"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get => abort(s"Group class `$name` is not allowed. Use a trait instead.")
+      }.get => abort(s"Graph class `$name` is not allowed. Use a trait instead.")
 
       case q""" $mods object $name extends ..$superTypes { ..$statements }""" if mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(TypeName("Group"))), termNames.CONSTRUCTOR), Nil) => true
+        case Apply(Select(New(Ident(TypeName("Graph"))), termNames.CONSTRUCTOR), Nil) => true
         case _                                                                        => false
-      }.get => abort(s"Group object `$name` is not allowed. Use a trait instead.")
+      }.get => abort(s"Graph object `$name` is not allowed. Use a trait instead.")
     }
   }
 
-  case class GroupPattern(name: String, _superTypes: List[String], nodes: List[String]) extends NamePattern with SuperTypesPattern
+  case class GraphPattern(name: String, _superTypes: List[String], nodes: List[String]) extends NamePattern with SuperTypesPattern
 
   object NodeTraitPattern {
     def unapply(tree: Tree): Option[NodeTraitPattern] = condOpt(tree) {

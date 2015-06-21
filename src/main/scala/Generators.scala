@@ -69,7 +69,7 @@ trait Generators extends Context with Patterns {
       val hyperRelationPatterns: List[HyperRelationPattern] = schemaPattern.statements.collect { case HyperRelationPattern(hyperRelationPattern) => hyperRelationPattern }
       val nodeTraitPatterns: List[NodeTraitPattern] = schemaPattern.statements.collect { case NodeTraitPattern(nodeTraitpattern) => nodeTraitpattern }
       val relationTraitPatterns: List[RelationTraitPattern] = schemaPattern.statements.collect { case RelationTraitPattern(nodeTraitpattern) => nodeTraitpattern }
-      val groupPatterns: List[GroupPattern] = schemaPattern.statements.collect { case GroupPattern(groupPattern) => groupPattern }
+      val graphPatterns: List[GraphPattern] = schemaPattern.statements.collect { case GraphPattern(graphPattern) => graphPattern }
       val allRelationPatterns = relationPatterns ::: hyperRelationPatterns
 
       def abortIfInheritsFrom(childItem: String, childType: String, child: NamePattern with SuperTypesPattern, parentItem: String, parentType: String, parents: List[NamePattern]): Unit = {
@@ -81,7 +81,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "trait", relationTraitPatterns)
-        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Group", "trait", groupPatterns)
+        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Graph", "trait", graphPatterns)
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
       nodeTraits.foreach(nodeTrait =>
@@ -91,7 +91,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "trait", nodeTraitPatterns)
-        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Group", "trait", groupPatterns)
+        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Graph", "trait", graphPatterns)
         RelationTrait(relationTraitPattern,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
@@ -103,7 +103,7 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
-        abortIfInheritsFrom("Node", "class", rawNodePattern, "Group", "trait", groupPatterns)
+        abortIfInheritsFrom("Node", "class", rawNodePattern, "Graph", "trait", graphPatterns)
 
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes intersect nodeTraits.map(_.name))
         import nodePattern._
@@ -127,37 +127,37 @@ trait Generators extends Context with Patterns {
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
       }
       }
-      val groups = groupPatterns.map { groupPattern =>
-        abortIfInheritsFrom("Group", "trait", groupPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("Group", "trait", groupPattern, "Node", "trait", nodeTraitPatterns)
-        abortIfInheritsFrom("Group", "trait", groupPattern, "Relation", "class", relationPatterns)
-        abortIfInheritsFrom("Group", "trait", groupPattern, "Relation", "trait", relationTraitPatterns)
-        val groupedElements = groupToNodes(groupPatterns, groupPattern)
-        val groupedTraits = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
+      val graphs = graphPatterns.map { graphPattern =>
+        abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "trait", relationTraitPatterns)
+        val graphedElements = graphToNodes(graphPatterns, graphPattern)
+        val graphedTraits = graphedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
           .intersect(nodeTraitPatterns.map(_.name))
           .map(nameToPattern(nodeTraitPatterns, _))
-        Group(groupPattern,
-          nodes = groupedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
-          nodesWithHyperNodes = groupedElements,
-          relations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, groupPattern),
-          relationsWithHyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, groupPattern),
-          hyperRelations = groupToRelations(groupPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, groupPattern),
-          nodeTraits = groupedTraits.map(nodeTraitPattern =>
+        Graph(graphPattern,
+          nodes = graphedElements.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
+          nodesWithHyperNodes = graphedElements,
+          relations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, graphPattern),
+          relationsWithHyperRelations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, allRelationPatterns, graphPattern),
+          hyperRelations = graphToRelations(graphPatterns, nodePatterns, hyperRelationPatterns, hyperRelationPatterns, graphPattern),
+          nodeTraits = graphedTraits.map(nodeTraitPattern =>
             NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
-              selectedNodePatterns = groupedElements.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
-              selectedHyperRelationPatterns = (nodeNamesToRelations(groupedElements, hyperRelationPatterns) ::: groupedElements.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
+              selectedNodePatterns = graphedElements.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
+              selectedHyperRelationPatterns = (nodeNamesToRelations(graphedElements, hyperRelationPatterns) ::: graphedElements.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
               relationPatterns, hyperRelationPatterns))
         )
       }
       val hyperRelations = hyperRelationPatterns.map { hyperRelationPattern =>
         abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Group", "trait", groupPatterns)
-        if(groupPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Graph", "trait", graphPatterns)
+        if(graphPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
         if(relationPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
-        if(groupPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(graphPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
         if(relationPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
 
@@ -173,11 +173,11 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "trait", nodeTraitPatterns)
-        abortIfInheritsFrom("Relation", "class", relationPattern, "Group", "trait", groupPatterns)
-        if(groupPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        abortIfInheritsFrom("Relation", "class", relationPattern, "Graph", "trait", graphPatterns)
+        if(graphPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
         if(relationPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
-        if(groupPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Group.")
+        if(graphPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
         if(relationPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
         if(relationTraitPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
 
@@ -186,7 +186,7 @@ trait Generators extends Context with Patterns {
           flatStatements = flatSuperStatements(relationTraitPatterns, relationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits))
       }
-      Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, groups, statements)
+      Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, graphs, statements)
     }
 
     def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): List[ParameterList] = {
@@ -341,16 +341,16 @@ trait Generators extends Context with Patterns {
     //      NodeTraitPattern("traitA", Nil, Nil)
     //    ).toSet, List("traitB", "traitC").toSet)
 
-    def groupToNodes(groupPatterns: List[GroupPattern], groupPattern: GroupPattern): List[String] = {
-      (groupPattern :: patternToFlatSubTypes(groupPatterns, groupPattern)).flatMap(_.nodes)
+    def graphToNodes(graphPatterns: List[GraphPattern], graphPattern: GraphPattern): List[String] = {
+      (graphPattern :: patternToFlatSubTypes(graphPatterns, graphPattern)).flatMap(_.nodes)
     }
-    //    assertX(groupToNodes(List(
-    //      GroupPattern("groupA", Nil, List("nodeA", "nodeB")),
-    //      GroupPattern("groupB", List("groupA"), List("nodeC", "nodeD"))
-    //    ), GroupPattern("groupA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
+    //    assertX(graphToNodes(List(
+    //      GraphPattern("graphA", Nil, List("nodeA", "nodeB")),
+    //      GraphPattern("graphB", List("graphA"), List("nodeC", "nodeD"))
+    //    ), GraphPattern("graphA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
 
-    def groupToRelations(groupPatterns: List[GroupPattern], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern], groupPattern: GroupPattern): List[String] = {
-      val nodes = groupToNodes(groupPatterns, groupPattern)
+    def graphToRelations(graphPatterns: List[GraphPattern], nodePatterns: List[NodePattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern], graphPattern: GraphPattern): List[String] = {
+      val nodes = graphToNodes(graphPatterns, graphPattern)
       val traits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).flatMap(_.superTypes).distinct
       nodeNamesToRelations(nodes ::: traits ::: hyperRelationPatterns.map(_.name), relations).map(_.name)
     }
@@ -388,13 +388,13 @@ trait Generators extends Context with Patterns {
                      hyperRelations: List[HyperRelation],
                      nodeTraits: List[NodeTrait],
                      relationTraits: List[RelationTrait],
-                     groups: List[Group],
+                     graphs: List[Graph],
                      statements: List[Tree]
                      ) extends Named with SuperTypes {
   }
 
-  case class Group(
-                    pattern: GroupPattern,
+  case class Graph(
+                    pattern: GraphPattern,
                     nodesWithHyperNodes: List[String],
                     nodes: List[String],
                     relationsWithHyperRelations: List[String],
