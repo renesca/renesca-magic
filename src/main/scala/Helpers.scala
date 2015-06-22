@@ -10,7 +10,7 @@ object Helpers {
     lower + suffix
   }
   def traitFactoryName(name: String) = name + "Factory"
-  def traitFactoryLocal(name: String) = "local" + name
+  def traitFactoryLocal(name: String) = "create" + name
   def nameToLabel(name: String) = name.toUpperCase
   def relationName(start: String, end: String) = s"${ start }To${ end }"
 

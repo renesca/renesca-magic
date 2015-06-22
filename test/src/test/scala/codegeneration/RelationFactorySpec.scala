@@ -14,8 +14,8 @@ class RelationFactorySpec extends CodeComparisonSpec {
       q"""object R extends RelationFactory[A, R, B] with AbstractRelationFactory[A, R, B] {
             val relationType = raw.RelationType("R");
             def wrap(relation: raw.Relation) = R(A.wrap(relation.startNode), relation, B.wrap(relation.endNode));
-            def local(startNode: A, endNode: B): R = {
-              val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node));
+            def create(startNode: A, endNode: B): R = {
+              val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
               relation
             }
           } """
@@ -25,21 +25,21 @@ class RelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
       """object R extends RelationFactory[A, R, B] with TFactory[A, R, B] { """,
-      q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
+      q"""def createT(startNode: A, endNode: B): R = create(startNode, endNode)"""
     )
   }
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Relation class R(startNode:A, endNode:B) {val p:String; var x:Int}}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node));
+      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+            val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
             relation.relation.properties.update("p", p);
             relation.relation.properties.update("x", x);
             relation
           } """
     )
   }
-  "with properties - parameter order of local" >> {
+  "with properties - parameter order of create" >> {
     generatedContainsCode(
       q"""object A {
             @Relation class R(startNode:A, endNode:B) {
@@ -49,40 +49,40 @@ class RelationFactorySpec extends CodeComparisonSpec {
               val p:String
             }
           }""",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R"""
+      q"""def create(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R"""
     )
   }
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation class R(startNode:A, endNode:B) extends T}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val relation = wrap(raw.Relation.local(startNode.node, relationType, endNode.node));
+      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+            val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
             relation.relation.properties.update("p", p);
             relation.relation.properties.update("x", x);
             relation
           }""",
-      q""" def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x) """
+      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x) """
     )
   }
   "with inherited properties from two traits" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String}; @Relation trait S {var x:Int}; @Relation class R(startNode:A, endNode:B) extends T with S}",
-      Not( """ def localT(startNode: A, endNode: B, p: String"""),
-      Not( """ def localS(startNode: A, endNode: B, p: String""")
+      Not( """ def createT(startNode: A, endNode: B, p: String"""),
+      Not( """ def createS(startNode: A, endNode: B, p: String""")
     )
   }
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def localT(startNode: START, endNode: END, p: String, x: Int): RELATION = localX(startNode, endNode, p, x)""",
-      q""" def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
+      q""" def createT(startNode: START, endNode: END, p: String, x: Int): RELATION = createX(startNode, endNode, p, x)""",
+      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
     )
   }
   "with indirectly inherited properties in chain" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)""",
-      Not( """ def localT(startNode: A, endNode: B, p: String""")
+      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)""",
+      Not( """ def createT(startNode: A, endNode: B, p: String""")
     )
   }
 }

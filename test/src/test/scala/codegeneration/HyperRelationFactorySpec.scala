@@ -23,9 +23,9 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
               hyperRelation._endRelation = RToB(hyperRelation, endRelation, B.wrap(endRelation.endNode));
               hyperRelation
             };
-            def local(startNode: A, endNode: B): R = {
-              val middleNode = raw.Node.local(labels);
-              wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
+            def create(startNode: A, endNode: B): R = {
+              val middleNode = raw.Node.create(labels);
+              wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
             }
           } """
     )
@@ -41,18 +41,18 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
       """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
-      q"""def localT(startNode: A, endNode: B): R = local(startNode, endNode)"""
+      q"""def createT(startNode: A, endNode: B): R = create(startNode, endNode)"""
     )
   }
 
   "with properties" >> {
     generatedContainsCode(
       q"object A {@HyperRelation class R(startNode:A, endNode:B) {val p:String; var x:Int}}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(labels);
+      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+            val middleNode = raw.Node.create(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
-            wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
+            wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
           }"""
     )
   }
@@ -60,25 +60,25 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(labels);
+      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+            val middleNode = raw.Node.create(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
-            wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
+            wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
           }""",
-      q"""def localT(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
+      q"""def createT(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
     )
   }
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @HyperRelation class R(startNode:A, endNode:B) extends X}",
-      q"""def local(startNode: A, endNode: B, p: String, x: Int): R = {
-            val middleNode = raw.Node.local(labels);
+      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+            val middleNode = raw.Node.create(labels);
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
-            wrap(raw.Relation.local(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.local(middleNode, endRelationType, endNode.node))
+            wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
           }""",
-      q"""def localX(startNode: A, endNode: B, p: String, x: Int): R = local(startNode, endNode, p, x)"""
+      q"""def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
     )
   }
 }

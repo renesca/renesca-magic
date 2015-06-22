@@ -13,8 +13,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
               val label = raw.Label("N");
               val labels = Set(raw.Label("N"));
               def wrap(node: raw.Node) = new N(node);
-              def local(): N = {
-                val node = wrap(raw.Node.local(labels));
+              def create(): N = {
+                val node = wrap(raw.Node.create(labels));
                 node
               }
             }"""
@@ -26,7 +26,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
-      q"""def localT(): N = local()"""
+      q"""def createT(): N = create()"""
     )
   }
   "with super factory with external superType" >> {
@@ -35,7 +35,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
-      q"""def localT(): N = local()"""
+      q"""def createT(): N = create()"""
     )
   }
   "with multiple super factories" >> {
@@ -44,8 +44,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] with SFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
-      q"""def localT(): N = local()""",
-      q"""def localS(): N = local()"""
+      q"""def createT(): N = create()""",
+      q"""def createS(): N = create()"""
     )
   }
   "with multiple super factories (chain)" >> {
@@ -54,21 +54,21 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends SFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
-      q"""def localS(): N = local()"""
+      q"""def createS(): N = create()"""
     )
   }
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:String; var x:Int}}",
-      q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(labels));
+      q"""def create(p: String, x: Int): N = {
+            val node = wrap(raw.Node.create(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
           } """
     )
   }
-  "with properties - parameter order of local" >> {
+  "with properties - parameter order of create" >> {
     generatedContainsCode(
       q"""object A {
             @Node class N {
@@ -78,26 +78,26 @@ class NodeFactorySpec extends CodeComparisonSpec {
               val p:String
             }
           }""",
-      q"""def local(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None): N"""
+      q"""def create(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None): N"""
     )
   }
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node class N extends T}",
-      q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(labels));
+      q"""def create(p: String, x: Int): N = {
+            val node = wrap(raw.Node.create(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
           }""",
-      q""" def localT(p: String, x: Int): N = local(p, x) """
+      q""" def createT(p: String, x: Int): N = create(p, x) """
     )
   }
   "with inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node class N extends T with S}",
-      q"""def local(p: String, x: Int): N = {
-            val node = wrap(raw.Node.local(labels));
+      q"""def create(p: String, x: Int): N = {
+            val node = wrap(raw.Node.create(labels));
             node.node.properties.update("p", p);
             node.node.properties.update("x", x);
             node
@@ -108,36 +108,36 @@ class NodeFactorySpec extends CodeComparisonSpec {
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T; @Node class N extends X}",
-      q""" def localX(p: String, x: Int): N = local(p, x) """,
-      q""" def localT(p: String, x: Int): NODE = localX(p, x) """
+      q""" def createX(p: String, x: Int): N = create(p, x) """,
+      q""" def createT(p: String, x: Int): NODE = createX(p, x) """
     )
   }
   "with indirectly inherited properties and default properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
-      q""" def localX(p: String, x: Int, q: Boolean = true): N = local(p, x, q) """,
-      q""" def localT(p: String, x: Int): NODE = localX(p, x, true) """
+      q""" def createX(p: String, x: Int, q: Boolean = true): N = create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = createX(p, x, true) """
     )
   }
   "with indirectly inherited properties and optional properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
-      q""" def localX(p: String, x: Int, q: Option[Boolean] = None): N = local(p, x, q) """,
-      q""" def localT(p: String, x: Int): NODE = localX(p, x, None) """
+      q""" def createX(p: String, x: Int, q: Option[Boolean] = None): N = create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = createX(p, x, None) """
     )
   }
   "with indirectly inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
-      q""" def localX(p: String, x: Int): N = local(p, x) """,
-      Not("def localS("),
-      Not("def localT(")
+      q""" def createX(p: String, x: Int): N = create(p, x) """,
+      Not("def createS("),
+      Not("def createT(")
     )
   }
   "diamond inheritance" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait L extends T; @Node trait R extends T; @Node trait X extends L with R; @Node class N extends X}",
-      q""" def local(p: String): N"""
+      q""" def create(p: String): N"""
     )
   }
   // TODO one direct + one indirect

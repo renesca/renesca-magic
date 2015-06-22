@@ -11,7 +11,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T}",
       q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] {
-           def localT(): NODE
+           def createT(): NODE
           }"""
     )
   }
@@ -61,16 +61,16 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     )
   }
   //TODO: no own factory, when there is no node extending the trait
-  "with local-interface" >> {
+  "with create-interface" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String}}",
-      q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] { def localT(p: String): NODE }"""
+      q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] { def createT(p: String): NODE }"""
     )
   }
   "with superType factories" >> {
     generatedContainsCode(
       q"object A {@Node trait T ; @Node trait X extends T {val p:String} }",
-      q"""trait XFactory[NODE <: X] extends TFactory[NODE] { def localX(p: String): NODE }"""
+      q"""trait XFactory[NODE <: X] extends TFactory[NODE] { def createX(p: String): NODE }"""
     )
   }
 
@@ -78,18 +78,18 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S extends T; @Node class N extends S}",
       q"""trait SFactory[NODE <: S] extends TFactory[NODE] {
-            def localS(): NODE;
-            def localT(): NODE = localS()
+            def createS(): NODE;
+            def createT(): NODE = createS()
           };
       """
     )
   }
-  "with superType factories with inherited local method" >> {
+  "with superType factories with inherited create method" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String}; @Node trait X extends T }",
       q"""trait XFactory[NODE <: X] extends TFactory[NODE] {
-            def localX(p: String): NODE
-            def localT(p: String): NODE = localX(p)
+            def createX(p: String): NODE
+            def createT(p: String): NODE = createX(p)
       }"""
     )
   }
@@ -98,11 +98,11 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
       q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] {
-            def localT(p: String, x: Int): NODE
+            def createT(p: String, x: Int): NODE
       }""",
       q"""trait XFactory[NODE <: X] extends TFactory[NODE] {
-            def localX(p: String, x: Int, q: Boolean = true): NODE
-            def localT(p: String, x: Int): NODE = localX(p, x, true)
+            def createX(p: String, x: Int, q: Boolean = true): NODE
+            def createT(p: String, x: Int): NODE = createX(p, x, true)
       }"""
     )
   }
@@ -110,11 +110,11 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
       q"""trait TFactory[NODE <: T] extends NodeFactory[NODE] {
-            def localT(p: String, x: Int): NODE
+            def createT(p: String, x: Int): NODE
       }""",
       q"""trait XFactory[NODE <: X] extends TFactory[NODE] {
-            def localX(p: String, x: Int, q: Option[Boolean] = None): NODE
-            def localT(p: String, x: Int): NODE = localX(p, x, None)
+            def createX(p: String, x: Int, q: Option[Boolean] = None): NODE
+            def createT(p: String, x: Int): NODE = createX(p, x, None)
       }"""
     )
   }
