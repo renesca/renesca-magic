@@ -133,10 +133,10 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "trait", relationTraitPatterns)
         val notAllowed = graphPattern.nodes.distinct diff (nodePatterns ++ nodeTraitPatterns).map(_.name)
-        if( notAllowed.nonEmpty ) abort(s"Graph `${graphPattern.name}` cannot contain ${notAllowed.mkString("`","`, `", "`")}. Only Node classes and traits are allowed.")
+        if(notAllowed.nonEmpty) abort(s"Graph `${ graphPattern.name }` cannot contain ${ notAllowed.mkString("`", "`, `", "`") }. Only Node classes and traits are allowed.")
 
         val traits = graphToNodes(graphPatterns, graphPattern).distinct intersect nodeTraits.map(_.name)
-        val expandedTraits = traits.flatMap(t => patternToFlatSubTypesWithoutSelf(nodeTraitPatterns ::: nodePatterns,nameToPattern(nodeTraitPatterns, t))).map(_.name)
+        val expandedTraits = traits.flatMap(t => patternToFlatSubTypesWithoutSelf(nodeTraitPatterns ::: nodePatterns, nameToPattern(nodeTraitPatterns, t))).map(_.name)
         val nodes = (graphToNodes(graphPatterns, graphPattern) ++ expandedTraits).distinct diff nodeTraits.map(_.name)
         val graphedTraits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
@@ -357,7 +357,7 @@ trait Generators extends Context with Patterns {
     //      GraphPattern("graphB", List("graphA"), List("nodeC", "nodeD"))
     //    ), GraphPattern("graphA", Nil, List("nodeA", "nodeB"))).toSet, List("nodeA", "nodeB", "nodeC", "nodeD").toSet)
 
-    def inducedRelations(nodes:List[String], nodePatterns: List[NodePattern], nodeTraitPatterns:List[NodeTraitPattern],  hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern]): List[String] = {
+    def inducedRelations(nodes: List[String], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern], hyperRelationPatterns: List[HyperRelationPattern], relations: List[NamePattern with StartEndNodePattern]): List[String] = {
       val traits = nodes.map(nameToPattern(nodePatterns, _)).flatMap(patternToFlatSuperTypesWithSelf(nodeTraitPatterns, _)).distinct.map(_.name)
       nodeNamesToRelations(nodes ::: traits ::: hyperRelationPatterns.map(_.name), relations).map(_.name)
     }
@@ -369,7 +369,7 @@ trait Generators extends Context with Patterns {
       // if we currently are at NodeTrait, we need to check whether one of its
       // children is a HyperRelation. If that is the case, a factory cannot be
       // generated, as the HyperRelation additionally needs Start-/EndNode in
-      // its local method.
+      // its create-method.
       val isNodeTrait = currentTrait.isInstanceOf[NodeTraitPattern]
       val hasHyperRelationChild = children.exists(_.isInstanceOf[HyperRelationPattern])
       if(isNodeTrait && hasHyperRelationChild)
