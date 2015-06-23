@@ -59,7 +59,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
           }""",
       q"""def create(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R""",
       q"""def merge(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):R""",
-      q"""def matches(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
+      q"""def matches(startNode: A, endNode: B, p: Option[String] = None, q: Option[Double] = None, x: Option[Int] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
     )
   }
   "with inherited properties" >> {
