@@ -10,8 +10,8 @@ jdk:
 - oraclejdk7
 - oraclejdk8
 script:
-- sbt ++$TRAVIS_SCALA_VERSION clean coverage "project test" test coverageReport
-- sbt ++$TRAVIS_SCALA_VERSION coverageAggregate
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage "project test" test
+- sbt ++$TRAVIS_SCALA_VERSION coverageReport
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
 - sbt ++$TRAVIS_SCALA_VERSION coveralls
