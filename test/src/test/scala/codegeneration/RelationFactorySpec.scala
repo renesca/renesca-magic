@@ -12,13 +12,21 @@ class RelationFactorySpec extends CodeComparisonSpec {
       // TODO: fail with compile error when start or endNode does not exist
       q"object A {@Relation class R(startNode:A, endNode:B)}",
       q"""object R extends RelationFactory[A, R, B] with AbstractRelationFactory[A, R, B] {
-            val relationType = raw.RelationType("R");
-            def wrap(relation: raw.Relation) = R(A.wrap(relation.startNode), relation, B.wrap(relation.endNode));
-            def create(startNode: A, endNode: B): R = {
-              val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-              relation
-            }
-          } """
+        val relationType = raw.RelationType("R");
+        def wrap(relation: raw.Relation) = R(A.wrap(relation.startNode), relation, B.wrap(relation.endNode));
+        def create(startNode: A, endNode: B): R = {
+          val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+          relation
+        }
+        def merge(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
+          val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+          relation
+        }
+        def matches(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = {
+          val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+          relation
+        }
+      } """
     )
   }
   "with super factory" >> {
@@ -49,7 +57,9 @@ class RelationFactorySpec extends CodeComparisonSpec {
               val p:String
             }
           }""",
-      q"""def create(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R"""
+      q"""def create(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R""",
+      q"""def merge(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):R""",
+      q"""def matches(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
     )
   }
   "with inherited properties" >> {

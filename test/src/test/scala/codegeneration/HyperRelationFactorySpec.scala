@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class HyperRelationFactorySpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple hyperrelation factory" >> {
@@ -26,6 +25,14 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             def create(startNode: A, endNode: B): R = {
               val middleNode = raw.Node.create(labels);
               wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
+            }
+            def merge(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
+              val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch);
+              wrap(raw.Relation.merge(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.node))
+            }
+            def matches(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = {
+              val middleNode = raw.Node.matches(labels, matches = matches);
+              wrap(raw.Relation.matches(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.node))
             }
           } """
     )
@@ -53,6 +60,24 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
+          }""",
+      q"""def merge(startNode: A, endNode: B, p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
+            val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch);
+            middleNode.properties.update("p", p);
+            middleNode.properties.update("x", x);
+            wrap(raw.Relation.merge(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.node))
+          }""",
+      q"""def matches(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = {
+            val middleNode = raw.Node.matches(labels, matches = matches);
+            if (p.isDefined)
+              middleNode.properties.update("p", p.get)
+            else
+              ();
+            if (x.isDefined)
+              middleNode.properties.update("x", x.get)
+            else
+              ();
+            wrap(raw.Relation.matches(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.node))
           }"""
     )
   }

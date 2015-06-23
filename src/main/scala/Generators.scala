@@ -539,6 +539,10 @@ trait Generators extends Context with Patterns {
     val ordered = nonDefault ::: withDefaultNonOptional ::: withDefaultOptional
     def toParamCode: List[Tree] = ordered.map(_.toParamCode)
     def toAssignmentCode(schemaItem: Tree): List[Tree] = ordered.map(_.toAssignmentCode(schemaItem))
+    def optional = ParameterList(parameters.map {
+      case Parameter(name, typeName, false, _, mutable) => Parameter(name, tq"Option[$typeName]", true, Some(q"None"), mutable)
+      case Parameter(name, typeName, true, _, mutable)  => Parameter(name, typeName, true, Some(q"None"), mutable)
+    })
     def supplementMissingParametersOf(that: ParameterList): List[Tree] = {
       this.ordered.map(p => (p, that.ordered.find(_.name.toString == p.name.toString))).map {
         case (_, Some(other)) => other.name

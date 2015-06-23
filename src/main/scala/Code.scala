@@ -90,6 +90,7 @@ trait Code extends Context with Generators {
     val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[$name_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$name_type]")
     val creaters = superTypes.flatMap(t => forwardCreateMethod(parameterList, traitFactoryParameterList, t, "create", tq"$name_type"))
     val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
+    val optionalParameterList = parameterList.optional
 
     // Extending superFactory is enough, because NodeFactory is pulled in every case.
     // This works because NodeFactory does not get any generics.
@@ -104,6 +105,18 @@ trait Code extends Context with Generators {
               node
              }
              ..$creaters
+
+             def merge (..${ parameterList.toParamCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
+              val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch))
+              ..${ parameterList.toAssignmentCode(q"node.node") }
+              node
+             }
+
+             def matches (..${ optionalParameterList.toParamCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
+              val node = wrap(raw.Node.matches(labels, matches = matches))
+              ..${ optionalParameterList.toAssignmentCode(q"node.node") }
+              node
+             }
            }
            """
   }
@@ -143,7 +156,7 @@ trait Code extends Context with Generators {
     val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
 
     q"""
-    case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$externalSuperTypes_type {
+      case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$externalSuperTypes_type {
         override val label = raw.Label($name_label)
         override val labels = Set(..$labels)
         ..$directNeighbours
@@ -158,21 +171,37 @@ trait Code extends Context with Generators {
   def relationFactories(schema: Schema): List[Tree] = schema.relations.map { relation => import relation._
     val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[$startNode_type, $name_type, $endNode_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$startNode_type, $name_type, $endNode_type]")
     val creaters = superTypes.flatMap(t => forwardCreateMethodStartEnd(parameterList, traitFactoryParameterList, t, "create", tq"$name_type", tq"$startNode_type", tq"$endNode_type"))
+    val parameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode
+    val optionalParameterList = parameterList.optional
+    val optionalParameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: optionalParameterList.toParamCode
 
     q"""
            object $name_term extends RelationFactory[$startNode_type, $name_type, $endNode_type]
             with ..$superFactories {
-               val relationType = raw.RelationType($name_label)
-               def wrap(relation: raw.Relation) = $name_term(
-                 $startNode_term.wrap(relation.startNode),
-                 relation,
-                 $endNode_term.wrap(relation.endNode))
-              def create (..${ List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode }):$name_type = {
-                val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node))
-                ..${ parameterList.toAssignmentCode(q"relation.relation") }
-                relation
-              }
+             val relationType = raw.RelationType($name_label)
+             def wrap(relation: raw.Relation) = $name_term(
+               $startNode_term.wrap(relation.startNode),
+               relation,
+               $endNode_term.wrap(relation.endNode))
+
+             def create (..${ parameterCode }):$name_type = {
+               val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node))
+               ..${ parameterList.toAssignmentCode(q"relation.relation") }
+               relation
+             }
              ..$creaters
+
+             def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
+               val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch))
+               ..${ parameterList.toAssignmentCode(q"relation.relation") }
+               relation
+             }
+
+             def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
+               val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches))
+               ..${ optionalParameterList.toAssignmentCode(q"relation.relation") }
+               relation
+             }
            }
            """
   }
@@ -195,6 +224,9 @@ trait Code extends Context with Generators {
     val superRelationFactories = superRelationTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$startNode_type, $name_type, $endNode_type]")
     val superNodeFactories = superNodeTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$name_type]")
     val creaters = superTypes.flatMap(t => forwardCreateMethodStartEnd(parameterList, traitFactoryParameterList, t, "create", tq"$name_type", tq"$startNode_type", tq"$endNode_type"))
+    val parameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode
+    val optionalParameterList = parameterList.optional
+    val optionalParameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: optionalParameterList.toParamCode
 
     q"""
            object $name_term extends HyperRelationFactory[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type] with ..$superRelationFactories with ..$superNodeFactories {
@@ -220,7 +252,7 @@ trait Code extends Context with Generators {
                 hyperRelation
              }
 
-             def create (..${ List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode }):$name_type = {
+             def create (..${ parameterCode }):$name_type = {
                 val middleNode = raw.Node.create(labels)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
                 wrap(
@@ -230,6 +262,26 @@ trait Code extends Context with Generators {
                 )
              }
              ..$creaters
+
+             def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
+                val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch)
+                ..${ parameterList.toAssignmentCode(q"middleNode") }
+                wrap(
+                  raw.Relation.merge(startNode.node, startRelationType, middleNode),
+                  middleNode,
+                  raw.Relation.merge(middleNode, endRelationType, endNode.node)
+                )
+             }
+
+             def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
+                val middleNode = raw.Node.matches(labels, matches = matches)
+                ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
+                wrap(
+                  raw.Relation.matches(startNode.node, startRelationType, middleNode),
+                  middleNode,
+                  raw.Relation.matches(middleNode, endRelationType, endNode.node)
+                )
+             }
            }
            """
   }

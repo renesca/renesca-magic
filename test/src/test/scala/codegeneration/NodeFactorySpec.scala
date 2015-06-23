@@ -10,14 +10,22 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node class N}",
       q"""object N extends NodeFactory[N] {
-              val label = raw.Label("N");
-              val labels = Set(raw.Label("N"));
-              def wrap(node: raw.Node) = new N(node);
-              def create(): N = {
-                val node = wrap(raw.Node.create(labels));
-                node
-              }
-            }"""
+        val label = raw.Label("N");
+        val labels = Set(raw.Label("N"));
+        def wrap(node: raw.Node) = new N(node);
+        def create(): N = {
+          val node = wrap(raw.Node.create(labels));
+          node
+        }
+        def merge(merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = {
+          val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+          node
+        }
+        def matches(matches: Set[PropertyKey] = Set.empty): N = {
+          val node = wrap(raw.Node.matches(labels, matches = matches));
+          node
+        }
+      }"""
     )
   }
   "with super factory" >> {
@@ -78,7 +86,9 @@ class NodeFactorySpec extends CodeComparisonSpec {
               val p:String
             }
           }""",
-      q"""def create(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None): N"""
+      q"""def create(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None): N""",
+      q"""def merge(p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N""",
+      q"""def matches(p: Option[String] = None, q: Option[Double] = None, x: Option[Int] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): N"""
     )
   }
   "with inherited properties" >> {
