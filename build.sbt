@@ -6,26 +6,26 @@ val scalaV = "2.11.6"
 
 val paradiseVersion = "2.1.0-M5"
 
-lazy val renescamagic = (project in file(".")).settings(
-  scalaVersion := scalaV,
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaV,
-  addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
-  scalacOptions ++= scalacOpts
+scalaVersion := scalaV
+
+
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" // specs2
+
+libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-reflect" % scalaV,
+  "org.specs2" %% "specs2-core" % "3.6" % "test",
+  "org.specs2" %% "specs2-mock" % "3.6" % "test",
+  "org.scala-lang" % "scala-compiler" % scalaV % "test"
+  // "com.github.renesca" %% "renesca" % "0.2.4"
 )
 
-lazy val test = (project in file("test")).settings(
-  scalaVersion := scalaV,
-  resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases", // specs2
-  libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.6" % "test",
-    "org.specs2" %% "specs2-mock" % "3.6" % "test",
-    "org.scala-lang" % "scala-compiler" % scalaV % "test",
-    "com.github.renesca" %% "renesca" % "0.2.4"
-  ),
-  addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
-  scalacOptions in Test ++= Seq("-Yrangepos"), // specs2
-  parallelExecution in Test := false
-).dependsOn(renescamagic)
+addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
+
+scalacOptions ++= scalacOpts
+
+scalacOptions in Test ++= Seq("-Yrangepos") // specs2
+
+parallelExecution in Test := false
 
 
 // publishing
