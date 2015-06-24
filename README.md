@@ -101,7 +101,7 @@ This is a lot of code for a single relation between two nodes. Writing this by h
 import renesca.schema.macros
 
 @macros.GraphSchema
-object Schema {
+object ExampleSchemaWrapping {
   @Node class Animal {val name: String }
   @Node class Food {
     val name: String;
@@ -110,7 +110,8 @@ object Schema {
   @Relation class Eats(startNode: Animal, endNode: Food)
 }
 
-import Schema._
+import ExampleSchemaWrapping._
+
 val animal = Animal.create("snake")
 val food = Food.create(name = "cake", amount = 1000)
 val eats = Eats.create(animal, food)
@@ -123,19 +124,30 @@ Note: ```Food.name``` is a ```val``` and only gets a getter. ```Food.amount``` i
 You can have a look at the generated code in the folder ```/magic``` created at the root of your sbt project. Files created in ```/magic``` are not needed for compilation. You can safely delete them and put the folder into your ```.gitignore```.
 
 ### Wrapping induced subgraphs
-Use the ```@Graph``` annotation to wrap a whole graph. This generates lists for graphs
+Use the ```@Graph``` annotation to wrap a subgraph. This generates lists for each Node and Relation type.
 
 ```scala
 import renesca.schema.macros
 
 @macros.GraphSchema
-object Schema {
-  @Node class Animal {val name: String}
-  @Node class Food {val name: String; var amount:Long}
+object ExampleSchemaSubgraph {
+  @Node class Animal {val name: String }
+  @Node class Food {
+    val name: String
+    var amount: Long
+  }
   @Relation class Eats(startNode: Animal, endNode: Food)
 
-  @Graph trait {Nodes(Animal, Food)}
+  @Graph trait Zoo {Nodes(Animal, Food) }
 }
+
+import ExampleSchemaSubgraph._
+
+val zoo = Zoo(db.queryGraph("MATCH (a:ANIMAL)-[e:EATS]->(f:FOOD) RETURN a,e,f"))
+val elefant = Animal.create("elefant")
+zoo.add(elefant)
+println(zoo.animals)
+db.persistChanges(zoo)
 ```
 
 
