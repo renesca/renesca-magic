@@ -61,39 +61,9 @@ object Animal {
   }
 }
 
-case class Food(node: Node) {
-  val label = Label("FOOD")
-  def rev_eats: Set[Animal] = node.inRelations.
-    filter(_.relationType == Eats.relationType).map(_.startNode).
-    filter(_.labels.contains(Animal.label)).map(Animal.wrap)
-  def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
-  def amount: Long = node.properties("amount").asInstanceOf[LongPropertyValue]
-  def `amount_=`(newValue: Long) { node.properties.update("amount", newValue) }
-}
-
-object Food {
-  val label = Label("FOOD")
-  def wrap(node: Node) = new Food(node)
-  def create(amount: Long, name: String): Food = {
-    val wrapped = wrap(Node.create(List(label)))
-    wrapped.node.properties.update("amount", amount)
-    wrapped.node.properties.update("name", name)
-    wrapped
-  }
-}
-
-case class Eats(startNode: Animal, relation: Relation, endNode: Food)
-
-object Eats {
-  val relationType = RelationType("EATS")
-  def wrap(relation: Relation) = {
-    Eats(Animal.wrap(relation.startNode), relation, Food.wrap(relation.endNode))
-  }
-  def create(startNode: Animal, endNode: Food): Eats = {
-    wrap(Relation.create(startNode.node, relationType, endNode.node))
-  }
-}
+...
 ```
+See the full boilerplate example at [renesca-example/.../Schema.scala](https://github.com/renesca/renesca-example/blob/master/src/main/scala/renesca/example/Schema.scala).
 
 This is a lot of code for a single relation between two nodes. Writing this by hand for a larger schemas takes a lot of time and is very error prone. We can use renesca-magic to generate this for us. Simply write:
 
