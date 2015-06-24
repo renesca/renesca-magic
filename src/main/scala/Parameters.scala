@@ -64,5 +64,4 @@ trait Parameters extends Context {
       case statement@(q"var $propertyName:$propertyType")                    => Parameter(q"$propertyName", q"$propertyType", optional = false, default = None, mutable = true)
     })
   }
-
 }

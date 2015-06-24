@@ -84,9 +84,11 @@ trait Generators extends Context with Patterns with Parameters {
         abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Graph", "trait", graphPatterns)
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
+
       nodeTraits.foreach(nodeTrait =>
         nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
       )
+
       val relationTraits = relationTraitPatterns.map { relationTraitPattern =>
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
@@ -96,9 +98,11 @@ trait Generators extends Context with Patterns with Parameters {
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
       }
+
       relationTraits.foreach(relationTrait =>
         relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
       )
+
       val nodes = nodePatterns.map { rawNodePattern => {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
@@ -124,8 +128,8 @@ trait Generators extends Context with Patterns with Parameters {
           }.map(r => (r.name, r.startNode)),
           flatStatements = flatSuperStatements(nodeTraitPatterns, nodePattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
-      }
-      }
+      }}
+
       val graphs = graphPatterns.map { graphPattern =>
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "trait", nodeTraitPatterns)
@@ -141,6 +145,7 @@ trait Generators extends Context with Patterns with Parameters {
           .flatMap(_.superTypes).distinct
           .intersect(nodeTraitPatterns.map(_.name))
           .map(nameToPattern(nodeTraitPatterns, _))
+
         Graph(graphPattern,
           nodes = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
           nodesWithHyperNodes = nodes,
@@ -154,6 +159,7 @@ trait Generators extends Context with Patterns with Parameters {
               relationPatterns, hyperRelationPatterns))
         )
       }
+
       val hyperRelations = hyperRelationPatterns.map { hyperRelationPattern =>
         abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Node", "class", nodePatterns)
@@ -173,6 +179,7 @@ trait Generators extends Context with Patterns with Parameters {
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
       }
+
       val relations = relationPatterns.map { relationPattern =>
         abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
@@ -190,6 +197,7 @@ trait Generators extends Context with Patterns with Parameters {
           flatStatements = flatSuperStatements(relationTraitPatterns, relationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits))
       }
+
       Schema(schemaPattern, nodes, relations, hyperRelations, nodeTraits, relationTraits, graphs, statements)
     }
 
