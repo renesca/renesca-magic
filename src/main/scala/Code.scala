@@ -186,21 +186,21 @@ trait Code extends Context with Generators {
              def wrap(node: raw.Node) = new $name_type(node)
 
              def create (..${ parameterList.toParamCode }):$name_type = {
-              val node = wrap(raw.Node.create(labels))
-              ..${ parameterList.toAssignmentCode(q"node.node") }
-              node
+              val wrapped = wrap(raw.Node.create(labels))
+              ..${ parameterList.toAssignmentCode(q"wrapped.node") }
+              wrapped
              }
 
              def merge (..${ parameterList.toParamCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
-              val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch))
-              ..${ parameterList.toAssignmentCode(q"node.node") }
-              node
+              val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch))
+              ..${ parameterList.toAssignmentCode(q"wrapped.node") }
+              wrapped
              }
 
              def matches (..${ optionalParameterList.toParamCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
-              val node = wrap(raw.Node.matches(labels, matches = matches))
-              ..${ optionalParameterList.toAssignmentCode(q"node.node") }
-              node
+              val wrapped = wrap(raw.Node.matches(labels, matches = matches))
+              ..${ optionalParameterList.toAssignmentCode(q"wrapped.node") }
+              wrapped
              }
 
              ..$forwardFactories
@@ -265,21 +265,21 @@ trait Code extends Context with Generators {
                $endNode_term.wrap(relation.endNode))
 
              def create (..${ parameterCode }):$name_type = {
-               val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node))
-               ..${ parameterList.toAssignmentCode(q"relation.relation") }
-               relation
+               val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node))
+               ..${ parameterList.toAssignmentCode(q"wrapped.relation") }
+               wrapped
              }
 
              def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
-               val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch))
-               ..${ parameterList.toAssignmentCode(q"relation.relation") }
-               relation
+               val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch))
+               ..${ parameterList.toAssignmentCode(q"wrapped.relation") }
+               wrapped
              }
 
              def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
-               val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches))
-               ..${ optionalParameterList.toAssignmentCode(q"relation.relation") }
-               relation
+               val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches))
+               ..${ optionalParameterList.toAssignmentCode(q"wrapped.relation") }
+               wrapped
              }
 
              ..$forwardFactories
