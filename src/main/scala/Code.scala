@@ -336,11 +336,13 @@ trait Code extends Context with Generators {
              def create (..${ parameterCode }):$name_type = {
                 val middleNode = raw.Node.create(labels)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
-                wrap(
+                val wrapped = wrap(
                   raw.Relation.create(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.create(middleNode, endRelationType, endNode.node)
                 )
+                wrapped.path = Some(Path(wrapped.startRelation, wrapped.endRelation))
+                wrapped
              }
 
              def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
@@ -351,7 +353,7 @@ trait Code extends Context with Generators {
                   middleNode,
                   raw.Relation.merge(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = Some(Path.merge(wrapped.startRelation, wrapped.endRelation))
+                wrapped.path = Some(Path(wrapped.startRelation, wrapped.endRelation))
                 wrapped
              }
 
@@ -363,7 +365,7 @@ trait Code extends Context with Generators {
                   middleNode,
                   raw.Relation.matches(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = Some(Path.matches(wrapped.startRelation, wrapped.endRelation))
+                wrapped.path = Some(Path(wrapped.startRelation, wrapped.endRelation))
                 wrapped
              }
 
