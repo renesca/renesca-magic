@@ -31,6 +31,8 @@ Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, F
 
 
 ## Usage Examples
+You can find all of these examples available as sbt project: [renesca/renesca-magic-example](https://github.com/renesca/renesca-magic-example). You can also have a look at the generated code: [renesca-magic-example/magic](https://github.com/renesca/renesca-magic-example/tree/master/magic)
+
 ### Wrapping low level entities
 In [renesca](https://github.com/renesca/renesca), nodes represent low level graph database entities from the property graph model. This is a bit annoying to work with when you have a schema in mind. For example when we have types of nodes that have a specific label, always read and write the same properties and access neighbours with another specific label.
 
@@ -91,12 +93,12 @@ val eats = Eats.create(snake, cake)
 cake.amount -= 100
 ```
 
-Note: ```Food.name``` is a ```val``` and only gets a getter. ```Food.amount``` is a ```var``` and therefore gets a getter and a setter.
+Note that ```Food.name``` is a ```val``` and only generates a getter. ```Food.amount``` is a ```var``` and therefore generates a getter and a setter.
 
 You can have a look at the generated code in the folder ```/magic``` created at the root of your sbt project. Files created in ```/magic``` are not needed for compilation. You can safely delete them and put the folder into your ```.gitignore```.
 
 ### Wrapping induced subgraphs
-Use the ```@Graph``` annotation to wrap a subgraph. This generates lists for each Node and Relation type.
+Use the ```@Graph``` annotation to wrap a subgraph. This generates filtered Set accessors for each Node and Relation type.
 
 ```scala
 import renesca.schema.macros
@@ -229,8 +231,6 @@ val article = Article.create(content="Dog eats Snake")
 val tags = Tags.create(helpful, article) // HyperRelation
 val supports = Supports.create(user, tags) // Relation from user to HyperRelation
 ```
-
-You can find all of these  examples available as sbt project: [renesca/renesca-magic-example](https://github.com/renesca/renesca-magic-example)
 
 ## License
 renesca-magic is free software released under the [Apache License, Version 2.0][Apache]
