@@ -28,7 +28,7 @@ class NodeTraitSpec extends CodeComparisonSpec {
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:Int}}",
-      q"""trait T extends Node { def p: Int = node.properties("p").asInstanceOf[IntPropertyValue] }"""
+      q"""trait T extends Node { def p: Int = item.properties("p").asInstanceOf[IntPropertyValue] }"""
     )
   }
   "custom code" >> {

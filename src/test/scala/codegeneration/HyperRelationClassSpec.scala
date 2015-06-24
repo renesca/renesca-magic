@@ -18,6 +18,12 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       """case class RToB(startNode: R, relation: raw.Relation, endNode: B) extends Relation[R, B]  }"""
     )
   }
+  "simple class with property accessors" >> {
+    generatedContainsCode(
+      q"object A {@HyperRelation class R(startNode:A, endNode:B) { val p: Int } }",
+      q"""def p: Int = item.properties("p").asInstanceOf[IntPropertyValue]"""
+    )
+  }
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@HyperRelation class R(startNode:A, endNode:B) {def custom = 0}}",

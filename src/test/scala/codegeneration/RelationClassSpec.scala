@@ -13,6 +13,12 @@ class RelationClassSpec extends CodeComparisonSpec {
       """case class R(startNode: A, relation: raw.Relation, endNode: B) extends Relation[A, B]  }"""
     )
   }
+  "simple class with property accessors" >> {
+    generatedContainsCode(
+      q"object A {@Relation class R(startNode:A, endNode:B) {val p:Int} }",
+      q"""def p: Int = item.properties("p").asInstanceOf[IntPropertyValue]"""
+    )
+  }
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@Relation class R(startNode:A, endNode:B) {def custom = 0}}",

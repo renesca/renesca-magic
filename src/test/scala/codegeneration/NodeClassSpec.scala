@@ -190,6 +190,6 @@ class NodeClassSpec extends CodeComparisonSpec {
   "property accessors" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:Int}}",
-      q"""def p: Int = node.properties("p").asInstanceOf[IntPropertyValue]""")
+      q"""def p: Int = item.properties("p").asInstanceOf[IntPropertyValue]""")
   }
 }

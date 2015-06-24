@@ -9,13 +9,17 @@ trait Code extends Context with Generators {
   def relationEnd(schema: Schema, name: String): String = schema.relations.find(_.name == name).get.endNode
 
   def propertyGetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name) }:$typeName = node.properties(${ name }).asInstanceOf[${ TypeName(typeName.toString + "PropertyValue") }] """
+    q""" def ${ TermName(name) }:$typeName = item.properties(${ name }).asInstanceOf[${ TypeName(typeName.toString + "PropertyValue") }] """
+
   def propertyOptionGetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name) }:Option[$typeName] = node.properties.get(${ name }).asInstanceOf[Option[${ TypeName(typeName.toString + "PropertyValue") }]].map(propertyValueToPrimitive) """
+    q""" def ${ TermName(name) }:Option[$typeName] = item.properties.get(${ name }).asInstanceOf[Option[${ TypeName(typeName.toString + "PropertyValue") }]].map(propertyValueToPrimitive) """
+
   def propertySetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name + "_$eq") }(newValue:$typeName){ node.properties(${ name }) = newValue} """
+    q""" def ${ TermName(name + "_$eq") }(newValue:$typeName){ item.properties(${ name }) = newValue} """
+
   def propertyOptionSetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name + "_$eq") }(newValue:Option[$typeName]){ if(newValue.isDefined) node.properties(${ name }) = newValue.get else node.properties -= ${ name } }"""
+    q""" def ${ TermName(name + "_$eq") }(newValue:Option[$typeName]){ if(newValue.isDefined) item.properties(${ name }) = newValue.get else item.properties -= ${ name } }"""
+
   def generatePropertyAccessors(statement: Tree): List[Tree] = statement match {
     case q"val $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType))
     case q"var $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
@@ -292,10 +296,12 @@ trait Code extends Context with Generators {
   def relationClasses(schema: Schema): List[Tree] = schema.relations.map { relation => import relation._
     val superTypesWithDefault = "Relation" :: superTypes
     val superTypesWithDefaultGenerics = superTypesWithDefault.map(TypeName(_)).map(superType => tq"$superType[$startNode_type,$endNode_type]")
+    val relationBody = statements.flatMap(generatePropertyAccessors(_))
+
     q"""
            case class $name_type(startNode: $startNode_type, relation: raw.Relation, endNode: $endNode_type)
              extends ..$superTypesWithDefaultGenerics {
-             ..$statements
+             ..$relationBody
            }
            """
   }
@@ -379,6 +385,8 @@ trait Code extends Context with Generators {
     //TODO: property accessors
     val superRelationTypesGenerics = superRelationTypes.map(TypeName(_)).map(superType => tq"$superType[$startNode_type,$endNode_type]")
     val labels = flatSuperNodeTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
+    val relationBody = statements.flatMap(generatePropertyAccessors(_))
+
     List(
       q"""
              case class $name_type(node: raw.Node)
@@ -386,7 +394,7 @@ trait Code extends Context with Generators {
                 with ..${ superRelationTypesGenerics ::: superNodeTypes.map(t => tq"${ TypeName(t) }") } {
                 override val label = raw.Label($name_label)
                 override val labels = Set(..$labels)
-               ..$statements
+               ..$relationBody
              }
              """,
       q"""
