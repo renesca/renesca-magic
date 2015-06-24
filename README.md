@@ -82,11 +82,11 @@ object ExampleSchemaWrapping {
 
 import ExampleSchemaWrapping._
 
-val animal = Animal.create("snake")
-val food = Food.create(name = "cake", amount = 1000)
-val eats = Eats.create(animal, food)
+val snake = Animal.create("snake")
+val cake = Food.create(name = "cake", amount = 1000)
+val eats = Eats.create(snake, cake)
 
-food.amount -= 100
+cake.amount -= 100
 ```
 
 Note: ```Food.name``` is a ```val``` and only gets a getter. ```Food.amount``` is a ```var``` and therefore gets a getter and a setter.
