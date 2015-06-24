@@ -341,7 +341,7 @@ trait Code extends Context with Generators {
                   middleNode,
                   raw.Relation.create(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
                 wrapped
              }
 
@@ -353,7 +353,7 @@ trait Code extends Context with Generators {
                   middleNode,
                   raw.Relation.merge(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
                 wrapped
              }
 
@@ -365,7 +365,7 @@ trait Code extends Context with Generators {
                   middleNode,
                   raw.Relation.matches(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
                 wrapped
              }
 

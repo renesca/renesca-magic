@@ -25,19 +25,19 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             def create(startNode: A, endNode: B): R = {
               val middleNode = raw.Node.create(labels);
               val wrapped = wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
-              wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+              wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
               wrapped
             }
             def merge(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
               val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch);
               val wrapped = wrap(raw.Relation.merge(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.node))
-              wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+              wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
               wrapped
             }
             def matches(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = {
               val middleNode = raw.Node.matches(labels, matches = matches);
               val wrapped = wrap(raw.Relation.matches(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.node))
-              wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+              wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
               wrapped
             }
           } """
@@ -68,7 +68,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             val wrapped = wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
-            wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+            wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
             wrapped
           }""",
       q"""def merge(startNode: A, endNode: B, p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
@@ -76,7 +76,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             val wrapped = wrap(raw.Relation.merge(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.node))
-            wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+            wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
             wrapped
           }""",
       q"""def matches(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = {
@@ -90,7 +90,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             else
               ();
             val wrapped = wrap(raw.Relation.matches(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.node))
-            wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+            wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
             wrapped
           }"""
     )
@@ -104,7 +104,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             val wrapped = wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
-            wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+            wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
             wrapped
           }""",
       q"""def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
@@ -120,7 +120,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("p", p);
             middleNode.properties.update("x", x);
             val wrapped = wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
-            wrapped.path = Some(raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation))
+            wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
             wrapped
           }""",
       q"""def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
