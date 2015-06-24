@@ -5,13 +5,14 @@
 renesca-magic generates typesafe database schemas for the Neo4j database based on [renesca](https://github.com/renesca/renesca) using scala macros.
 
 ## Feature summary
-- Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
-- Generate getters and setters for properties (primitives and optional primitives)
-- Generate accessors for neighbours on Nodes
-- Generate filtered lists for each Node/Relation type in a Graph
-- View generated code in ```/magic``` of your sbt project root. (you should add it to your ```.gitignore```)
-- traits, multiple inheritance
-- graph inheritance
+* Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
+* Generate boilerplate for handling HyperRelations ```(n)-[]->(hyperRelation)-[]->(m)```
+* Generate getters, setters and factories for properties (primitives, optional primitives, default values)
+* Generate accessors for neighbours on Nodes, over Relations and HyperRelations
+* Node and Relation traits with multiple inheritance for labels and properties
+* Generate filtered set accessors for Nodes, Relations and traits in a Graph
+* Graph can inherit Nodes from multiple other Graphs
+* View generated code in ```/magic``` of your sbt project root. (you should add it to your ```.gitignore```)
 
 ## Installation
 
@@ -27,7 +28,7 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion
 ```
 
 ## Feedback
-Please don't hesitate to create issues about anything. Ideas, Questions, Bugs, Feature Requests, Criticism, ... . If you are stuck with renesca or renesca-magic for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together.
+Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . If you are stuck with renesca or renesca-magic for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together. And if there is something in this README that is unclear or you don't understand, please tell us, too.
 
 
 ## Usage Examples
