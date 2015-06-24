@@ -346,21 +346,25 @@ trait Code extends Context with Generators {
              def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
                 val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
-                wrap(
+                val wrapped = wrap(
                   raw.Relation.merge(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.merge(middleNode, endRelationType, endNode.node)
                 )
+                wrapped.path = Some(Path.merge(wrapped.startRelation, wrapped.endRelation))
+                wrapped
              }
 
              def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
                 val middleNode = raw.Node.matches(labels, matches = matches)
                 ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
-                wrap(
+                val wrapped = wrap(
                   raw.Relation.matches(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.matches(middleNode, endRelationType, endNode.node)
                 )
+                wrapped.path = Some(Path.matches(wrapped.startRelation, wrapped.endRelation))
+                wrapped
              }
 
              ..$forwardFactories
