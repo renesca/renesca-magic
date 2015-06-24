@@ -14,8 +14,8 @@ script:
 - sbt ++$TRAVIS_SCALA_VERSION coverageReport
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
-- sbt ++$TRAVIS_SCALA_VERSION coveralls
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && ++$TRAVIS_SCALA_VERSION
+- test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION coveralls
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION
   publishSigned sonatypeRelease
 env:
   global:
