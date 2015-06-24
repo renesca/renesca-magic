@@ -4,8 +4,8 @@ trait Generators extends Context with Patterns {
 
   //TODO: abort when wrong superType inheritance. example: Relation extends NodeTrait
 
-  import context.universe._
   import Helpers._
+  import context.universe._
 
   trait Named {
     def pattern: NamePattern
@@ -106,7 +106,6 @@ trait Generators extends Context with Patterns {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Graph", "trait", graphPatterns)
 
         val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes intersect nodeTraits.map(_.name))
-        import nodePattern._
         Node(nodePattern,
           superTypes = nodePattern.superTypes,
           flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name) intersect (nodePattern.name :: nodeTraits.map(_.name)),
@@ -442,7 +441,7 @@ trait Generators extends Context with Patterns {
                relationPatterns: List[RelationPattern],
                hyperRelationPatterns: List[HyperRelationPattern]
                ) = {
-      import Schema.{childNodesOfNodeTrait, nodeNamesToRelations, nodeTraitToCommonHyperNodeTraits, flatSuperStatements, traitCanHaveOwnFactory, patternToFlatSuperTypesWithSelf}
+      import Schema.{childNodesOfNodeTrait, flatSuperStatements, nodeNamesToRelations, nodeTraitToCommonHyperNodeTraits, patternToFlatSuperTypesWithSelf, traitCanHaveOwnFactory}
       val childNodes = childNodesOfNodeTrait(nodeTraitPatterns, selectedNodePatterns ::: selectedHyperRelationPatterns, nodeTraitPattern)
       val childTraits = childNodesOfNodeTrait(nodeTraitPatterns, nodeTraitPatterns, nodeTraitPattern)
       new NodeTrait(

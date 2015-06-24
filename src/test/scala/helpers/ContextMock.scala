@@ -3,7 +3,6 @@ package helpers
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
-import scala.reflect.macros.runtime.AbortMacroException
 import scala.reflect.macros.whitebox
 
 trait ContextMock extends Specification with Mockito {

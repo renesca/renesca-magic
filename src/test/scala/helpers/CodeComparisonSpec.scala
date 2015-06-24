@@ -1,7 +1,7 @@
 package helpers
 
 import org.specs2.mutable.Specification
-import renesca.schema.macros.{Code, Generators, Patterns, Aborter, Warner}
+import renesca.schema.macros.{Aborter, Code, Generators, Patterns, Warner}
 
 
 trait CodeComparisonSpec extends Specification with ContextMock {
@@ -22,7 +22,6 @@ trait CodeComparisonSpec extends Specification with ContextMock {
   }
 
   import contextMock.universe._
-
   import magic.{schema, Schema, SchemaPattern}
 
   implicit def TreeToString(t: Tree): String = showCode(t)

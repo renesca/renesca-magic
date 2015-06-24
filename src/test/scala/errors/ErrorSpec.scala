@@ -6,6 +6,7 @@ import org.mockito.Mockito.reset
 class ErrorSpec extends CodeComparisonSpec {
 
   import contextMock.universe._
+
   import scala.util.Try
 
   def generatedAborts(source: Tree, msg: String) = {

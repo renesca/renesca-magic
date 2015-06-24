@@ -1,8 +1,7 @@
 package renesca.schema.macros
 
-import scala.reflect.macros.whitebox
+import scala.PartialFunction._
 import scala.language.experimental.macros
-import PartialFunction._
 
 trait PatternTraits extends Context {
 

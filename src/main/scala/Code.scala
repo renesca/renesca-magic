@@ -2,8 +2,8 @@ package renesca.schema.macros
 
 trait Code extends Context with Generators {
 
-  import context.universe._
   import Helpers._
+  import context.universe._
 
   def relationStart(schema: Schema, name: String): String = schema.relations.find(_.name == name).get.startNode
   def relationEnd(schema: Schema, name: String): String = schema.relations.find(_.name == name).get.endNode
