@@ -42,7 +42,8 @@ import renesca.parameter.implicits._
 
 case class Animal(node: Node) {
   val label = Label("ANIMAL")
-  def eats: Set[Food] = node.outRelations.filter(_.relationType == Eats.relationType).map(_.endNode).
+  def eats: Set[Food] = node.outRelations.
+    filter(_.relationType == Eats.relationType).map(_.endNode).
     filter(_.labels.contains(Food.label)).map(Food.wrap)
   def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
 }
@@ -59,7 +60,8 @@ object Animal {
 
 case class Food(node: Node) {
   val label = Label("FOOD")
-  def rev_eats: Set[Animal] = node.inRelations.filter(_.relationType == Eats.relationType).map(_.startNode).
+  def rev_eats: Set[Animal] = node.inRelations.
+    filter(_.relationType == Eats.relationType).map(_.startNode).
     filter(_.labels.contains(Animal.label)).map(Animal.wrap)
   def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
   def amount: Long = node.properties("amount").asInstanceOf[LongPropertyValue]
@@ -81,7 +83,9 @@ case class Eats(startNode: Animal, relation: Relation, endNode: Food)
 
 object Eats {
   val relationType = RelationType("EATS")
-  def wrap(relation: Relation) = Eats(Animal.wrap(relation.startNode), relation, Food.wrap(relation.endNode))
+  def wrap(relation: Relation) = {
+    Eats(Animal.wrap(relation.startNode), relation, Food.wrap(relation.endNode))
+  }
   def create(startNode: Animal, endNode: Food): Eats = {
     wrap(Relation.create(startNode.node, relationType, endNode.node))
   }
