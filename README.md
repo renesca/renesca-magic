@@ -7,8 +7,11 @@ renesca-magic generates typesafe database schemas for the Neo4j database based o
 ## Feature summary
 - Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
 - Generate getters and setters for properties (primitives and optional primitives)
-- Generate accessors for neighbours
+- Generate accessors for neighbours on Nodes
+- Generate filtered lists for each Node/Relation type in a Graph
 - View generated code in ```/magic``` of your sbt project root. (you should add it to your ```.gitignore```)
+- traits, multiple inheritance
+- graph inheritance
 
 ## Installation
 
@@ -99,15 +102,43 @@ import renesca.schema.macros
 
 @macros.GraphSchema
 object Schema {
-  @Node class Animal {val name: String}
-  @Node class Food {val name: String; var amount:Long}
+  @Node class Animal {val name: String }
+  @Node class Food {
+    val name: String;
+    var amount: Long
+  }
   @Relation class Eats(startNode: Animal, endNode: Food)
 }
+
+import Schema._
+val animal = Animal.create("snake")
+val food = Food.create(name = "cake", amount = 1000)
+val eats = Eats.create(animal, food)
+
+food.amount -= 100
 ```
+
+Note: ```Food.name``` is a ```val``` and only gets a getter. ```Food.amount``` is a ```var``` and therefore gets a getter and a setter.
 
 You can have a look at the generated code in the folder ```/magic``` created at the root of your sbt project. Files created in ```/magic``` are not needed for compilation. You can safely delete them and put the folder into your ```.gitignore```.
 
-### Graph wrapper
+### Wrapping induced subgraphs
+Use the ```@Graph``` annotation to wrap a whole graph. This generates lists for graphs
+
+```scala
+import renesca.schema.macros
+
+@macros.GraphSchema
+object Schema {
+  @Node class Animal {val name: String}
+  @Node class Food {val name: String; var amount:Long}
+  @Relation class Eats(startNode: Animal, endNode: Food)
+
+  @Graph trait {Nodes(Animal, Food)}
+}
+```
+
+
 ### traits, relations to traits
 ### multiple inheritance, multiple labels
 ### hyperrelations
