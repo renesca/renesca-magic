@@ -34,7 +34,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
-      q"""def createT(): N = create()"""
+      q"""def createT(): N = this.create()"""
     )
   }
   "with super factory with external superType" >> {
@@ -43,7 +43,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
-      q"""def createT(): N = create()"""
+      q"""def createT(): N = this.create()"""
     )
   }
   "with multiple super factories" >> {
@@ -52,8 +52,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends TFactory[N] with SFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
-      q"""def createT(): N = create()""",
-      q"""def createS(): N = create()"""
+      q"""def createT(): N = this.create()""",
+      q"""def createS(): N = this.create()"""
     )
   }
   "with multiple super factories (chain)" >> {
@@ -62,7 +62,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       """object N extends SFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"), raw.Label("S"))""",
-      q"""def createS(): N = create()"""
+      q"""def createS(): N = this.create()"""
     )
   }
   "with properties" >> {
@@ -100,7 +100,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
             node.node.properties.update("x", x);
             node
           }""",
-      q""" def createT(p: String, x: Int): N = create(p, x) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x) """
     )
   }
   "with inherited properties by two traits" >> {
@@ -118,28 +118,28 @@ class NodeFactorySpec extends CodeComparisonSpec {
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T; @Node class N extends X}",
-      q""" def createX(p: String, x: Int): N = create(p, x) """,
-      q""" def createT(p: String, x: Int): NODE = createX(p, x) """
+      q""" def createX(p: String, x: Int): N = this.create(p, x) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x) """
     )
   }
   "with indirectly inherited properties and default properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
-      q""" def createX(p: String, x: Int, q: Boolean = true): N = create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = createX(p, x, true) """
+      q""" def createX(p: String, x: Int, q: Boolean = true): N = this.create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, true) """
     )
   }
   "with indirectly inherited properties and optional properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
-      q""" def createX(p: String, x: Int, q: Option[Boolean] = None): N = create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = createX(p, x, None) """
+      q""" def createX(p: String, x: Int, q: Option[Boolean] = None): N = this.create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, None) """
     )
   }
   "with indirectly inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
-      q""" def createX(p: String, x: Int): N = create(p, x) """,
+      q""" def createX(p: String, x: Int): N = this.create(p, x) """,
       Not("def createS("),
       Not("def createT(")
     )

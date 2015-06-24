@@ -33,7 +33,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
       """object R extends RelationFactory[A, R, B] with TFactory[A, R, B] { """,
-      q"""def createT(startNode: A, endNode: B): R = create(startNode, endNode)"""
+      q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)"""
     )
   }
   "with properties" >> {
@@ -71,7 +71,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
             relation.relation.properties.update("x", x);
             relation
           }""",
-      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x) """
+      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x) """
     )
   }
   "with inherited properties from two traits" >> {
@@ -84,14 +84,14 @@ class RelationFactorySpec extends CodeComparisonSpec {
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def createT(startNode: START, endNode: END, p: String, x: Int): RELATION = createX(startNode, endNode, p, x)""",
-      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
+      q""" def createT(startNode: START, endNode: END, p: String, x: Int): RELATION = this.createX(startNode, endNode, p, x)""",
+      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)"""
     )
   }
   "with indirectly inherited properties in chain" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)""",
+      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
       Not( """ def createT(startNode: A, endNode: B, p: String""")
     )
   }

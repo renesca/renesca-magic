@@ -48,7 +48,9 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
       """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
-      q"""def createT(startNode: A, endNode: B): R = create(startNode, endNode)"""
+      q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)""",
+      q"""def mergeT(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, merge, onMatch)""",
+      q"""def matchesT(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, matches)"""
     )
   }
 
@@ -91,7 +93,9 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("x", x);
             wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
           }""",
-      q"""def createT(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
+      q"""def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
+      q"""def mergeT(startNode: A, endNode: B, p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, p, x, merge, onMatch)""",
+      q"""def matchesT(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, x, matches)"""
     )
   }
   "with indirectly inherited properties" >> {
@@ -103,7 +107,9 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
             middleNode.properties.update("x", x);
             wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node))
           }""",
-      q"""def createX(startNode: A, endNode: B, p: String, x: Int): R = create(startNode, endNode, p, x)"""
+      q"""def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
+      q"""def mergeX(startNode: A, endNode: B, p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, p, x, merge, onMatch)""",
+      q"""def matchesX(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, x, matches)"""
     )
   }
 }
