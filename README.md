@@ -72,11 +72,13 @@ import renesca.schema.macros
 
 @macros.GraphSchema
 object ExampleSchemaWrapping {
+  // Nodes get their class name as uppercase label
   @Node class Animal {val name: String }
   @Node class Food {
-    val name: String;
+    val name: String
     var amount: Long
   }
+  // Relations get their class name as uppercase relationType
   @Relation class Eats(startNode: Animal, endNode: Food)
 }
 
@@ -108,6 +110,7 @@ object ExampleSchemaSubgraph {
   }
   @Relation class Eats(startNode: Animal, endNode: Food)
 
+  // Relations between specified nodes will be induced
   @Graph trait Zoo {Nodes(Animal, Food) }
 }
 
@@ -115,15 +118,119 @@ import ExampleSchemaSubgraph._
 
 val zoo = Zoo(db.queryGraph("MATCH (a:ANIMAL)-[e:EATS]->(f:FOOD) RETURN a,e,f"))
 val elefant = Animal.create("elefant")
-zoo.add(elefant)
-println(zoo.animals)
+val pizza = Food.create(name = "pizza", amount = 2)
+zoo.add(Eats.create(elefant, pizza))
+zoo.animals // Set(elefant)
+zoo.relations // Set(elefant eats pizza)
 db.persistChanges(zoo)
 ```
 
+### Traits and relations to traits
+```scala
+@macros.GraphSchema
+object ExampleSchemaTraits {
+  // Inheriting Nodes receive their name as additional label
+  @Node trait Animal {val name: String }
 
-### traits, relations to traits
-### multiple inheritance, multiple labels
-### hyperrelations
+  // Node with labels FISH and ANIMAL
+  @Node class Fish extends Animal
+  @Node class Dog extends Animal
+
+  @Relation trait Consumes { val funny:Boolean }
+
+  // Relations can connect Node traits.
+  // So we can connect any node extending the trait
+  @Relation class Eats(startNode: Animal, endNode: Animal) extends Consumes
+  @Relation class Drinks(startNode: Animal, endNode: Animal) extends Consumes
+
+  // Zoo contains all Animals (Animal expands to all subNodes)
+  @Graph trait Zoo {Nodes(Animal) }
+}
+
+import ExampleSchemaTraits._
+
+val zoo = Zoo.empty
+val bello = Dog.create("bello")
+val wanda = Fish.create("wanda")
+
+zoo.add(bello)
+zoo.add(wanda)
+zoo.animals // Set(bello, wanda)
+
+zoo.add(Eats.create(bello, wanda, funny = false))
+zoo.add(Drinks.create(wanda, bello, funny = true))
+```
+
+### Multiple inheritance, multiple Node labels
+```scala
+@macros.GraphSchema
+object ExampleSchemaMultipleInheritance {
+  // Assignments are default values for properties
+  // They can also be arbitrary statements
+  @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
+  @Node trait Timestamp { val timestamp: Long = System.currentTimeMillis }
+  @Node trait Taggable
+
+  @Node class Article extends Uuid with Timestamp with Taggable {
+    val content:String
+  }
+  @Node class Tag extends Uuid { val name:String }
+  @Relation class Categorizes(startNode:Tag, endNode:Taggable)
+
+  @Graph trait Blog {Nodes(Article, Tag)}
+}
+
+import ExampleSchemaMultipleInheritance._
+val initGraph = Blog.empty
+initGraph.add(Tag.create(name="useful"))
+initGraph.add(Tag.create(name="important"))
+db.persistChanges(initGraph)
+
+val blog = Blog(db.queryGraph("MATCH (t:TAG) return t"))
+
+// automatically set uuid and timestamp
+val article = Article.create(content = "Some useful and important content")
+blog.add(article)
+
+// set all tags on the article
+blog.tags.foreach{ tag =>
+  Categorizes.create(tag, article)
+}
+
+blog.taggables // Set(article)
+
+db.persistChanges(blog)
+```
+
+### HyperRelations
+```scala
+@macros.GraphSchema
+object ExampleSchemaHyperRelations {
+  @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
+  @Node trait Taggable
+  @Node class Tag extends Uuid {val name:String}
+  @Node class User extends Uuid {val name:String}
+  @Node class Article extends Uuid with Taggable {val content:String}
+
+  // A HyperRelation is a node representing a relation:
+  // (n)-[]->(hyperRelation)-[]->(m)
+  // It behaves like node and relation at the same time
+  // and therefore can extend node and relation traits.
+  @HyperRelation class Tags(startNode: Tag, endNode: Taggable) extends Uuid
+  // Because they are nodes, we can connect a HyperRelation with another Node
+  @Relation class Supports(startNode: User, endNode: Tags)
+}
+
+import ExampleSchemaHyperRelations._
+val user = User.create(name="pumuckl")
+val helpful = Tag.create(name="helpful")
+val article = Article.create(content="Dog eats Snake")
+
+val tags = Tags.create(helpful, article) // HyperRelation
+val supports = Supports.create(user, tags) // Relation from user to HyperRelation
+```
+
+You can find all of these  examples available as sbt project: [renesca/renesca-magic-example](https://github.com/renesca/renesca-magic-example)
 
 ## License
 renesca-magic is free software released under the [Apache License, Version 2.0][Apache]
