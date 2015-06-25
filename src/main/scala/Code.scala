@@ -5,9 +5,6 @@ trait Code extends Context with Generators {
   import Helpers._
   import context.universe._
 
-  def relationStart(schema: Schema, name: String): String = schema.relations.find(_.name == name).get.startNode
-  def relationEnd(schema: Schema, name: String): String = schema.relations.find(_.name == name).get.endNode
-
   def propertyGetter(name: String, typeName: Tree) =
     q""" def ${ TermName(name) }:$typeName = item.properties(${ name }).asInstanceOf[${ TypeName(typeName.toString + "PropertyValue") }] """
 
