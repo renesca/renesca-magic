@@ -28,6 +28,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       }"""
     )
   }
+
   "with super factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
@@ -37,6 +38,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"""def createT(): N = this.create()"""
     )
   }
+
   "with super factory with external superType" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T with E}",
@@ -46,6 +48,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"""def createT(): N = this.create()"""
     )
   }
+
   "with multiple super factories" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
@@ -56,6 +59,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"""def createS(): N = this.create()"""
     )
   }
+
   "with multiple super factories (chain)" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S extends T; @Node class N extends S}",
@@ -65,6 +69,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"""def createS(): N = this.create()"""
     )
   }
+
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:String; var x:Int}}",
@@ -76,6 +81,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
           } """
     )
   }
+
   "with properties - parameter order of create" >> {
     generatedContainsCode(
       q"""object A {
@@ -91,6 +97,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"""def matches(p: Option[String] = None, q: Option[Double] = None, x: Option[Int] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): N"""
     )
   }
+
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node class N extends T}",
@@ -103,6 +110,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q""" def createT(p: String, x: Int): N = this.create(p, x) """
     )
   }
+
   "with inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node class N extends T with S}",
@@ -122,6 +130,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q""" def createT(p: String, x: Int): NODE = this.createX(p, x) """
     )
   }
+
   "with indirectly inherited properties and default properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
@@ -129,6 +138,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q""" def createT(p: String, x: Int): NODE = this.createX(p, x, true) """
     )
   }
+
   "with indirectly inherited properties and optional properties" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
@@ -136,6 +146,31 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q""" def createT(p: String, x: Int): NODE = this.createX(p, x, None) """
     )
   }
+
+  "with indirectly inherited properties and optional default properties" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] = Some(true) }; @Node class N extends X}",
+      q""" def createX(p: String, x: Int, q: Option[Boolean] = Some(true)): N = this.create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, Some(true)) """
+    )
+  }
+
+  "with indirectly inherited properties and default properties (var)" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { var q: Boolean = true }; @Node class N extends X}",
+      q""" def createX(p: String, x: Int, q: Boolean = true): N = this.create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, true) """
+    )
+  }
+
+  "with indirectly inherited properties and optional properties (var)" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { var q: Option[Boolean] = Some(true) }; @Node class N extends X}",
+      q""" def createX(p: String, x: Int, q: Option[Boolean] = Some(true)): N = this.create(p, x, q) """,
+      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, Some(true)) """
+    )
+  }
+
   "with indirectly inherited properties by two traits" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node trait X extends T with S; @Node class N extends X}",
@@ -144,6 +179,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
       Not("def createT(")
     )
   }
+
   "diamond inheritance" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait L extends T; @Node trait R extends T; @Node trait X extends L with R; @Node class N extends X}",
