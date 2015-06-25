@@ -153,8 +153,10 @@ object ExampleSchemaTraits {
 import ExampleSchemaTraits._
 
 val zoo = Zoo.empty
-val bello = Dog.create("bello")
-val wanda = Fish.create("wanda")
+// merge dog and fish on the name property
+// (creates the animal if it does not exist, otherwise the existing animal is matched)
+val bello = Dog.merge(name = "bello", merge = Set("name"))
+val wanda = Fish.merge(name = "wanda", merge = Set("name"))
 
 zoo.add(bello)
 zoo.add(wanda)
@@ -169,28 +171,33 @@ zoo.add(Drinks.create(wanda, bello, funny = true))
 ```scala
 @macros.GraphSchema
 object ExampleSchemaMultipleInheritance {
-  // Assignments are default values for properties
-  // They can also be arbitrary statements
-  @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
-  @Node trait Timestamp { val timestamp: Long = System.currentTimeMillis }
-  @Node trait Taggable
+    // Assignments are default values for properties
+    // They can also be arbitrary statements
+    @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
+    @Node trait Timestamp { val timestamp: Long = System.currentTimeMillis }
+    @Node trait Taggable
 
-  @Node class Article extends Uuid with Timestamp with Taggable {
+    @Node class Article extends Uuid with Timestamp with Taggable {
     val content:String
-  }
-  @Node class Tag extends Uuid { val name:String }
-  @Relation class Categorizes(startNode:Tag, endNode:Taggable)
+    }
+    @Node class Tag extends Uuid { val name:String }
+    @Relation class Categorizes(startNode:Tag, endNode:Taggable)
 
-  @Graph trait Blog { Nodes(Article, Tag) }
+    @Graph trait Blog {Nodes(Article, Tag)}
 }
 
 import ExampleSchemaMultipleInheritance._
+
 val initGraph = Blog.empty
-initGraph.add(Tag.create(name="useful"))
-initGraph.add(Tag.create(name="important"))
+initGraph.add(Tag.create(name = "useful"))
+initGraph.add(Tag.create(name = "important"))
 db.persistChanges(initGraph)
 
-val blog = Blog(db.queryGraph("MATCH (t:TAG) return t"))
+val blog = Blog.empty
+
+// match the previously created tags
+blog.add(Tag.matches(name = Some("useful"), matches = Set("name")))
+blog.add(Tag.matches(name = Some("important"), matches = Set("name")))
 
 // automatically set uuid and timestamp
 val article = Article.create(content = "Some useful and important content")
@@ -198,10 +205,11 @@ blog.add(article)
 
 // set all tags on the article
 blog.tags.foreach{ tag =>
-  Categorizes.create(tag, article)
+    blog.add(Categorizes.create(tag, article))
 }
 
 blog.taggables // Set(article)
+article.rev_categorizes // blog.tags
 
 db.persistChanges(blog)
 ```
