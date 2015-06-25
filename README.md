@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/renesca/renesca-magic.svg?branch=master)](https://travis-ci.org/renesca/renesca-magic)
 [![Coverage Status](https://coveralls.io/repos/renesca/renesca-magic/badge.svg?branch=master)](https://coveralls.io/r/renesca/renesca-magic?branch=master)
 
-renesca-magic generates typesafe database schemas for the Neo4j database based on [renesca](https://github.com/renesca/renesca) using scala macros.
+renesca-magic is an abstraction layer for [renesca](https://github.com/renesca/renesca), which generates typesafe database schemas for the Neo4j database using scala macros.
 
 ## Feature summary
 * Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
@@ -35,7 +35,7 @@ Please don't hesitate to create issues about anything. Ideas, questions, bugs, f
 You can find all of these examples available as sbt project: [renesca/renesca-magic-example](https://github.com/renesca/renesca-magic-example). You can also have a look at the generated code: [renesca-magic-example/magic](https://github.com/renesca/renesca-magic-example/tree/master/magic)
 
 ### Wrapping low level entities
-In [renesca](https://github.com/renesca/renesca), nodes represent low level graph database entities from the property graph model. This is a bit annoying to work with when you have a schema in mind. For example when we have types of nodes that have a specific label, always read and write the same properties and access neighbours with another specific label.
+In [renesca](https://github.com/renesca/renesca), nodes represent low level graph database entities from the property graph model. This is a bit annoying to work with when you have a schema in mind. For example, when we have types of nodes that have a specific label, we always access neighbours with another specific label. The same holds for properties for specific labels.
 
 We can wrap our low-level nodes and relations in classes that take care of and hide the boilerplate. In the following example we provide some hand-written boilerplate to demonstrate this.
 
@@ -68,7 +68,7 @@ object Animal {
 ```
 See the full boilerplate example at [renesca-example/.../Schema.scala](https://github.com/renesca/renesca-example/blob/master/src/main/scala/renesca/example/Schema.scala).
 
-This is a lot of code for a single relation between two nodes. Writing this by hand for a larger schemas takes a lot of time and is very error prone. We can use renesca-magic to generate this for us. Simply write:
+This is a lot of code for a single relation between two nodes. Writing this by hand for a larger schema takes a lot of time and is very error prone. We can use renesca-magic to generate this for us. Simply write:
 
 ```scala
 import renesca.schema.macros
@@ -76,7 +76,7 @@ import renesca.schema.macros
 @macros.GraphSchema
 object ExampleSchemaWrapping {
   // Nodes get their class name as uppercase label
-  @Node class Animal {val name: String }
+  @Node class Animal { val name: String }
   @Node class Food {
     val name: String
     var amount: Long
@@ -106,7 +106,7 @@ import renesca.schema.macros
 
 @macros.GraphSchema
 object ExampleSchemaSubgraph {
-  @Node class Animal {val name: String }
+  @Node class Animal { val name: String }
   @Node class Food {
     val name: String
     var amount: Long
@@ -114,7 +114,7 @@ object ExampleSchemaSubgraph {
   @Relation class Eats(startNode: Animal, endNode: Food)
 
   // Relations between specified nodes will be induced
-  @Graph trait Zoo {Nodes(Animal, Food) }
+  @Graph trait Zoo { Nodes(Animal, Food) }
 }
 
 import ExampleSchemaSubgraph._
@@ -133,7 +133,7 @@ db.persistChanges(zoo)
 @macros.GraphSchema
 object ExampleSchemaTraits {
   // Inheriting Nodes receive their name as additional label
-  @Node trait Animal {val name: String }
+  @Node trait Animal { val name: String }
 
   // Node with labels FISH and ANIMAL
   @Node class Fish extends Animal
@@ -141,13 +141,13 @@ object ExampleSchemaTraits {
 
   @Relation trait Consumes { val funny:Boolean }
 
-  // Relations can connect Node traits.
-  // So we can connect any node extending the trait
+  // Relations can connect Node traits
+  // instead of defining relations for Fish and Dog explicitly
   @Relation class Eats(startNode: Animal, endNode: Animal) extends Consumes
   @Relation class Drinks(startNode: Animal, endNode: Animal) extends Consumes
 
   // Zoo contains all Animals (Animal expands to all subNodes)
-  @Graph trait Zoo {Nodes(Animal) }
+  @Graph trait Zoo { Nodes(Animal) }
 }
 
 import ExampleSchemaTraits._
@@ -160,6 +160,7 @@ zoo.add(bello)
 zoo.add(wanda)
 zoo.animals // Set(bello, wanda)
 
+// We can connect any node extending the trait Animal
 zoo.add(Eats.create(bello, wanda, funny = false))
 zoo.add(Drinks.create(wanda, bello, funny = true))
 ```
@@ -180,7 +181,7 @@ object ExampleSchemaMultipleInheritance {
   @Node class Tag extends Uuid { val name:String }
   @Relation class Categorizes(startNode:Tag, endNode:Taggable)
 
-  @Graph trait Blog {Nodes(Article, Tag)}
+  @Graph trait Blog { Nodes(Article, Tag) }
 }
 
 import ExampleSchemaMultipleInheritance._
@@ -211,16 +212,16 @@ db.persistChanges(blog)
 object ExampleSchemaHyperRelations {
   @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
   @Node trait Taggable
-  @Node class Tag extends Uuid {val name:String}
-  @Node class User extends Uuid {val name:String}
-  @Node class Article extends Uuid with Taggable {val content:String}
+  @Node class Tag extends Uuid { val name:String }
+  @Node class User extends Uuid { val name:String }
+  @Node class Article extends Uuid with Taggable { val content:String }
 
   // A HyperRelation is a node representing a relation:
   // (n)-[]->(hyperRelation)-[]->(m)
   // It behaves like node and relation at the same time
-  // and therefore can extend node and relation traits.
+  // and therefore can extend node and relation traits
   @HyperRelation class Tags(startNode: Tag, endNode: Taggable) extends Uuid
-  // Because they are nodes, we can connect a HyperRelation with another Node
+  // Because these are nodes, we can connect a HyperRelation with another Node
   @Relation class Supports(startNode: User, endNode: Tags)
 }
 
