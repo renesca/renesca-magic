@@ -28,8 +28,7 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion
 ```
 
 ## Feedback
-Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . If you are stuck with renesca or renesca-magic for some time, this means something does not work as intended or the API is not intuitive. Let's fix this together. And if there is something in this README that is unclear or you don't understand, please tell us, too.
-
+Please don't hesitate to create issues about anything. Ideas, questions, bugs, feature requests, criticism, missing documentation, confusing examples, ... . Are you stuck with renesca or renesca-magic for some time? Is there something in this README that is unclear? Anything else? This means something does not work as intended or the API is not intuitive. Contact us and let's fix this together.
 
 ## Usage Examples
 You can find all of these examples available as sbt project: [renesca/renesca-magic-example](https://github.com/renesca/renesca-magic-example). You can also have a look at the generated code: [renesca-magic-example/magic](https://github.com/renesca/renesca-magic-example/tree/master/magic)
