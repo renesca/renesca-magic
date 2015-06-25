@@ -202,7 +202,7 @@ trait Generators extends Context with Patterns with Parameters {
     }
 
     def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): List[ParameterList] = {
-      patternToNameClasses(pattern.superTypes.map(nameToPattern(patterns, _)), nameClasses).filter(_.hasOwnFactory).map(_.parameterList)
+      patternToNameClasses(pattern.superTypes.map(nameToPattern(patterns, _)), nameClasses).map(_.parameterList)
     }
 
     def patternToNameClasses[P <: Named with HasOwnFactory](patterns: List[_ <: NamePattern], nameClasses: List[P]): List[P] = nameClasses.filter(nameClass => patterns.map(_.name).contains(nameClass.name))
@@ -226,7 +226,7 @@ trait Generators extends Context with Patterns with Parameters {
     }
 
     def neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
-      val sources = (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern)).map(_.name)
+      val sources = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(sources contains _.startNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.endNode) {
           // if r.endNode is a trait
@@ -245,7 +245,7 @@ trait Generators extends Context with Patterns with Parameters {
     }
 
     def rev_neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
-      val targets = (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern)).map(_.name)
+      val targets = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(targets contains _.endNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.startNode) {
           // if r.startNode is a trait
@@ -293,7 +293,7 @@ trait Generators extends Context with Patterns with Parameters {
 
     // TODO: check usages if other callers also need intermediate traits
     def childNodesOfNodeTrait(nodeTraits: List[NodeTraitPattern], nodePatterns: List[NamePattern with SuperTypesPattern], nodeTrait: NodeTraitPattern): List[String] = {
-      (patternToFlatSubTypesWithSelf(nodeTraits, nodeTrait)).flatMap { subTrait =>
+      patternToFlatSubTypesWithSelf(nodeTraits, nodeTrait).flatMap { subTrait =>
         nodePatterns.filter(_.superTypes contains subTrait.name)
       }.distinct.map(_.name)
     }
@@ -390,7 +390,7 @@ trait Generators extends Context with Patterns with Parameters {
     def commonHyperNodeNodeTraits_type = commonHyperNodeNodeTraits.map(TypeName(_))
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
-    val parameterList = ParameterList.create(flatStatements)
+    val parameterList = ParameterList.create(flatStatements, hasOwnFactory)
 
     //TODO: do not use mutable property
     var traitFactoryParameterList: List[ParameterList] = Nil
@@ -429,7 +429,7 @@ trait Generators extends Context with Patterns with Parameters {
                             hasOwnFactory: Boolean
                             ) extends Named with SuperTypes with Statements with HasOwnFactory {
 
-    val parameterList = ParameterList.create(flatStatements)
+    val parameterList = ParameterList.create(flatStatements, hasOwnFactory)
 
     var traitFactoryParameterList: List[ParameterList] = Nil //TODO: no var
   }

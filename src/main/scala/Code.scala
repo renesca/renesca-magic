@@ -33,11 +33,16 @@ trait Code extends Context with Generators {
   }
 
   def factoryMethodsInterface(parameterList: ParameterList, hasOwnFactory: Boolean, ownName: String): List[Tree] = {
-    if(hasOwnFactory) {
-      val optionalParameterList = parameterList.optional
+    val typeName = tq"NODE"
+    val optionalParameterList = parameterList.optional
+    val optionalFactoryParameters = optionalParameterList.toParamCode
+    val matches =
+      q"""
+            def ${ TermName(traitFactoryMatches(ownName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
+            """
+
+    val factories = if(hasOwnFactory) {
       val factoryParameters = parameterList.toParamCode
-      val optionalFactoryParameters = optionalParameterList.toParamCode
-      val typeName = tq"NODE"
 
       List(
         q"""
@@ -45,22 +50,26 @@ trait Code extends Context with Generators {
               """,
         q"""
               def ${ TermName(traitFactoryMerge(ownName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName
-              """,
-        q"""
-              def ${ TermName(traitFactoryMatches(ownName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
               """
       )
     } else {
       List.empty
     }
+
+    matches :: factories
   }
 
   def factoryMethodsInterfaceStartEnd(parameterList: ParameterList, hasOwnFactory: Boolean, ownName: String): List[Tree] = {
-    if(hasOwnFactory) {
-      val optionalParameterList = parameterList.optional
+    val typeName = tq"RELATION"
+    val optionalParameterList = parameterList.optional
+    val optionalFactoryParameters = List(q"val startNode:START", q"val endNode:END") ::: optionalParameterList.toParamCode
+    val matches =
+      q"""
+            def ${ TermName(traitFactoryMatches(ownName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
+            """
+
+    val factories = if(hasOwnFactory) {
       val factoryParameters = List(q"val startNode:START", q"val endNode:END") ::: parameterList.toParamCode
-      val optionalFactoryParameters = List(q"val startNode:START", q"val endNode:END") ::: optionalParameterList.toParamCode
-      val typeName = tq"RELATION"
 
       List(
         q"""
@@ -68,36 +77,44 @@ trait Code extends Context with Generators {
               """,
         q"""
               def ${ TermName(traitFactoryMerge(ownName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName
-              """,
-        q"""
-              def ${ TermName(traitFactoryMatches(ownName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
               """
       )
     } else {
       List.empty
     }
+
+    matches :: factories
   }
 
   def forwardFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], superName: String, typeName: Tree, ownName: String = ""): List[Tree] = {
     traitFactoryParameterList.flatMap(parentParameterList => {
       val optionalParameterList = parameterList.optional
       val optionalParentParameterList = parentParameterList.optional
-      val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
       val optionalParentCaller = optionalParameterList.supplementMissingParametersOf(optionalParentParameterList)
-      val factoryParameters = parentParameterList.toParamCode
       val optionalFactoryParameters = optionalParentParameterList.toParamCode
 
-      List(
-        q"""
-              def ${ TermName(traitFactoryCreate(superName)) } (..$factoryParameters): $typeName = this.${ TermName(traitFactoryCreate(ownName)) } (..$parentCaller)
-              """,
-        q"""
-              def ${ TermName(traitFactoryMerge(superName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMerge(ownName)) } (..$parentCaller, merge, onMatch)
-              """,
+      val matches =
         q"""
               def ${ TermName(traitFactoryMatches(superName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMatches(ownName)) } (..$optionalParentCaller, matches)
               """
-      )
+
+      val factories = if(parentParameterList.hasOwnFactory) {
+        val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
+        val factoryParameters = parentParameterList.toParamCode
+
+        List(
+          q"""
+              def ${ TermName(traitFactoryCreate(superName)) } (..$factoryParameters): $typeName = this.${ TermName(traitFactoryCreate(ownName)) } (..$parentCaller)
+              """,
+          q"""
+              def ${ TermName(traitFactoryMerge(superName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMerge(ownName)) } (..$parentCaller, merge, onMatch)
+              """
+        )
+      } else {
+        List.empty
+      }
+
+      matches :: factories
     })
   }
 
@@ -105,22 +122,31 @@ trait Code extends Context with Generators {
     traitFactoryParameterList.flatMap(parentParameterList => {
       val optionalParameterList = parameterList.optional
       val optionalParentParameterList = parentParameterList.optional
-      val parentCaller = List(q"startNode", q"endNode") ::: parameterList.supplementMissingParametersOf(parentParameterList)
       val optionalParentCaller = List(q"startNode", q"endNode") ::: optionalParameterList.supplementMissingParametersOf(optionalParentParameterList)
-      val factoryParameters = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: parentParameterList.toParamCode
       val optionalFactoryParameters = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: optionalParentParameterList.toParamCode
 
-      List(
-        q"""
-            def ${ TermName(traitFactoryCreate(superName)) } (..$factoryParameters): $typeName = this.${ TermName(traitFactoryCreate(ownName)) } (..$parentCaller)
-            """,
-        q"""
-            def ${ TermName(traitFactoryMerge(superName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMerge(ownName)) } (..$parentCaller, merge, onMatch)
-            """,
+      val matches =
         q"""
             def ${ TermName(traitFactoryMatches(superName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMatches(ownName)) } (..$optionalParentCaller, matches)
             """
-      )
+
+      val factories = if(parentParameterList.hasOwnFactory) {
+        val parentCaller = List(q"startNode", q"endNode") ::: parameterList.supplementMissingParametersOf(parentParameterList)
+        val factoryParameters = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: parentParameterList.toParamCode
+
+        List(
+          q"""
+            def ${ TermName(traitFactoryCreate(superName)) } (..$factoryParameters): $typeName = this.${ TermName(traitFactoryCreate(ownName)) } (..$parentCaller)
+            """,
+          q"""
+            def ${ TermName(traitFactoryMerge(superName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(traitFactoryMerge(ownName)) } (..$parentCaller, merge, onMatch)
+            """
+        )
+      } else {
+        List.empty
+      }
+
+      matches :: factories
     })
   }
 

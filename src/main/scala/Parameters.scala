@@ -31,7 +31,7 @@ trait Parameters extends Context {
     }
   }
 
-  case class ParameterList(parameters: List[Parameter]) {
+  case class ParameterList(parameters: List[Parameter], hasOwnFactory: Boolean) {
 
     val (withDefault, nonDefault) = parameters.sortBy(_.name.toString).partition(_.default.isDefined)
     val (withDefaultOptional, withDefaultNonOptional) = withDefault.partition(_.optional)
@@ -42,7 +42,7 @@ trait Parameters extends Context {
     def optional = ParameterList(parameters.map {
       case Parameter(name, typeName, false, _, mutable) => Parameter(name, tq"Option[$typeName]", true, Some(q"None"), mutable)
       case Parameter(name, typeName, true, _, mutable)  => Parameter(name, typeName, true, Some(q"None"), mutable)
-    })
+    }, hasOwnFactory)
 
     def supplementMissingParametersOf(that: ParameterList): List[Tree] = {
       this.ordered.map(p => (p, that.ordered.find(_.name.toString == p.name.toString))).map {
@@ -53,7 +53,7 @@ trait Parameters extends Context {
   }
 
   object ParameterList {
-    def create(flatStatements: List[Tree]): ParameterList = new ParameterList(flatStatements.collect {
+    def create(flatStatements: List[Tree], hasOwnFactory: Boolean = true): ParameterList = ParameterList(flatStatements.collect {
       case statement@(q"val $propertyName:Option[$propertyType] = $default") => Parameter(q"$propertyName", tq"Option[$propertyType]", optional = true, default = Some(q"$default"), mutable = false)
       case statement@(q"var $propertyName:Option[$propertyType] = $default") => Parameter(q"$propertyName", tq"Option[$propertyType]", optional = true, default = Some(q"$default"), mutable = true)
       case statement@(q"val $propertyName:Option[$propertyType]")            => Parameter(q"$propertyName", tq"Option[$propertyType]", optional = true, default = Some(q"None"), mutable = false)
@@ -62,6 +62,6 @@ trait Parameters extends Context {
       case statement@(q"var $propertyName:$propertyType = $default")         => Parameter(q"$propertyName", q"$propertyType", optional = false, default = Some(q"$default"), mutable = true)
       case statement@(q"val $propertyName:$propertyType")                    => Parameter(q"$propertyName", q"$propertyType", optional = false, default = None, mutable = false)
       case statement@(q"var $propertyName:$propertyType")                    => Parameter(q"$propertyName", q"$propertyType", optional = false, default = None, mutable = true)
-    })
+    }, hasOwnFactory)
   }
 }
