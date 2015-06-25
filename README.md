@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/renesca/renesca-magic.svg?branch=master)](https://travis-ci.org/renesca/renesca-magic)
 [![Coverage Status](https://coveralls.io/repos/renesca/renesca-magic/badge.svg?branch=master)](https://coveralls.io/r/renesca/renesca-magic?branch=master)
 
-renesca-magic is an abstraction layer for [renesca](https://github.com/renesca/renesca), which generates typesafe database schemas for the Neo4j database using scala macros.
+renesca-magic is an abstraction layer for [renesca](https://github.com/renesca/renesca), which generates typesafe graph database schemas for the Neo4j database using scala macros.
 
 ## Feature summary
 * Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
