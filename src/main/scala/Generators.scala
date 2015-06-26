@@ -135,12 +135,16 @@ trait Generators extends Context with Patterns with Parameters {
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "trait", nodeTraitPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "trait", relationTraitPatterns)
+        //TODO: maybe also specify hypernodes?
         val notAllowed = graphPattern.nodes.distinct diff (nodePatterns ++ nodeTraitPatterns).map(_.name)
         if(notAllowed.nonEmpty) abort(s"Graph `${ graphPattern.name }` cannot contain ${ notAllowed.mkString("`", "`, `", "`") }. Only Node classes and traits are allowed.")
 
+        //TODO: test/audit!
         val traits = graphToNodes(graphPatterns, graphPattern).distinct intersect nodeTraits.map(_.name)
         val expandedTraits = traits.flatMap(t => patternToFlatSubTypesWithoutSelf(nodeTraitPatterns ::: nodePatterns, nameToPattern(nodeTraitPatterns, t))).map(_.name)
         val nodes = (graphToNodes(graphPatterns, graphPattern) ++ expandedTraits).distinct diff nodeTraits.map(_.name)
+        val connectedHyperNodes = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, hyperRelationPatterns)
+        val nodesWithHyperNodes = nodes ++ connectedHyperNodes
         val graphedTraits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
           .flatMap(_.superTypes).distinct
           .intersect(nodeTraitPatterns.map(_.name))
@@ -148,15 +152,16 @@ trait Generators extends Context with Patterns with Parameters {
 
         Graph(graphPattern,
           nodes = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
-          nodesWithHyperNodes = nodes,
+          nodesWithHyperNodes = nodesWithHyperNodes,
           relations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, relationPatterns),
           relationsWithHyperRelations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, allRelationPatterns),
-          hyperRelations = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, hyperRelationPatterns),
-          nodeTraits = graphedTraits.map(nodeTraitPattern =>
+          hyperRelations = connectedHyperNodes,
+          nodeTraits = graphedTraits.map(nodeTraitPattern => {
             NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns,
-              selectedNodePatterns = nodes.filter(g => nodePatterns.exists(_.name == g)).map(nameToPattern(nodePatterns, _)),
-              selectedHyperRelationPatterns = (nodeNamesToRelations(nodes, hyperRelationPatterns) ::: nodes.filter(g => hyperRelationPatterns.exists(_.name == g)).map(nameToPattern(hyperRelationPatterns, _))).distinct,
-              relationPatterns, hyperRelationPatterns))
+              nodes.filter(nodePatterns.map(_.name).toSet).distinct.map(nameToPattern(nodePatterns, _)),
+              connectedHyperNodes.filter(hyperRelationPatterns.map(_.name).toSet).distinct.map(nameToPattern(hyperRelationPatterns, _)),
+              relationPatterns, hyperRelationPatterns)
+          })
         )
       }
 
@@ -406,6 +411,7 @@ trait Generators extends Context with Patterns with Parameters {
                relationPatterns: List[RelationPattern],
                hyperRelationPatterns: List[HyperRelationPattern]
                ) = {
+
       import Schema.{childNodesOfNodeTrait, flatSuperStatements, nodeNamesToRelations, nodeTraitToCommonHyperNodeTraits, patternToFlatSuperTypesWithSelf, traitCanHaveOwnFactory}
       val childNodes = childNodesOfNodeTrait(nodeTraitPatterns, selectedNodePatterns ::: selectedHyperRelationPatterns, nodeTraitPattern)
       val childTraits = childNodesOfNodeTrait(nodeTraitPatterns, nodeTraitPatterns, nodeTraitPattern)
