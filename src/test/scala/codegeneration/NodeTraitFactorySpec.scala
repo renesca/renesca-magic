@@ -179,4 +179,11 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
+  "no factory methods if HyperRelation inherits from NodeTrait" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {val p:String}; @HyperRelation class X(startNode: Node, endNode: Node) extends T}",
+      q"""trait TFactory[NODE <: T] extends NodeFactory[NODE];"""
+    )
+  }
 }
