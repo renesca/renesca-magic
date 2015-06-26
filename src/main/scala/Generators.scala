@@ -51,7 +51,7 @@ trait Generators extends Context with Patterns with Parameters {
   }
 
   trait HasOwnFactory {
-    val hasOwnFactory: Boolean
+    val hasOwnFactory: Option[Boolean]
     val parameterList: ParameterList
   }
 
@@ -326,7 +326,7 @@ trait Generators extends Context with Patterns with Parameters {
       nodeNamesToRelations(nodes ::: traits ::: hyperRelationPatterns.map(_.name), relations).map(_.name)
     }
 
-    def traitCanHaveOwnFactory(hierarchyPatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], currentTrait: NamePattern with SuperTypesPattern): Boolean = {
+    def traitCanHaveOwnFactory(hierarchyPatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], currentTrait: NamePattern with SuperTypesPattern): Option[Boolean] = {
       val children = patternToFlatSubTypesWithoutSelf(hierarchyPatterns, currentTrait)
       val childrenWithFlatParents = children.flatMap(patternToFlatSuperTypesWithSelf(hierarchyPatterns, _)).distinct
       val subWithoutSuper = childrenWithFlatParents diff patternToFlatSuperTypesWithSelf(hierarchyPatterns, currentTrait)
@@ -337,10 +337,10 @@ trait Generators extends Context with Patterns with Parameters {
       val isNodeTrait = currentTrait.isInstanceOf[NodeTraitPattern]
       val hasHyperRelationChild = children.exists(_.isInstanceOf[HyperRelationPattern])
       if(isNodeTrait && hasHyperRelationChild)
-        return false
+        return None
 
       val statements = subWithoutSuper.flatMap(_.statements)
-      statements.forall {
+      Some(statements.forall {
         case q"val $x:Option[$propertyType]" => true
         case q"var $x:Option[$propertyType]" => true
         case q"val $x:$propertyType = $y"    => true
@@ -348,7 +348,7 @@ trait Generators extends Context with Patterns with Parameters {
         case q"val $x:$propertyType"         => false
         case q"var $x:$propertyType"         => false
         case _                               => true // custom statements
-      }
+      })
     }
   }
 
@@ -384,13 +384,13 @@ trait Generators extends Context with Patterns with Parameters {
                         commonHyperNodeNodeTraits: List[String],
                         commonHyperNodeRelationTraits: List[String],
                         flatStatements: List[Tree],
-                        hasOwnFactory: Boolean
+                        hasOwnFactory: Option[Boolean]
                         ) extends Named with SuperTypes with Statements with HasOwnFactory {
 
     def commonHyperNodeNodeTraits_type = commonHyperNodeNodeTraits.map(TypeName(_))
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
-    val parameterList = ParameterList.create(flatStatements, hasOwnFactory)
+    val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
 
     //TODO: do not use mutable property
     var traitFactoryParameterList: List[ParameterList] = Nil
@@ -426,10 +426,10 @@ trait Generators extends Context with Patterns with Parameters {
   case class RelationTrait(
                             pattern: RelationTraitPattern,
                             flatStatements: List[Tree],
-                            hasOwnFactory: Boolean
+                            hasOwnFactory: Option[Boolean]
                             ) extends Named with SuperTypes with Statements with HasOwnFactory {
 
-    val parameterList = ParameterList.create(flatStatements, hasOwnFactory)
+    val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
 
     var traitFactoryParameterList: List[ParameterList] = Nil //TODO: no var
   }
@@ -447,7 +447,7 @@ trait Generators extends Context with Patterns with Parameters {
                    traitFactoryParameterList: List[ParameterList]
                    ) extends Named with SuperTypes with Statements {
 
-    val parameterList = ParameterList.create(flatStatements)
+    val parameterList = ParameterList.create(flatStatements, name)
 
     def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
       (TermName(accessorName), TermName(relation), TypeName(endNode), TermName(endNode))
@@ -464,7 +464,7 @@ trait Generators extends Context with Patterns with Parameters {
                        traitFactoryParameterList: List[ParameterList]
                        ) extends Named with StartEndNode with SuperTypes with Statements {
 
-    val parameterList = ParameterList.create(flatStatements)
+    val parameterList = ParameterList.create(flatStatements, name)
   }
 
   case class HyperRelation(
@@ -476,6 +476,6 @@ trait Generators extends Context with Patterns with Parameters {
                             traitFactoryParameterList: List[ParameterList]
                             ) extends Named with SuperTypes with StartEndNode with Statements with StartEndRelation {
 
-    val parameterList = ParameterList.create(flatSuperStatements)
+    val parameterList = ParameterList.create(flatSuperStatements, name)
   }
 }

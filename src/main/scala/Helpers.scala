@@ -12,9 +12,10 @@ object Helpers {
   }
 
   def traitFactoryName(name: String) = name + "Factory"
-  def traitFactoryCreate(name: String) = "create" + name
-  def traitFactoryMerge(name: String) = "merge" + name
-  def traitFactoryMatches(name: String) = "matches" + name
+  def factoryCreateMethod(name: String) = "create" + name
+  def factoryMergeMethod(name: String) = "merge" + name
+  def factoryMatchesMethod(name: String) = "matches" + name
+  def traitFactoryMatchesMethod(name: String) = factoryMatchesMethod(name) + "Trait"
   def nameToLabel(name: String) = name.toUpperCase
   def relationName(start: String, end: String) = s"${ start }To${ end }"
 
