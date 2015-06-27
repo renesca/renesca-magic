@@ -137,10 +137,8 @@ trait Generators extends Context with Patterns with Parameters {
         val nodes = (graphToNodes(graphPatterns, graphPattern) ++ expandedTraits).distinct diff nodeTraits.map(_.name)
         val connectedHyperNodes = inducedRelations(nodes, nodePatterns, nodeTraitPatterns, hyperRelationPatterns, hyperRelationPatterns)
         val nodesWithHyperNodes = nodes ++ connectedHyperNodes
-        val graphedTraits = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
-          .flatMap(_.superTypes).distinct
-          .intersect(nodeTraitPatterns.map(_.name))
-          .map(nameToPattern(nodeTraitPatterns, _))
+        val graphedNodePatterns = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _))
+        val graphedTraits = graphedNodePatterns.flatMap(patternToFlatSuperTypesWithoutSelf(nodeTraitPatterns, _)).distinct
 
         Graph(graphPattern,
           nodes = nodes.map(nameToPattern(nodePatterns ::: hyperRelationPatterns, _)).collect { case n: NodePattern => n.name },
