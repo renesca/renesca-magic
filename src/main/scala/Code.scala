@@ -90,7 +90,7 @@ trait Code extends Context with Generators {
     }).getOrElse(List.empty)
   }
 
-  def forwardFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree, ownName: String = ""): List[Tree] = {
+  def forwardFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree): List[Tree] = {
     traitFactoryParameterList.flatMap(parentParameterList => {
       val optionalParameterList = parameterList.optional
       val optionalParentParameterList = parentParameterList.optional
@@ -100,7 +100,7 @@ trait Code extends Context with Generators {
       parentParameterList.hasOwnFactory.map(ownFactory => {
         val matches =
           q"""
-                def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(factoryMatchesMethod(ownName)) } (..$optionalParentCaller, matches)
+                def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
                 """
 
         val factories = if(ownFactory) {
@@ -109,10 +109,10 @@ trait Code extends Context with Generators {
 
           List(
             q"""
-                def ${ TermName(factoryCreateMethod(parentParameterList.typeName)) } (..$factoryParameters): $typeName = this.${ TermName(factoryCreateMethod(ownName)) } (..$parentCaller)
+                def ${ TermName(factoryCreateMethod(parentParameterList.typeName)) } (..$factoryParameters): $typeName = this.create (..$parentCaller)
                 """,
             q"""
-                def ${ TermName(factoryMergeMethod(parentParameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(factoryMergeMethod(ownName)) } (..$parentCaller, merge, onMatch)
+                def ${ TermName(factoryMergeMethod(parentParameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.merge (..$parentCaller, merge, onMatch)
                 """
           )
         } else {
@@ -124,7 +124,7 @@ trait Code extends Context with Generators {
     })
   }
 
-  def forwardFactoryMethodsStartEnd(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree, startNodeType: Tree, endNodeType: Tree, ownName: String = ""): List[Tree] = {
+  def forwardFactoryMethodsStartEnd(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree, startNodeType: Tree, endNodeType: Tree): List[Tree] = {
     traitFactoryParameterList.flatMap(parentParameterList => {
       val optionalParameterList = parameterList.optional
       val optionalParentParameterList = parentParameterList.optional
@@ -134,7 +134,7 @@ trait Code extends Context with Generators {
       parentParameterList.hasOwnFactory.map(ownFactory => {
         val matches =
           q"""
-              def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(factoryMatchesMethod(ownName)) } (..$optionalParentCaller, matches)
+              def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
               """
 
         val factories = if(ownFactory) {
@@ -143,10 +143,10 @@ trait Code extends Context with Generators {
 
           List(
             q"""
-                def ${ TermName(factoryCreateMethod(parentParameterList.typeName)) } (..$factoryParameters): $typeName = this.${ TermName(factoryCreateMethod(ownName)) } (..$parentCaller)
+                def ${ TermName(factoryCreateMethod(parentParameterList.typeName)) } (..$factoryParameters): $typeName = this.create (..$parentCaller)
                 """,
             q"""
-                def ${ TermName(factoryMergeMethod(parentParameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.${ TermName(factoryMergeMethod(ownName)) } (..$parentCaller, merge, onMatch)
+                def ${ TermName(factoryMergeMethod(parentParameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.merge (..$parentCaller, merge, onMatch)
                 """
           )
         } else {
@@ -169,7 +169,6 @@ trait Code extends Context with Generators {
     val factoryName = TypeName(traitFactoryName(name))
     val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[NODE]")
     val factoryInterface = factoryMethodsInterface(parameterList, name)
-    val forwardFactories = forwardFactoryMethods(parameterList, traitFactoryParameterList, tq"NODE", name)
     val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
 
     List(
@@ -177,8 +176,6 @@ trait Code extends Context with Generators {
            trait $factoryName [NODE <: $name_type] extends ..$superFactories {
 
              ..$factoryInterface
-
-             ..$forwardFactories
            }
     """,
       q"""
@@ -195,14 +192,11 @@ trait Code extends Context with Generators {
     val factoryName = TypeName(traitFactoryName(name))
     val superFactories = if(superTypes.isEmpty) List(tq"AbstractRelationFactory[START,RELATION,END]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[START,RELATION,END]")
     val factoryInterface = factoryMethodsInterfaceStartEnd(parameterList, name)
-    val forwardFactories = forwardFactoryMethodsStartEnd(parameterList, traitFactoryParameterList, tq"RELATION", tq"START", tq"END", name)
 
     q"""
            trait $factoryName [START <: Node, +RELATION <: AbstractRelation[START,END], END <: Node] extends ..$superFactories {
 
              ..$factoryInterface
-
-             ..$forwardFactories
            }
            """
   }

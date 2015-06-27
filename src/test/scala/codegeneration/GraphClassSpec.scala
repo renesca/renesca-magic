@@ -35,6 +35,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           } """
     )
   }
+
   "with nodes" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M}",
@@ -55,6 +56,7 @@ class GraphClassSpec extends CodeComparisonSpec {
       q"""def nodes: Set[Node] = Set.empty.++(ns).++(ms).++(os)"""
     )
   }
+
   "with relations inserted by inherited traits" >> {
     generatedContainsCode(
       q"""object A {
@@ -72,6 +74,7 @@ class GraphClassSpec extends CodeComparisonSpec {
       q"""def r3s: Set[R3] = relationsAs(R3);"""
     )
   }
+
   "with nodes inserted by inherited traits" >> {
     generatedContainsCode(
       q"""object A {
@@ -88,6 +91,7 @@ class GraphClassSpec extends CodeComparisonSpec {
       q"""def os: Set[O] = nodesAs(O);"""
     )
   }
+
   "with duplicate nodes" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M,N)}; @Node class N; @Node class M}",
@@ -96,6 +100,7 @@ class GraphClassSpec extends CodeComparisonSpec {
       """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
     )
   }
+
   "with inherited nodes" >> {
     generatedContainsCode(
       q"""object A {
@@ -157,6 +162,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with inherited nodes from two graphs" >> {
     generatedContainsCode(
       q"""object A {
@@ -194,6 +200,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with same inherited node from two graphs" >> {
     generatedContainsCode(
       q"""object A {
@@ -229,6 +236,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with same inherited node from diamond inheritance" >> {
     generatedContainsCode(
       q"""object A {
@@ -265,6 +273,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with relations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
@@ -284,6 +293,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }) = Set.empty.++(rs).++(s);"""
     )
   }
+
   "with relations between chained super trait" >> {
     generatedContainsCode(
       q"""object A {
@@ -309,6 +319,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }) = Set.empty.++(rs);"""
     )
   }
+
   "with hyperRelations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
@@ -372,6 +383,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           }) = Set.empty.++(rs);"""
     )
   }
+
   "list trait relations only if in Graph and trait" >> {
     generatedContainsCode(
       q"""object A {@Graph trait G {Nodes(M,N,O,P)};
@@ -395,6 +407,7 @@ class GraphClassSpec extends CodeComparisonSpec {
        }) = Set.empty.++(rs);"""
     )
   }
+
   "list trait hyperrelations only if in Graph and trait" >> {
     generatedContainsCode(
       q"""object A {@Graph trait G {Nodes(M,N,O,P)};
@@ -428,6 +441,7 @@ class GraphClassSpec extends CodeComparisonSpec {
      })] = Set.empty.++(rs);"""
     )
   }
+
   "common hyperRelation traits between nodes of trait" >> {
     generatedContainsCode(
       q"""object A {@Graph trait G {Nodes(M,N,O,P)};
@@ -457,6 +471,7 @@ class GraphClassSpec extends CodeComparisonSpec {
 
     )
   }
+
   "common hyperRelation traits between nodes of trait (multiple inheritance)" >> {
     generatedContainsCode(
       q"""object A {@Graph trait G {Nodes(M,N,O,P)};

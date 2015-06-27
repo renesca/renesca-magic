@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class HyperRelationClassSpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple class, helper relations" >> {
@@ -18,12 +17,14 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       """case class RToB(startNode: R, relation: raw.Relation, endNode: B) extends Relation[R, B]  }"""
     )
   }
+
   "simple class with property accessors" >> {
     generatedContainsCode(
       q"object A {@HyperRelation class R(startNode:A, endNode:B) { val p: Int } }",
       q"""def p: Int = item.properties("p").asInstanceOf[IntPropertyValue]"""
     )
   }
+
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@HyperRelation class R(startNode:A, endNode:B) {def custom = 0}}",
@@ -34,6 +35,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with super relation types" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
@@ -43,6 +45,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       }"""
     )
   }
+
   "with super node types" >> {
     generatedContainsCode(
       q"object A {@Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends K}",
@@ -52,6 +55,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       }"""
     )
   }
+
   "with super relation and node types" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends T with K}",

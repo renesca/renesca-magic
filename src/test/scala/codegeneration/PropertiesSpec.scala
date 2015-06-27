@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class PropertiesSpec extends CodeComparisonSpec {
    
-
   import contextMock.universe._
 
   "immutable property getter" >> {

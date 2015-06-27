@@ -127,7 +127,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T; @Node class N extends X}",
       q""" def createX(p: String, x: Int): N = this.create(p, x) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x) """
     )
   }
 
@@ -135,7 +135,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
       q""" def createX(p: String, x: Int, q: Boolean = true): N = this.create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, true) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x, true) """
     )
   }
 
@@ -143,7 +143,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
       q""" def createX(p: String, x: Int, q: Option[Boolean] = None): N = this.create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, None) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x, None) """
     )
   }
 
@@ -151,7 +151,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] = Some(true) }; @Node class N extends X}",
       q""" def createX(p: String, x: Int, q: Option[Boolean] = Some(true)): N = this.create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, Some(true)) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x, Some(true)) """
     )
   }
 
@@ -159,7 +159,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { var q: Boolean = true }; @Node class N extends X}",
       q""" def createX(p: String, x: Int, q: Boolean = true): N = this.create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, true) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x, true) """
     )
   }
 
@@ -167,7 +167,7 @@ class NodeFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { var q: Option[Boolean] = Some(true) }; @Node class N extends X}",
       q""" def createX(p: String, x: Int, q: Option[Boolean] = Some(true)): N = this.create(p, x, q) """,
-      q""" def createT(p: String, x: Int): NODE = this.createX(p, x, Some(true)) """
+      q""" def createT(p: String, x: Int): N = this.create(p, x, Some(true)) """
     )
   }
 

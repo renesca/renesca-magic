@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class NodeClassSpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple class" >> {
@@ -16,6 +15,7 @@ class NodeClassSpec extends CodeComparisonSpec {
       }"""
     )
   }
+
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@Node class N {def custom = 0}}",
@@ -25,6 +25,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             def custom = 0
           } """)
   }
+
   "with super types" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
@@ -34,6 +35,7 @@ class NodeClassSpec extends CodeComparisonSpec {
         }"""
     )
   }
+
   "with multiple super types" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node trait S; @Node class N extends T with S}",
@@ -44,6 +46,7 @@ class NodeClassSpec extends CodeComparisonSpec {
       """
     )
   }
+
   //TODO: which other supertype constellations can appear?
   "with external super types (no nodeTraits)" >> {
     generatedContainsCode(
@@ -55,6 +58,7 @@ class NodeClassSpec extends CodeComparisonSpec {
       """
     )
   }
+
   "direct neighbour accessors" >> {
     generatedContainsCode(
       q"object A {@Node class N; @Node class M; @Relation class R(startNode:N,endNode:M)}",
@@ -70,6 +74,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "direct neighbour accessors over hyperrelations" >> {
     generatedContainsCode(
       q"object A {@Node class N; @Node class M; @HyperRelation class R(startNode:N,endNode:M)}",
@@ -85,6 +90,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "accessors for successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait T;
@@ -101,6 +107,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             }"""
     )
   }
+
   "accessors for super successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait V; @Node trait T extends V;
@@ -117,6 +124,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "accessors for predecessor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait T;
@@ -133,6 +141,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "accessors for super predecessor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait V; @Node trait T extends V;
@@ -149,6 +158,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "accessors for predecessor and successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait T;
@@ -168,6 +178,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "accessors for super predecessor and successor traits" >> {
     generatedContainsCode(
       q"""object A {@Node trait V; @Node trait T extends V;
@@ -187,6 +198,7 @@ class NodeClassSpec extends CodeComparisonSpec {
             };"""
     )
   }
+
   "property accessors" >> {
     generatedContainsCode(
       q"object A {@Node class N {val p:Int}}",

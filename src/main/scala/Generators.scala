@@ -85,10 +85,6 @@ trait Generators extends Context with Patterns with Parameters {
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
 
-      nodeTraits.foreach(nodeTrait =>
-        nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
-      )
-
       val relationTraits = relationTraitPatterns.map { relationTraitPattern =>
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
@@ -98,10 +94,6 @@ trait Generators extends Context with Patterns with Parameters {
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
       }
-
-      relationTraits.foreach(relationTrait =>
-        relationTrait.traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationTrait.pattern, relationTraits)
-      )
 
       val nodes = nodePatterns.map { rawNodePattern => {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
@@ -207,7 +199,7 @@ trait Generators extends Context with Patterns with Parameters {
     }
 
     def findSuperFactoryParameterList[P <: NamePattern with SuperTypesPattern, Q <: Named with HasOwnFactory](patterns: List[_ <: P], pattern: P, nameClasses: List[Q]): List[ParameterList] = {
-      patternToNameClasses(pattern.superTypes.map(nameToPattern(patterns, _)), nameClasses).map(_.parameterList)
+      patternToNameClasses(patternToFlatSuperTypesWithoutSelf(patterns, pattern), nameClasses).map(_.parameterList)
     }
 
     def patternToNameClasses[P <: Named with HasOwnFactory](patterns: List[_ <: NamePattern], nameClasses: List[P]): List[P] = nameClasses.filter(nameClass => patterns.map(_.name).contains(nameClass.name))
@@ -396,9 +388,6 @@ trait Generators extends Context with Patterns with Parameters {
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
     val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
-
-    //TODO: do not use mutable property
-    var traitFactoryParameterList: List[ParameterList] = Nil
   }
 
   object NodeTrait {
@@ -436,8 +425,6 @@ trait Generators extends Context with Patterns with Parameters {
                             ) extends Named with SuperTypes with Statements with HasOwnFactory {
 
     val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
-
-    var traitFactoryParameterList: List[ParameterList] = Nil //TODO: no var
   }
 
   case class Node(

@@ -5,7 +5,6 @@ import helpers.CodeComparisonSpec
 
 class GraphFactorySpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple Graph" >> {

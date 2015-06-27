@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class NodeTraitFactorySpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple factory trait" >> {
@@ -17,6 +16,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with own factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @Node class N extends T}",
@@ -26,6 +26,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with own factory with superTraits" >> {
     generatedContainsCode(
       q"object A {@Node trait S; @Node trait T extends S; @Node class N extends T}",
@@ -35,6 +36,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with own factory with superTraits and external traits" >> {
     generatedContainsCode(
       q"object A {@Node trait S; @Node trait T extends S; @Node class N extends T with E}",
@@ -44,6 +46,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with own factory with multiple superTraits" >> {
     generatedContainsCode(
       q"object A {@Node trait S;@Node trait X; @Node trait T extends S with X; @Node class N extends T}",
@@ -53,6 +56,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   "with own factory with multiple superTraits (chain)" >> {
     generatedContainsCode(
       q"object A {@Node trait Y;@Node trait S;@Node trait X extends Y; @Node trait T extends S with X; @Node class N extends T}",
@@ -94,8 +98,8 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesX(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
             def createX(p: String): NODE
             def mergeX(p: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
-            def matchesT(matches: Set[PropertyKey] = Set.empty): NODE = this.matchesX(None, matches)
-          }"""
+          }""",
+      q"""def matchesT(matches: Set[PropertyKey] = Set.empty): NODE;"""
     )
   }
 
@@ -106,24 +110,28 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesS(matches: Set[PropertyKey] = Set.empty): NODE
             def createS(): NODE
             def mergeS(merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
-            def matchesT(matches: Set[PropertyKey] = Set.empty): NODE = this.matchesS(matches)
-            def createT(): NODE = this.createS()
-            def mergeT(merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE = this.mergeS(merge, onMatch)
           };
-      """
+      """,
+      q"""def matchesT(matches: Set[PropertyKey] = Set.empty): N = this.matches(matches)""",
+      q"""def createT(): N = this.create()""",
+      q"""def mergeT(merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(merge, onMatch)"""
     )
   }
+
   "with superType factories with inherited factory methods" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {val p:String}; @Node trait X extends T }",
+      q"object A {@Node trait T {val p:String}; @Node trait X extends T; @Node class N extends X }",
       q"""trait XFactory[NODE <: X] extends TFactory[NODE] {
             def matchesX(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
             def createX(p: String): NODE
             def mergeX(p: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
-            def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE = this.matchesX(p, matches)
-            def createT(p: String): NODE = this.createX(p)
-            def mergeT(p: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE = this.mergeX(p, merge, onMatch)
-          }"""
+          }""",
+      q"""def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, matches)""",
+      q"""def createT(p: String): N = this.create(p)""",
+      q"""def mergeT(p: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(p, merge, onMatch)""",
+      q"""def matchesX(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, matches)""",
+      q"""def createX(p: String): N = this.create(p)""",
+      q"""def mergeX(p: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(p, merge, onMatch)"""
     )
   }
 
@@ -137,8 +145,8 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE;
             def createX(p: String, q: Boolean, x: Int): NODE;
             def mergeX(p: String, q: Boolean, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
-            def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE = this.matchesX(p, None, x, matches)
-          }"""
+          }""",
+      q"""def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)"""
     )
   }
 
@@ -154,9 +162,6 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE;
             def createX(p: String, x: Int, q: Boolean = true): NODE;
             def mergeX(p: String, x: Int, q: Boolean = true, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
-            def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE = this.matchesX(p, None, x, matches)
-            def createT(p: String, x: Int): NODE = this.createX(p, x, true);
-            def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE = this.mergeX(p, x, true, merge, onMatch);
           }"""
     )
   }
@@ -173,10 +178,10 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE
             def createX(p: String, x: Int, q: Option[Boolean] = None): NODE
             def mergeX(p: String, x: Int, q: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
-            def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE = this.matchesX(p, None, x, matches)
-            def createT(p: String, x: Int): NODE = this.createX(p, x, None)
-            def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE = this.mergeX(p, x, None, merge, onMatch)
-          }"""
+          }""",
+      q"""def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)""",
+      q"""def createT(p: String, x: Int): N = this.create(p, x, None)""",
+      q"""def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(p, x, None, merge, onMatch)"""
     )
   }
 

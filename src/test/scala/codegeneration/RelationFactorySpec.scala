@@ -4,7 +4,6 @@ import helpers.CodeComparisonSpec
 
 class RelationFactorySpec extends CodeComparisonSpec {
 
-
   import contextMock.universe._
 
   "simple relation factory" >> {
@@ -29,6 +28,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
       } """
     )
   }
+
   "with super factory" >> {
     generatedContainsCode(
       q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
@@ -47,6 +47,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
           } """
     )
   }
+
   "with properties - parameter order of create" >> {
     generatedContainsCode(
       q"""object A {
@@ -62,6 +63,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
       q"""def matches(startNode: A, endNode: B, p: Option[String] = None, q: Option[Double] = None, x: Option[Int] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
     )
   }
+
   "with inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation class R(startNode:A, endNode:B) extends T}",
@@ -74,6 +76,7 @@ class RelationFactorySpec extends CodeComparisonSpec {
       q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x) """
     )
   }
+
   "with inherited properties from two traits" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String}; @Relation trait S {var x:Int}; @Relation class R(startNode:A, endNode:B) extends T with S}",
@@ -81,17 +84,20 @@ class RelationFactorySpec extends CodeComparisonSpec {
       Not( """ def createS(startNode: A, endNode: B, p: String""")
     )
   }
+
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def createT(startNode: START, endNode: END, p: String, x: Int): RELATION = this.createX(startNode, endNode, p, x)""",
+      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
       q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)"""
     )
   }
+
   "with indirectly inherited properties in chain" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
       q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
+      q""" def matchesT(startNode: A, endNode: B, p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, None, matches)""",
       Not( """ def createT(startNode: A, endNode: B, p: String""")
     )
   }

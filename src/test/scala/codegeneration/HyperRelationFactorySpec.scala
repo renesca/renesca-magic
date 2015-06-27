@@ -43,6 +43,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
           } """
     )
   }
+
   "with node super factory" >> {
     generatedContainsCode(
       q"object A {@Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
@@ -95,6 +96,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
   //TODO abort with error when inheriting from myself. Right now this produces a stack overflow error 
   "with inherited properties" >> {
     generatedContainsCode(
@@ -112,6 +114,7 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
       q"""def matchesT(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, x, matches)"""
     )
   }
+
   "with indirectly inherited properties" >> {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @HyperRelation class R(startNode:A, endNode:B) extends X}",
