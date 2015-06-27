@@ -183,7 +183,7 @@ trait Code extends Context with Generators {
 
     List(
       q"""
-            trait $factoryName [NODE <: $name_type] extends ..$superFactories {
+            trait $factoryName [+NODE <: $name_type] extends ..$superFactories {
 
               ..$factoryInterface
             }
