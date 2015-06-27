@@ -172,7 +172,7 @@ trait Generators extends Context with Patterns with Parameters {
           flatSuperNodeTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) intersect (hyperRelationPattern.name :: nodeTraits.map(_.name)),
           superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
-          traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, relationTraits))
+          traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, nodeTraits ::: relationTraits))
       }
 
       val relations = relationPatterns.map { relationPattern =>
@@ -331,6 +331,7 @@ trait Generators extends Context with Patterns with Parameters {
       // its create-method.
       val isNodeTrait = currentTrait.isInstanceOf[NodeTraitPattern]
       val hasHyperRelationChild = children.exists(_.isInstanceOf[HyperRelationPattern])
+      //TODO: should return something else for matches without start/end
       if(isNodeTrait && hasHyperRelationChild)
         return None
 

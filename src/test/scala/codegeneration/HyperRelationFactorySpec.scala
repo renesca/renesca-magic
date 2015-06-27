@@ -40,6 +40,10 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
               wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
               wrapped
             }
+           def matchesNode(matches: Set[PropertyKey] = Set.empty): R = {
+             val middleNode = raw.Node.matches(labels, matches = matches);
+             wrap(middleNode)
+           }
           } """
     )
   }

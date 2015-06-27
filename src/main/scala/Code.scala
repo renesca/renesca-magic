@@ -30,44 +30,44 @@ trait Code extends Context with Generators {
   }
 
   def factoryMethodsInterface(parameterList: ParameterList): List[Tree] = {
-    parameterList.hasOwnFactory.map(ownFactory => {
-      val typeName = tq"NODE"
-      val optionalParameterList = parameterList.optional
-      val optionalFactoryParameters = optionalParameterList.toParamCode
+    val typeName = tq"NODE"
+    val optionalParameterList = parameterList.optional
+    val optionalFactoryParameters = optionalParameterList.toParamCode
 
-      val matches =
-        q"""
+    val matches =
+      q"""
               def ${ TermName(factoryMatchesMethod(parameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
               """
 
-      val factories = if(ownFactory) {
-        val factoryParameters = parameterList.toParamCode
+    val factories = if(parameterList.hasOwnFactory.isDefined && parameterList.hasOwnFactory.get) {
+      val factoryParameters = parameterList.toParamCode
 
-        List(
-          q"""
+      List(
+        q"""
                 def ${ TermName(factoryCreateMethod(parameterList.typeName)) } (..$factoryParameters): $typeName
                 """,
-          q"""
+        q"""
                 def ${ TermName(factoryMergeMethod(parameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName
                 """
-        )
-      } else {
-        List.empty
-      }
+      )
+    } else {
+      List.empty
+    }
 
-      matches :: factories
-    }).getOrElse(List.empty)
+    matches :: factories
   }
 
   def factoryMethodsInterfaceStartEnd(parameterList: ParameterList): List[Tree] = {
+    val typeName = tq"RELATION"
+    val optionalParameterList = parameterList.optional
+    val optionalFactoryParameters = optionalParameterList.toParamCode
+
     parameterList.hasOwnFactory.map(ownFactory => {
-      val typeName = tq"RELATION"
-      val optionalParameterList = parameterList.optional
-      val optionalFactoryParameters = List(q"val startNode:START", q"val endNode:END") ::: optionalParameterList.toParamCode
+      val optionalFactoryParametersStartEnd = List(q"val startNode:START", q"val endNode:END") ::: optionalFactoryParameters
 
       val matches =
         q"""
-              def ${ TermName(factoryMatchesMethod(parameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
+              def ${ TermName(factoryMatchesMethod(parameterList.typeName)) } (..$optionalFactoryParametersStartEnd, matches: Set[PropertyKey] = Set.empty): $typeName
               """
 
       val factories = if(ownFactory) {
@@ -86,7 +86,12 @@ trait Code extends Context with Generators {
       }
 
       matches :: factories
-    }).getOrElse(List.empty)
+    }).getOrElse(List(
+      //TODO: test!
+      q"""
+              def ${ TermName(factoryMatchesMethod(parameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName
+              """
+    ))
   }
 
   def forwardFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree): List[Tree] = {
@@ -96,30 +101,28 @@ trait Code extends Context with Generators {
       val optionalParentCaller = optionalParameterList.supplementMissingParametersOf(optionalParentParameterList)
       val optionalFactoryParameters = optionalParentParameterList.toParamCode
 
-      parentParameterList.hasOwnFactory.map(ownFactory => {
-        val matches =
-          q"""
+      val matches =
+        q"""
                 def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
                 """
 
-        val factories = if(ownFactory) {
-          val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
-          val factoryParameters = parentParameterList.toParamCode
+      val factories = if(parentParameterList.hasOwnFactory.isDefined && parentParameterList.hasOwnFactory.get) {
+        val parentCaller = parameterList.supplementMissingParametersOf(parentParameterList)
+        val factoryParameters = parentParameterList.toParamCode
 
-          List(
-            q"""
+        List(
+          q"""
                   def ${ TermName(factoryCreateMethod(parentParameterList.typeName)) } (..$factoryParameters): $typeName = this.create (..$parentCaller)
                   """,
-            q"""
+          q"""
                   def ${ TermName(factoryMergeMethod(parentParameterList.typeName)) } (..$factoryParameters, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): $typeName = this.merge (..$parentCaller, merge, onMatch)
                   """
-          )
-        } else {
-          List.empty
-        }
+        )
+      } else {
+        List.empty
+      }
 
-        matches :: factories
-      }).getOrElse(List.empty)
+      matches :: factories
     })
   }
 
@@ -127,13 +130,16 @@ trait Code extends Context with Generators {
     traitFactoryParameterList.flatMap(parentParameterList => {
       val optionalParameterList = parameterList.optional
       val optionalParentParameterList = parentParameterList.optional
-      val optionalParentCaller = List(q"startNode", q"endNode") ::: optionalParameterList.supplementMissingParametersOf(optionalParentParameterList)
-      val optionalFactoryParameters = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: optionalParentParameterList.toParamCode
+      val optionalParentCaller = optionalParameterList.supplementMissingParametersOf(optionalParentParameterList)
+      val optionalFactoryParameters = optionalParentParameterList.toParamCode
 
       parentParameterList.hasOwnFactory.map(ownFactory => {
+        val optionalFactoryParametersStartEnd = List(q"val startNode:$startNodeType", q"val endNode:$endNodeType") ::: optionalFactoryParameters
+        val optionalParentCallerStartEnd = List(q"startNode", q"endNode") ::: optionalParentCaller
+
         val matches =
           q"""
-                def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
+                def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParametersStartEnd, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCallerStartEnd, matches)
                 """
 
         val factories = if(ownFactory) {
@@ -153,7 +159,12 @@ trait Code extends Context with Generators {
         }
 
         matches :: factories
-      }).getOrElse(List.empty)
+      }).getOrElse(List(
+        //TODO: test!
+        q"""
+                def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matchesNode (..$optionalParentCaller, matches)
+                """
+      ))
     })
   }
 
@@ -339,7 +350,8 @@ trait Code extends Context with Generators {
     val forwardFactories = forwardFactoryMethodsStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type")
     val parameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode
     val optionalParameterList = parameterList.optional
-    val optionalParameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: optionalParameterList.toParamCode
+    val optionalParameterCode = optionalParameterList.toParamCode
+    val optionalParameterCodeStartEnd = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: optionalParameterCode
 
     q"""
            object $name_term extends HyperRelationFactory[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type] with ..$superRelationFactories with ..$superNodeFactories {
@@ -389,7 +401,7 @@ trait Code extends Context with Generators {
                 wrapped
              }
 
-             def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
+             def matches (..${ optionalParameterCodeStartEnd }, matches: Set[PropertyKey] = Set.empty):$name_type = {
                 val middleNode = raw.Node.matches(labels, matches = matches)
                 ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
                 val wrapped = wrap(
@@ -399,6 +411,12 @@ trait Code extends Context with Generators {
                 )
                 wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
                 wrapped
+             }
+
+             def matchesNode (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
+                val middleNode = raw.Node.matches(labels, matches = matches)
+                ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
+                wrap(middleNode)
              }
 
              ..$forwardFactories
