@@ -466,7 +466,17 @@ trait Code extends Context with Generators {
   }
 
   def graphFactories(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._
-    q""" object $name_term {def empty = new $name_type(raw.Graph.empty) } """
+    q"""
+          object $name_term {
+            def empty = new $name_type(raw.Graph.empty)
+
+            def apply(items: Item*) = {
+              val wrapper = empty
+              wrapper.add(items: _*)
+              wrapper
+            }
+          }
+          """
   }
 
   def graphClasses(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._
