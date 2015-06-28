@@ -380,37 +380,31 @@ trait Code extends Context with Generators {
              def create (..${ parameterCode }):$name_type = {
                 val middleNode = raw.Node.create(labels)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
-                val wrapped = wrap(
+                wrap(
                   raw.Relation.create(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.create(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
-                wrapped
              }
 
              def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
                 val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
-                val wrapped = wrap(
+                wrap(
                   raw.Relation.merge(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.merge(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
-                wrapped
              }
 
              def matches (..${ optionalParameterCodeStartEnd }, matches: Set[PropertyKey] = Set.empty):$name_type = {
                 val middleNode = raw.Node.matches(labels, matches = matches)
                 ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
-                val wrapped = wrap(
+                wrap(
                   raw.Relation.matches(startNode.node, startRelationType, middleNode),
                   middleNode,
                   raw.Relation.matches(middleNode, endRelationType, endNode.node)
                 )
-                wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption
-                wrapped
              }
 
              def matchesNode (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
