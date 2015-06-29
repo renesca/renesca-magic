@@ -2,7 +2,7 @@ name := "renesca-magic"
 
 version := "0.3.0"
 
-val scalaV = "2.11.6"
+val scalaV = "2.11.7"
 
 val paradiseVersion = "2.1.0-M5"
 
@@ -13,8 +13,8 @@ resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" // spec
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaV,
-  "org.specs2" %% "specs2-core" % "3.6" % "test",
-  "org.specs2" %% "specs2-mock" % "3.6" % "test",
+  "org.specs2" %% "specs2-core" % "3.6.2" % "test",
+  "org.specs2" %% "specs2-mock" % "3.6.2" % "test",
   "org.scala-lang" % "scala-compiler" % scalaV % "test"
   // "com.github.renesca" %% "renesca" % "0.2.4"
 )
