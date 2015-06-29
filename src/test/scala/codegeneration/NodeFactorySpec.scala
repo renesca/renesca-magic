@@ -75,8 +75,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"object A {@Node class N {val p:String; var x:Int}}",
       q"""def create(p: String, x: Int): N = {
             val wrapped = wrap(raw.Node.create(labels));
-            wrapped.node.properties.update("p", p);
-            wrapped.node.properties.update("x", x);
+            wrapped.rawItem.properties.update("p", p);
+            wrapped.rawItem.properties.update("x", x);
             wrapped
           } """
     )
@@ -103,8 +103,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"object A {@Node trait T {val p:String; var x:Int}; @Node class N extends T}",
       q"""def create(p: String, x: Int): N = {
             val wrapped = wrap(raw.Node.create(labels));
-            wrapped.node.properties.update("p", p);
-            wrapped.node.properties.update("x", x);
+            wrapped.rawItem.properties.update("p", p);
+            wrapped.rawItem.properties.update("x", x);
             wrapped
           }""",
       q""" def createT(p: String, x: Int): N = this.create(p, x) """
@@ -116,8 +116,8 @@ class NodeFactorySpec extends CodeComparisonSpec {
       q"object A {@Node trait T {val p:String }; @Node trait S {var x:Int}; @Node class N extends T with S}",
       q"""def create(p: String, x: Int): N = {
             val wrapped = wrap(raw.Node.create(labels));
-            wrapped.node.properties.update("p", p);
-            wrapped.node.properties.update("x", x);
+            wrapped.rawItem.properties.update("p", p);
+            wrapped.rawItem.properties.update("x", x);
             wrapped
           }"""
     )

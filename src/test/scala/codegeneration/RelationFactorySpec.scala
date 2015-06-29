@@ -14,15 +14,15 @@ class RelationFactorySpec extends CodeComparisonSpec {
         val relationType = raw.RelationType("R");
         def wrap(relation: raw.Relation) = R(A.wrap(relation.startNode), relation, B.wrap(relation.endNode));
         def create(startNode: A, endNode: B): R = {
-          val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+          val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
           wrapped
         }
         def merge(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = {
-          val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+          val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch));
           wrapped
         }
         def matches(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = {
-          val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+          val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches));
           wrapped
         }
       } """
@@ -40,9 +40,9 @@ class RelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation class R(startNode:A, endNode:B) {val p:String; var x:Int}}",
       q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
-            val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-            wrapped.relation.properties.update("p", p);
-            wrapped.relation.properties.update("x", x);
+            val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
+            wrapped.rawItem.properties.update("p", p);
+            wrapped.rawItem.properties.update("x", x);
             wrapped
           } """
     )
@@ -68,9 +68,9 @@ class RelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Relation trait T {val p:String; var x:Int}; @Relation class R(startNode:A, endNode:B) extends T}",
       q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
-            val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-            wrapped.relation.properties.update("p", p);
-            wrapped.relation.properties.update("x", x);
+            val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
+            wrapped.rawItem.properties.update("p", p);
+            wrapped.rawItem.properties.update("x", x);
             wrapped
           }""",
       q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x) """

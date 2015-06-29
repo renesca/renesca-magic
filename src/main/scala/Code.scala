@@ -6,16 +6,16 @@ trait Code extends Context with Generators {
   import context.universe._
 
   def propertyGetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name) }:$typeName = item.properties(${ name }).asInstanceOf[${ TypeName(typeName.toString + "PropertyValue") }] """
+    q""" def ${ TermName(name) }:$typeName = rawItem.properties(${ name }).asInstanceOf[${ TypeName(typeName.toString + "PropertyValue") }] """
 
   def propertyOptionGetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name) }:Option[$typeName] = item.properties.get(${ name }).asInstanceOf[Option[${ TypeName(typeName.toString + "PropertyValue") }]].map(propertyValueToPrimitive) """
+    q""" def ${ TermName(name) }:Option[$typeName] = rawItem.properties.get(${ name }).asInstanceOf[Option[${ TypeName(typeName.toString + "PropertyValue") }]].map(propertyValueToPrimitive) """
 
   def propertySetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name + "_$eq") }(newValue:$typeName){ item.properties(${ name }) = newValue} """
+    q""" def ${ TermName(name + "_$eq") }(newValue:$typeName){ rawItem.properties(${ name }) = newValue} """
 
   def propertyOptionSetter(name: String, typeName: Tree) =
-    q""" def ${ TermName(name + "_$eq") }(newValue:Option[$typeName]){ if(newValue.isDefined) item.properties(${ name }) = newValue.get else item.properties -= ${ name } }"""
+    q""" def ${ TermName(name + "_$eq") }(newValue:Option[$typeName]){ if(newValue.isDefined) rawItem.properties(${ name }) = newValue.get else rawItem.properties -= ${ name } }"""
 
   def generatePropertyAccessors(statement: Tree): List[Tree] = statement match {
     case q"val $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType))
@@ -228,19 +228,19 @@ trait Code extends Context with Generators {
 
              def create (..${ parameterList.toParamCode }):$name_type = {
               val wrapped = wrap(raw.Node.create(labels))
-              ..${ parameterList.toAssignmentCode(q"wrapped.node") }
+              ..${ parameterList.toAssignmentCode(q"wrapped.rawItem") }
               wrapped
              }
 
              def merge (..${ parameterList.toParamCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
               val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch))
-              ..${ parameterList.toAssignmentCode(q"wrapped.node") }
+              ..${ parameterList.toAssignmentCode(q"wrapped.rawItem") }
               wrapped
              }
 
              def matches (..${ optionalParameterList.toParamCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
               val wrapped = wrap(raw.Node.matches(labels, matches = matches))
-              ..${ optionalParameterList.toAssignmentCode(q"wrapped.node") }
+              ..${ optionalParameterList.toAssignmentCode(q"wrapped.rawItem") }
               wrapped
              }
 
@@ -277,7 +277,7 @@ trait Code extends Context with Generators {
     val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
 
     q"""
-            case class $name_type(node: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$externalSuperTypes_type {
+            case class $name_type(rawItem: raw.Node) extends ..$superNodeTraitTypesWithDefault with ..$externalSuperTypes_type {
               override val label = raw.Label($name_label)
               override val labels = Set(..$labels)
               ..$directNeighbours
@@ -306,20 +306,20 @@ trait Code extends Context with Generators {
                 $endNode_term.wrap(relation.endNode))
 
               def create (..${ parameterCode }):$name_type = {
-                val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node))
-                ..${ parameterList.toAssignmentCode(q"wrapped.relation") }
+                val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem))
+                ..${ parameterList.toAssignmentCode(q"wrapped.rawItem") }
                 wrapped
               }
 
               def merge (..${ parameterCode }, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):$name_type = {
-                val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch))
-                ..${ parameterList.toAssignmentCode(q"wrapped.relation") }
+                val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch))
+                ..${ parameterList.toAssignmentCode(q"wrapped.rawItem") }
                 wrapped
               }
 
               def matches (..${ optionalParameterCode }, matches: Set[PropertyKey] = Set.empty):$name_type = {
-                val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches))
-                ..${ optionalParameterList.toAssignmentCode(q"wrapped.relation") }
+                val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches))
+                ..${ optionalParameterList.toAssignmentCode(q"wrapped.rawItem") }
                 wrapped
               }
 
@@ -335,7 +335,7 @@ trait Code extends Context with Generators {
     val relationBody = statements.flatMap(generatePropertyAccessors(_))
 
     q"""
-            case class $name_type(startNode: $startNode_type, relation: raw.Relation, endNode: $endNode_type)
+            case class $name_type(startNode: $startNode_type, rawItem: raw.Relation, endNode: $endNode_type)
               extends ..$superTypesWithDefaultGenerics {
 
               ..$relationBody
@@ -381,9 +381,9 @@ trait Code extends Context with Generators {
                 val middleNode = raw.Node.create(labels)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
                 wrap(
-                  raw.Relation.create(startNode.node, startRelationType, middleNode),
+                  raw.Relation.create(startNode.rawItem, startRelationType, middleNode),
                   middleNode,
-                  raw.Relation.create(middleNode, endRelationType, endNode.node)
+                  raw.Relation.create(middleNode, endRelationType, endNode.rawItem)
                 )
              }
 
@@ -391,9 +391,9 @@ trait Code extends Context with Generators {
                 val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch)
                 ..${ parameterList.toAssignmentCode(q"middleNode") }
                 wrap(
-                  raw.Relation.merge(startNode.node, startRelationType, middleNode),
+                  raw.Relation.merge(startNode.rawItem, startRelationType, middleNode),
                   middleNode,
-                  raw.Relation.merge(middleNode, endRelationType, endNode.node)
+                  raw.Relation.merge(middleNode, endRelationType, endNode.rawItem)
                 )
              }
 
@@ -401,9 +401,9 @@ trait Code extends Context with Generators {
                 val middleNode = raw.Node.matches(labels, matches = matches)
                 ..${ optionalParameterList.toAssignmentCode(q"middleNode") }
                 wrap(
-                  raw.Relation.matches(startNode.node, startRelationType, middleNode),
+                  raw.Relation.matches(startNode.rawItem, startRelationType, middleNode),
                   middleNode,
-                  raw.Relation.matches(middleNode, endRelationType, endNode.node)
+                  raw.Relation.matches(middleNode, endRelationType, endNode.rawItem)
                 )
              }
 
@@ -427,7 +427,7 @@ trait Code extends Context with Generators {
 
     List(
       q"""
-             case class $name_type(node: raw.Node)
+             case class $name_type(rawItem: raw.Node)
                 extends HyperRelation[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type]
                 with ..${ superRelationTypesGenerics ::: superNodeTypes.map(t => tq"${ TypeName(t) }") } {
                 override val label = raw.Label($name_label)
@@ -436,11 +436,11 @@ trait Code extends Context with Generators {
              }
              """,
       q"""
-             case class $startRelation_type(startNode: $startNode_type, relation: raw.Relation, endNode: $name_type)
+             case class $startRelation_type(startNode: $startNode_type, rawItem: raw.Relation, endNode: $name_type)
                extends Relation[$startNode_type, $name_type]
              """,
       q"""
-             case class $endRelation_type(startNode: $name_type, relation: raw.Relation, endNode: $endNode_type)
+             case class $endRelation_type(startNode: $name_type, rawItem: raw.Relation, endNode: $endNode_type)
                extends Relation[$name_type, $endNode_type]
              """
     )
