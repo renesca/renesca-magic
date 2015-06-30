@@ -13,16 +13,16 @@ class NodeFactorySpec extends CodeComparisonSpec {
         val label = raw.Label("N");
         val labels = Set(raw.Label("N"));
         def wrap(node: raw.Node) = new N(node);
+        def matches(matches: Set[PropertyKey] = Set.empty): N = {
+          val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+          wrapped
+        }
         def create(): N = {
           val wrapped = wrap(raw.Node.create(labels));
           wrapped
         }
         def merge(merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = {
           val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-          wrapped
-        }
-        def matches(matches: Set[PropertyKey] = Set.empty): N = {
-          val wrapped = wrap(raw.Node.matches(labels, matches = matches));
           wrapped
         }
       }"""

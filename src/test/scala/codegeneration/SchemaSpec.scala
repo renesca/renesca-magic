@@ -17,12 +17,10 @@ class SchemaSpec extends CodeComparisonSpec {
        import renesca.parameter._
        import renesca.parameter.implicits._
 
-       val nodeLabelToFactory = Map[raw.Label,NodeFactory[_ <: Node]]()
+       val nodeLabelToFactory = Map[Set[raw.Label],NodeFactory[Node]]()
 
-       trait RootNodeTraitFactory[NODE <: Node] {
-         val nodeLabels:Set[raw.Label] = Set()
-         def nodeLabel(node:raw.Node):raw.Label = (nodeLabels intersect node.labels).head
-         def factory(node:raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
+       trait RootNodeTraitFactory[+NODE <: Node] {
+         def factory(node:raw.Node) = nodeLabelToFactory(node.labels.toSet).asInstanceOf[NodeFactory[NODE]];
          def wrap(node: raw.Node) = factory(node).wrap(node)
        }
       } """)
@@ -35,13 +33,7 @@ class SchemaSpec extends CodeComparisonSpec {
   "RootNodeTraitFactory with one Node" >> {
     generatedContainsCode(
       q"object A {@Node class A}",
-      q"""val nodeLabelToFactory = Map[raw.Label,NodeFactory[_ <: Node]](("A", A))""",
-      q"""trait RootNodeTraitFactory[NODE <: Node] {
-            val nodeLabels:Set[raw.Label] = Set("A")
-            def nodeLabel(node:raw.Node):raw.Label = (nodeLabels intersect node.labels).head
-            def factory(node:raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
-            def wrap(node: raw.Node) = factory(node).wrap(node)
-          }""")
+      q"""val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(A.labels, A));""")
   }
   "RootNodeTraitFactory with Nodes, Relation and traits" >> {
     generatedContainsCode(
@@ -51,13 +43,7 @@ class SchemaSpec extends CodeComparisonSpec {
             @Node class A extends X; @Node class B extends X;
             @Relation class R(startNode:A, endNode:B) extends Y
           }""",
-      q"""val nodeLabelToFactory = Map[raw.Label,NodeFactory[_ <: Node]](("A",A), ("B", B))""",
-      q"""trait RootNodeTraitFactory[NODE <: Node] {
-            val nodeLabels:Set[raw.Label] = Set("A", "B")
-            def nodeLabel(node:raw.Node):raw.Label = (nodeLabels intersect node.labels).head
-            def factory(node:raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
-            def wrap(node: raw.Node) = factory(node).wrap(node)
-          }""")
+      q"""val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(X.labels, XMatches), scala.Tuple2(A.labels, A), scala.Tuple2(B.labels, B));""")
   }
   "RootNodeTraitFactory with HyperNode" >> {
     generatedContainsCode(
@@ -67,12 +53,6 @@ class SchemaSpec extends CodeComparisonSpec {
             @Node class A extends X; @Node class B extends X;
             @HyperRelation class R(startNode:A, endNode:B) extends Y
           }""",
-      q"""val nodeLabelToFactory = Map[raw.Label,NodeFactory[_ <: Node]](("A",A), ("B", B), ("R", R))""",
-      q"""trait RootNodeTraitFactory[NODE <: Node] {
-            val nodeLabels:Set[raw.Label] = Set("A", "B", "R")
-            def nodeLabel(node:raw.Node):raw.Label = (nodeLabels intersect node.labels).head
-            def factory(node:raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
-            def wrap(node: raw.Node) = factory(node).wrap(node)
-          }""")
+      q"""val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(X.labels, XMatches), scala.Tuple2(A.labels, A), scala.Tuple2(B.labels, B), scala.Tuple2(R.labels, R));""")
   }
 }

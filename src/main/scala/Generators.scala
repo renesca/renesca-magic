@@ -85,6 +85,10 @@ trait Generators extends Context with Patterns with Parameters {
         NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
 
+      nodeTraits.foreach { nodeTrait =>
+        nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
+      }
+
       val relationTraits = relationTraitPatterns.map { relationTraitPattern =>
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
@@ -95,7 +99,17 @@ trait Generators extends Context with Patterns with Parameters {
           traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
       }
 
-      val nodes = nodePatterns.map { rawNodePattern => {
+      // create special nodepatterns for creating matches class for nodetraits
+      val (traitImplementationPattern, traitImplementationMap) = {
+        val (pattern, mapping) = nodeTraits.map(nodeTrait => { import nodeTrait._
+          val implName = traitMatchesClassName(name)
+          (NodePattern(implName, List(name), List.empty), implName -> nodeTrait)
+        }).unzip
+
+        (pattern, mapping.toMap)
+      }
+
+      val nodes = (traitImplementationPattern ++ nodePatterns).map { rawNodePattern => {
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
@@ -119,7 +133,8 @@ trait Generators extends Context with Patterns with Parameters {
               (nodeTraitPatterns.map(_.name) contains r.startNode)
           }.map(r => (r.name, r.startNode)),
           flatStatements = flatSuperStatements(nodeTraitPatterns, nodePattern),
-          traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits))
+          traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits),
+          implementedTrait = traitImplementationMap.get(nodePattern.name))
       }}
 
       val graphs = graphPatterns.map { graphPattern =>
@@ -387,6 +402,8 @@ trait Generators extends Context with Patterns with Parameters {
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
     val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
+
+    var traitFactoryParameterList: List[ParameterList] = null
   }
 
   object NodeTrait {
@@ -436,10 +453,13 @@ trait Generators extends Context with Patterns with Parameters {
                    outRelationsToTrait: List[(String, String)],
                    inRelationsFromTrait: List[(String, String)],
                    flatStatements: List[Tree],
-                   traitFactoryParameterList: List[ParameterList]
+                   traitFactoryParameterList: List[ParameterList],
+                   implementedTrait: Option[NodeTrait]
                    ) extends Named with SuperTypes with Statements {
 
     val parameterList = ParameterList.create(flatStatements, name)
+
+    def isTraitImplementation = implementedTrait.isDefined
 
     def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
       (TermName(accessorName), TermName(relation), TypeName(endNode), TermName(endNode))
