@@ -17,16 +17,25 @@ trait Code extends Context with Generators {
   def propertyOptionSetter(name: String, typeName: Tree) =
     q""" def ${ TermName(name + "_$eq") }(newValue:Option[$typeName]){ if(newValue.isDefined) rawItem.properties(${ name }) = newValue.get else rawItem.properties -= ${ name } }"""
 
+  //TODO: built from parameter list
   def generatePropertyAccessors(statement: Tree): List[Tree] = statement match {
-    case q"val $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType))
-    case q"var $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
-    case q"val $propertyName:Option[$propertyType] = $x" => List(propertyOptionGetter(propertyName.toString, propertyType))
-    case q"var $propertyName:Option[$propertyType] = $x" => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
-    case q"val $propertyName:$propertyType"              => List(propertyGetter(propertyName.toString, propertyType))
-    case q"var $propertyName:$propertyType"              => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
-    case q"val $propertyName:$propertyType = $x"         => List(propertyGetter(propertyName.toString, propertyType))
-    case q"var $propertyName:$propertyType = $y"         => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
-    case somethingElse                                   => List(somethingElse)
+    case q"val $propertyName:Option[$propertyType]"              => List(propertyOptionGetter(propertyName.toString, propertyType))
+    case q"var $propertyName:Option[$propertyType]"              => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
+    case q"val $propertyName:Option[$propertyType] = $x"         => List(propertyOptionGetter(propertyName.toString, propertyType))
+    case q"var $propertyName:Option[$propertyType] = $x"         => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
+    case q"val $propertyName:$propertyType"                      => List(propertyGetter(propertyName.toString, propertyType))
+    case q"var $propertyName:$propertyType"                      => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
+    case q"val $propertyName:$propertyType = $x"                 => List(propertyGetter(propertyName.toString, propertyType))
+    case q"var $propertyName:$propertyType = $y"                 => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
+    case q"@unique val $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType))
+    case q"@unique var $propertyName:Option[$propertyType]"      => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
+    case q"@unique val $propertyName:Option[$propertyType] = $x" => List(propertyOptionGetter(propertyName.toString, propertyType))
+    case q"@unique var $propertyName:Option[$propertyType] = $x" => List(propertyOptionGetter(propertyName.toString, propertyType), propertyOptionSetter(propertyName.toString, propertyType))
+    case q"@unique val $propertyName:$propertyType"              => List(propertyGetter(propertyName.toString, propertyType))
+    case q"@unique var $propertyName:$propertyType"              => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
+    case q"@unique val $propertyName:$propertyType = $x"         => List(propertyGetter(propertyName.toString, propertyType))
+    case q"@unique var $propertyName:$propertyType = $y"         => List(propertyGetter(propertyName.toString, propertyType), propertySetter(propertyName.toString, propertyType))
+    case somethingElse                                           => List(somethingElse)
   }
 
   def matchesFactoryMethodsInterface(parameterList: ParameterList): List[Tree] = {
@@ -141,15 +150,15 @@ trait Code extends Context with Generators {
 
       parentParameterList.hasOwnFactory.map(ownFactory => {
 
-          q"""
+        q"""
                 def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParametersStartEnd, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCallerStartEnd, matches)
                 """
       }).getOrElse(
-        //TODO: test!
+          //TODO: test!
           q"""
                 def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matchesNode (..$optionalParentCaller, matches)
                 """
-      )
+        )
     })
   }
 
@@ -605,6 +614,21 @@ trait Code extends Context with Generators {
     q""" Map[Set[raw.Label],NodeFactory[Node]](..$tuples) """
   }
 
+  def setupDbConstraints(schema: Schema): Tree = {
+    val constraintSetter: List[Tree] = (schema.nodes.filterNot(_.isTraitImplementation) ++ schema.nodeTraits ++ schema.hyperRelations)
+      .flatMap(item => item.parameterList.parameters.diff(item.traitFactoryParameterList.flatMap(_.parameters)).filter(_.unique).map((item, _))).distinct.map {
+      case (item, parameter) =>
+        val command = s"CREATE CONSTRAINT ON (n:${ item.name_label }) ASSERT n.${ parameter.name.toString } IS UNIQUE"
+        q"queryHandler.query($command)"
+    }
+
+    q"""
+           def setupDbConstraints(queryHandler: QueryHandler) = {
+             ..$constraintSetter
+           }
+           """
+  }
+
   def otherStatements(schema: Schema): List[Tree] = schema.statements.filterNot { statement =>
     NodePattern.unapply(statement).isDefined ||
       RelationPattern.unapply(statement).isDefined ||
@@ -621,6 +645,7 @@ trait Code extends Context with Generators {
     q"""
            object $name_term extends ..$superTypes_type {
              import renesca.{graph => raw}
+             import renesca.QueryHandler
              import renesca.schema._
              import renesca.parameter._
              import renesca.parameter.implicits._
@@ -631,6 +656,8 @@ trait Code extends Context with Generators {
                def factory(node: raw.Node) = nodeLabelToFactory(node.labels.toSet).asInstanceOf[NodeFactory[NODE]];
                def wrap(node: raw.Node) = factory(node).wrap(node)
              }
+
+             ${ setupDbConstraints(schema) }
 
              ..${ nodeTraitFactories(schema) }
              ..${ nodeSuperTraits(schema) }

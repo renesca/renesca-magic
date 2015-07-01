@@ -60,6 +60,14 @@ trait Generators extends Context with Patterns with Parameters {
     def statements = pattern.statements
   }
 
+  trait HasParameterList {
+    val parameterList: ParameterList
+  }
+
+  trait HasTraitFactoryParameterList {
+    def traitFactoryParameterList: List[ParameterList]
+  }
+
   object Schema {
     def apply(schemaPattern: SchemaPattern): Schema = {
       import schemaPattern._
@@ -396,12 +404,12 @@ trait Generators extends Context with Patterns with Parameters {
                         commonHyperNodeRelationTraits: List[String],
                         flatStatements: List[Tree],
                         hasOwnFactory: Option[Boolean]
-                        ) extends Named with SuperTypes with Statements with HasOwnFactory {
+                        ) extends Named with SuperTypes with Statements with HasOwnFactory with HasParameterList with HasTraitFactoryParameterList {
 
     def commonHyperNodeNodeTraits_type = commonHyperNodeNodeTraits.map(TypeName(_))
     def commonHyperNodeRelationTraits_type = commonHyperNodeRelationTraits.map(TypeName(_))
 
-    val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
+    val parameterList = ParameterList.create(flatStatements, name, representsNode = true, hasOwnFactory)
 
     var traitFactoryParameterList: List[ParameterList] = null
   }
@@ -438,9 +446,9 @@ trait Generators extends Context with Patterns with Parameters {
                             pattern: RelationTraitPattern,
                             flatStatements: List[Tree],
                             hasOwnFactory: Option[Boolean]
-                            ) extends Named with SuperTypes with Statements with HasOwnFactory {
+                            ) extends Named with SuperTypes with Statements with HasOwnFactory with HasParameterList {
 
-    val parameterList = ParameterList.create(flatStatements, name, hasOwnFactory)
+    val parameterList = ParameterList.create(flatStatements, name, representsNode = false, hasOwnFactory)
   }
 
   case class Node(
@@ -455,9 +463,9 @@ trait Generators extends Context with Patterns with Parameters {
                    flatStatements: List[Tree],
                    traitFactoryParameterList: List[ParameterList],
                    implementedTrait: Option[NodeTrait]
-                   ) extends Named with SuperTypes with Statements {
+                   ) extends Named with SuperTypes with Statements with HasParameterList with HasTraitFactoryParameterList {
 
-    val parameterList = ParameterList.create(flatStatements, name)
+    val parameterList = ParameterList.create(flatStatements, name, representsNode = true)
 
     def isTraitImplementation = implementedTrait.isDefined
 
@@ -474,9 +482,9 @@ trait Generators extends Context with Patterns with Parameters {
                        pattern: RelationPattern,
                        flatStatements: List[Tree], // TODO: rename to flatSuperStatements (same for node etc)
                        traitFactoryParameterList: List[ParameterList]
-                       ) extends Named with StartEndNode with SuperTypes with Statements {
+                       ) extends Named with StartEndNode with SuperTypes with Statements with HasParameterList with HasTraitFactoryParameterList {
 
-    val parameterList = ParameterList.create(flatStatements, name)
+    val parameterList = ParameterList.create(flatStatements, name, representsNode = false)
   }
 
   case class HyperRelation(
@@ -486,8 +494,8 @@ trait Generators extends Context with Patterns with Parameters {
                             superRelationTypes: List[String],
                             flatSuperStatements: List[Tree],
                             traitFactoryParameterList: List[ParameterList]
-                            ) extends Named with SuperTypes with StartEndNode with Statements with StartEndRelation {
+                            ) extends Named with SuperTypes with StartEndNode with Statements with StartEndRelation with HasParameterList with HasTraitFactoryParameterList {
 
-    val parameterList = ParameterList.create(flatSuperStatements, name)
+    val parameterList = ParameterList.create(flatSuperStatements, name, representsNode = true)
   }
 }
