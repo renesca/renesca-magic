@@ -25,8 +25,8 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
-            def matches(matches: Set[PropertyKey] = Set.empty) = TMatches.matches(matches)
-            def matchesT(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
+            def matches(matches: Set[PropertyKey] = Set.empty):TMatches = TMatches.matches(matches)
+            def matchesT(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
   }
@@ -37,9 +37,9 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
-            def matches(matches: Set[PropertyKey] = Set.empty) = TMatches.matches(matches)
-            def matchesT(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
-            def matchesS(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
+            def matches(matches: Set[PropertyKey] = Set.empty):TMatches = TMatches.matches(matches)
+            def matchesT(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
+            def matchesS(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
   }
@@ -50,9 +50,9 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
-            def matches(matches: Set[PropertyKey] = Set.empty) = TMatches.matches(matches)
-            def matchesT(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
-            def matchesS(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
+            def matches(matches: Set[PropertyKey] = Set.empty):TMatches = TMatches.matches(matches)
+            def matchesT(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
+            def matchesS(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
   }
@@ -63,10 +63,10 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
-            def matches(matches: Set[PropertyKey] = Set.empty) = TMatches.matches(matches)
-            def matchesT(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
-            def matchesS(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
-            def matchesX(matches: Set[PropertyKey] = Set.empty):T = this.matches(matches)
+            def matches(matches: Set[PropertyKey] = Set.empty):TMatches = TMatches.matches(matches)
+            def matchesT(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
+            def matchesS(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
+            def matchesX(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
   }
@@ -78,18 +78,18 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
         object S extends RootNodeTraitFactory[S] with SMatchesFactory[S] {
           val label = SMatches.label;
           val labels = SMatches.labels;
-          def matches(matches: Set[PropertyKey] = Set.empty) = SMatches.matches(matches);
-          def matchesS(matches: Set[PropertyKey] = Set.empty): S = this.matches(matches)
+          def matches(matches: Set[PropertyKey] = Set.empty):SMatches = SMatches.matches(matches);
+          def matchesS(matches: Set[PropertyKey] = Set.empty): SMatches = this.matches(matches)
         };""",
       q"""
         object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
           val label = TMatches.label;
           val labels = TMatches.labels;
-          def matches(matches: Set[PropertyKey] = Set.empty) = TMatches.matches(matches);
-          def matchesT(matches: Set[PropertyKey] = Set.empty): T = this.matches(matches);
-          def matchesY(matches: Set[PropertyKey] = Set.empty): T = this.matches(matches)
-          def matchesS(matches: Set[PropertyKey] = Set.empty): T = this.matches(matches)
-          def matchesX(matches: Set[PropertyKey] = Set.empty): T = this.matches(matches)
+          def matches(matches: Set[PropertyKey] = Set.empty):TMatches = TMatches.matches(matches);
+          def matchesT(matches: Set[PropertyKey] = Set.empty): TMatches = this.matches(matches);
+          def matchesY(matches: Set[PropertyKey] = Set.empty): TMatches = this.matches(matches)
+          def matchesS(matches: Set[PropertyKey] = Set.empty): TMatches = this.matches(matches)
+          def matchesX(matches: Set[PropertyKey] = Set.empty): TMatches = this.matches(matches)
         }""")
   }
 

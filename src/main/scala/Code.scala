@@ -188,12 +188,12 @@ trait Code extends Context with Generators {
     val factoryName = TypeName(traitFactoryName(name))
     val matchesFactoryName = TypeName(traitMatchesFactoryName(name))
     val matchesClassTerm = TermName(traitMatchesClassName(name))
+    val matchesClassType = TypeName(traitMatchesClassName(name))
     val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[NODE]")
     val superMatchesFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${ TypeName(traitMatchesFactoryName(t)) }[NODE]")
     val factoryInterface = factoryMethodsInterface(parameterList)
     val matchesFactoryInterface = matchesFactoryMethodsInterface(parameterList)
-    val forwardMatchesFactories = forwardMatchesFactoryMethods(parameterList, parameterList :: traitFactoryParameterList, tq"$name_type")
-    val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
+    val forwardMatchesFactories = forwardMatchesFactoryMethods(parameterList, parameterList :: traitFactoryParameterList, tq"$matchesClassType")
     val optionalParameterList = parameterList.optional
 
     List(
@@ -214,7 +214,7 @@ trait Code extends Context with Generators {
               val label = $matchesClassTerm.label
               val labels = $matchesClassTerm.labels
 
-              def matches(..${ optionalParameterList.toParamCode }, matches: Set[PropertyKey] = Set.empty) = $matchesClassTerm.matches(..${ optionalParameterList.toCallerCode }, matches)
+              def matches(..${ optionalParameterList.toParamCode }, matches: Set[PropertyKey] = Set.empty):$matchesClassType = $matchesClassTerm.matches(..${ optionalParameterList.toCallerCode }, matches)
 
               ..$forwardMatchesFactories
             }
