@@ -17,6 +17,7 @@ object Helpers {
   def factoryCreateMethod(name: String) = "create" + name
   def factoryMergeMethod(name: String) = "merge" + name
   def factoryMatchesMethod(name: String) = "matches" + name
+  def factoryUniqueMatchesMethod(name: String) = "matchesOn" + name.capitalize
   def nameToLabel(name: String) = name.toUpperCase
   def relationName(start: String, end: String) = s"${ start }To${ end }"
 

@@ -180,6 +180,16 @@ class NodeFactorySpec extends CodeComparisonSpec {
     )
   }
 
+  "with unique matches factory methods in node" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {@unique val p:String}; @Node class N extends T {@unique var q:Boolean }}",
+      q"""def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE""",
+      q"""def matchesOnP(p: String): NODE = this.matchesT(p = Some(p), matches = Set("p"))""",
+      q"""def matches(p: Option[String] = None, q: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): N""",
+      q"""def matchesOnQ(q: Boolean): N = this.matches(q = Some(q), matches = Set("q"))"""
+    )
+  }
+
   "diamond inheritance" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String }; @Node trait L extends T; @Node trait R extends T; @Node trait X extends L with R; @Node class N extends X}",

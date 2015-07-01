@@ -93,6 +93,20 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
         }""")
   }
 
+  "with unique matches factory methods in trait" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {@unique val p:String; @unique var q:Boolean; @unique val r: Long = 1; @unique var s: Boolean = true};}",
+      q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
+           def matchesT(p: Option[String] = None, q: Option[Boolean] = None, r: Option[Long] = None, s: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): NODE;
+           def matchesOnP(p: String): NODE = this.matchesT(p = Some(p), matches = Set("p"));
+           def matchesOnQ(q: Boolean): NODE = this.matchesT(q = Some(q), matches = Set("q"));
+           def matchesOnR(r: Long): NODE = this.matchesT(r = Some(r), matches = Set("r"));
+           def matchesOnS(s: Boolean): NODE = this.matchesT(s = Some(s), matches = Set("s"))
+          }""",
+      q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE];"""
+    )
+  }
+
   //TODO: no own factory, when there is no node extending the trait
   "with factory interface" >> {
     generatedContainsCode(
@@ -235,10 +249,24 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
     )
   }
 
-  "no factory methods if HyperRelation inherits from NodeTrait" >> {
+  "only matches factory methods if HyperRelation inherits from NodeTrait" >> {
     generatedContainsCode(
       q"object A {@Node trait T {val p:String}; @HyperRelation class X(startNode: Node, endNode: Node) extends T}",
-      q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE];"""
+      q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
+           def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
+          }""",
+      q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE];"""
+    )
+  }
+
+  "only matches factory methods if HyperRelation inherits from NodeTrait with unique property" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {@unique val p:String}; @HyperRelation class X(startNode: Node, endNode: Node) extends T}",
+      q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
+           def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
+           def matchesOnP(p: String): NODE = this.matchesT(p = Some(p), matches = Set("p"))
+          }""",
+      q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE];"""
     )
   }
 

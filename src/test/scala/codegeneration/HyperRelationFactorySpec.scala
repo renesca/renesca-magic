@@ -119,4 +119,14 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
       q"""def matchesX(startNode: A, endNode: B, p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, x, matches)"""
     )
   }
+
+  "with unique matches factory methods in hyperrelation" >> {
+    generatedContainsCode(
+      q"object A {@Node trait T {@unique val p:String}; @HyperRelation class R(startNode: T, endNode: T) extends T {@unique var q:Boolean }}",
+      q"""def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE""",
+      q"""def matchesOnP(p: String): NODE = this.matchesT(p = Some(p), matches = Set("p"))""",
+      q"""def matchesNode(p: Option[String] = None, q: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): R""",
+      q"""def matchesOnQ(q: Boolean): R = this.matchesNode(q = Some(q), matches = Set("q"))"""
+    )
+  }
 }

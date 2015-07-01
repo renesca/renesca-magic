@@ -106,6 +106,14 @@ trait Code extends Context with Generators {
     }
   }
 
+  def forwardUniqueMatchesFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree, methodPostfix: String = ""): List[Tree] = {
+    parameterList.parameters.diff(traitFactoryParameterList.flatMap(_.parameters)).filter(_.unique).map(parameter => {
+      q"""
+              def ${ TermName(factoryUniqueMatchesMethod(parameter.name.toString)) } (${ parameter.name }: ${ parameter.typeName }): $typeName = this.${ TermName(factoryMatchesMethod(methodPostfix)) }(${ parameter.name } = Some(${ parameter.name }), matches = Set(${ parameter.name.toString }))
+              """
+    })
+  }
+
   def forwardMatchesFactoryMethods(parameterList: ParameterList, traitFactoryParameterList: List[ParameterList], typeName: Tree): List[Tree] = {
     traitFactoryParameterList.map(parentParameterList => {
       val optionalParameterList = parameterList.optional
@@ -114,8 +122,8 @@ trait Code extends Context with Generators {
       val optionalFactoryParameters = optionalParentParameterList.toParamCode
 
       q"""
-              def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
-              """
+            def ${ TermName(factoryMatchesMethod(parentParameterList.typeName)) } (..$optionalFactoryParameters, matches: Set[PropertyKey] = Set.empty): $typeName = this.matches (..$optionalParentCaller, matches)
+            """
     })
   }
 
@@ -198,6 +206,7 @@ trait Code extends Context with Generators {
     val superMatchesFactories = if(superTypes.isEmpty) List(tq"NodeFactory[NODE]") else superTypes.map(t => tq"${ TypeName(traitMatchesFactoryName(t)) }[NODE]")
     val factoryInterface = factoryMethodsInterface(parameterList)
     val matchesFactoryInterface = matchesFactoryMethodsInterface(parameterList)
+    val forwardUniqueMatchesFactories = forwardUniqueMatchesFactoryMethods(parameterList, traitFactoryParameterList, tq"NODE", name)
     val forwardMatchesFactories = forwardMatchesFactoryMethods(parameterList, parameterList :: traitFactoryParameterList, tq"$matchesClassType")
     val optionalParameterList = parameterList.optional
 
@@ -206,6 +215,7 @@ trait Code extends Context with Generators {
             trait $matchesFactoryName [+NODE <: $name_type] extends ..$superMatchesFactories {
 
               ..$matchesFactoryInterface
+              ..$forwardUniqueMatchesFactories
             }
             """,
       q"""
@@ -287,6 +297,7 @@ trait Code extends Context with Generators {
     }).getOrElse {
       val superFactories = if(superTypes.isEmpty) List(tq"NodeFactory[$name_type]") else superTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$name_type]")
       val forwardFactories = forwardFactoryMethods(parameterList, traitFactoryParameterList, tq"$name_type")
+      val forwardUniqueMatchesFactories = forwardUniqueMatchesFactoryMethods(parameterList, traitFactoryParameterList, tq"$name_type")
       val labels = flatSuperTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
 
       // Extending superFactory is enough, because NodeFactory is pulled in every case.
@@ -311,6 +322,7 @@ trait Code extends Context with Generators {
                }
 
                ..$forwardFactories
+               ..$forwardUniqueMatchesFactories
              }
              """
     }
@@ -420,6 +432,7 @@ trait Code extends Context with Generators {
     val superNodeFactories = superNodeTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$name_type]")
     val forwardFactories = forwardFactoryMethodsStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type")
     val forwardMatchesFactories = forwardMatchesFactoryMethodsStartEnd(parameterList, traitFactoryParameterList, tq"$name_type", tq"$startNode_type", tq"$endNode_type")
+    val forwardUniqueMatchesFactories = forwardUniqueMatchesFactoryMethods(parameterList, traitFactoryParameterList, tq"$name_type", "Node")
     val parameterCode = List(q"val startNode:$startNode_type", q"val endNode:$endNode_type") ::: parameterList.toParamCode
     val optionalParameterList = parameterList.optional
     val optionalParameterCode = optionalParameterList.toParamCode
@@ -487,7 +500,8 @@ trait Code extends Context with Generators {
              }
 
              ..$forwardFactories
-              ..$forwardMatchesFactories
+             ..$forwardMatchesFactories
+             ..$forwardUniqueMatchesFactories
            }
            """
   }

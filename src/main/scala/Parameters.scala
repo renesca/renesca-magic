@@ -5,6 +5,7 @@ trait Parameters extends Context {
   import Helpers._
   import context.universe._
 
+
   case class Parameter(name: Tree, typeName: Tree, optional: Boolean, default: Option[Tree], mutable: Boolean, unique: Boolean) {
     def canEqual(other: Any): Boolean = other.isInstanceOf[Parameter]
 
