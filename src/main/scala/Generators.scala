@@ -358,15 +358,22 @@ trait Generators extends Context with Patterns with Parameters {
       if(isNodeTrait && hasHyperRelationChild)
         return None
 
+      //TODO: anything we can do to avoid repeating outselves here all over again?
       val statements = subWithoutSuper.flatMap(_.statements)
       Some(statements.forall {
-        case q"val $x:Option[$propertyType]" => true
-        case q"var $x:Option[$propertyType]" => true
-        case q"val $x:$propertyType = $y"    => true
-        case q"var $x:$propertyType = $y"    => true
-        case q"val $x:$propertyType"         => false
-        case q"var $x:$propertyType"         => false
-        case _                               => true // custom statements
+        case q"val $x:Option[$propertyType]"         => true
+        case q"var $x:Option[$propertyType]"         => true
+        case q"val $x:$propertyType = $y"            => true
+        case q"var $x:$propertyType = $y"            => true
+        case q"val $x:$propertyType"                 => false
+        case q"var $x:$propertyType"                 => false
+        case q"@unique val $x:Option[$propertyType]" => true
+        case q"@unique var $x:Option[$propertyType]" => true
+        case q"@unique val $x:$propertyType = $y"    => true
+        case q"@unique var $x:$propertyType = $y"    => true
+        case q"@unique val $x:$propertyType"         => false
+        case q"@unique var $x:$propertyType"         => false
+        case _                                       => true // custom statements
       })
     }
   }
@@ -498,4 +505,5 @@ trait Generators extends Context with Patterns with Parameters {
 
     val parameterList = ParameterList.create(flatSuperStatements, name, representsNode = true)
   }
+
 }
