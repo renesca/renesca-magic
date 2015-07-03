@@ -78,3 +78,9 @@ val scalacMacroOpts = Seq(
   "-Yshow-trees-stringified"
 )
 
+fullClasspath in Test := {
+  val defaultValue = (fullClasspath in Test).value
+  val classpath = defaultValue.files.map(_.getAbsolutePath)
+  System.setProperty("sbt.paths.tests.classpath", classpath.mkString(java.io.File.pathSeparatorChar.toString))
+  defaultValue
+}
