@@ -4,7 +4,6 @@ class BehaviorSpec extends Specification {
   "behavior" >> {
     val paradiseJar = System.getProperty("user.home") + "/.ivy2/cache/org.scalamacros/paradise_2.11.6/jars/paradise_2.11.6-2.1.0-M5.jar"
     val classpath = System.getProperty("sbt.paths.tests.classpath")
-    println(classpath)
     val code = "@renesca.schema.macros.GraphSchema object MySchema"
 
     // Step 1: create and initialize the compiler
