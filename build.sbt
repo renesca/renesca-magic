@@ -15,8 +15,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaV,
   "org.specs2" %% "specs2-core" % "3.6.2" % "test",
   "org.specs2" %% "specs2-mock" % "3.6.2" % "test",
-  "org.scala-lang" % "scala-compiler" % scalaV % "test"
-  // "com.github.renesca" %% "renesca" % "0.2.4"
+  "org.scala-lang" % "scala-compiler" % scalaV % "test",
+  "com.github.renesca" %% "renesca" % "0.3.0"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
@@ -78,3 +78,9 @@ val scalacMacroOpts = Seq(
   "-Yshow-trees-stringified"
 )
 
+fullClasspath in Test := {
+  val defaultValue = (fullClasspath in Test).value
+  val classpath = defaultValue.files.map(_.getAbsolutePath)
+  System.setProperty("sbt.paths.tests.classpath", classpath.mkString(java.io.File.pathSeparatorChar.toString))
+  defaultValue
+}
