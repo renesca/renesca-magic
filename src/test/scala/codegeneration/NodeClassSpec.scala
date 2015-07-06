@@ -50,14 +50,14 @@ class NodeClassSpec extends CodeComparisonSpec {
   //TODO: which other supertype constellations can appear?
   "with external super types (no nodeTraits)" >> {
     generatedContainsCode(
-      q"object A {@Node trait T; @Node class N extends T with Ext}",
+      q"object A {trait Ext; @Node trait T; @Node class N extends T with Ext}",
       q"""case class N(rawItem: raw.Node) extends T with Ext  {
             override val label = raw.Label("N")
             override val labels = Set(raw.Label("N"), raw.Label("T"))
           }
       """
     )
-  }
+  }.pendingUntilFixed
 
   "direct neighbour accessors" >> {
     generatedContainsCode(
@@ -201,7 +201,7 @@ class NodeClassSpec extends CodeComparisonSpec {
 
   "property accessors" >> {
     generatedContainsCode(
-      q"object A {@Node class N {val p:Int}}",
-      q"""def p: Int = rawItem.properties("p").asInstanceOf[IntPropertyValue]""")
+      q"object A {@Node class N {val p:Long}}",
+      q"""def p: Long = rawItem.properties("p").asInstanceOf[LongPropertyValue]""")
   }
 }

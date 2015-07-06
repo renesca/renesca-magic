@@ -10,6 +10,11 @@ class GraphFactorySpec extends CodeComparisonSpec {
   "simple Graph" >> {
     generatedContainsCode(
     q"""
+        object A {
+          @Graph trait G
+        }
+        """,
+    q"""
           object G {
             def empty = new G(raw.Graph.empty);
             def apply(items: Item*) = {

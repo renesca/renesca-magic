@@ -1,18 +1,23 @@
-import org.specs2.mutable.Specification
+package helpers
 
-class BehaviorSpec extends Specification {
-  "behavior" >> {
+trait CompileSpec {
+  import scala.tools.cmd.CommandLineParser
+  import scala.tools.nsc.reporters.StoreReporter
+  import scala.tools.nsc.{CompilerCommand, Global, Settings}
+
+  object Config {
     val paradiseJar = System.getProperty("user.home") + "/.ivy2/cache/org.scalamacros/paradise_2.11.6/jars/paradise_2.11.6-2.1.0-M5.jar"
     val classpath = System.getProperty("sbt.paths.tests.classpath")
-    val code = "@renesca.schema.macros.GraphSchema object MySchema"
 
-    // Step 1: create and initialize the compiler
-    import scala.tools.cmd.CommandLineParser
-    import scala.tools.nsc.{Global, CompilerCommand, Settings}
-    import scala.tools.nsc.reporters.StoreReporter
     val options = s"-Xplugin-require:macroparadise -Xplugin:$paradiseJar -cp $classpath"
     val args = CommandLineParser.tokenize(options)
     val emptySettings = new Settings(error => sys.error("compilation has failed: " + error))
+  }
+
+  def compileCode(code: String): Boolean = {
+    import Config._
+
+    // Step 1: create and initialize the compiler
     val reporter = new StoreReporter()
     val command = new CompilerCommand(args, emptySettings)
     val settings = command.settings
@@ -26,7 +31,7 @@ class BehaviorSpec extends Specification {
     import scala.compat.Platform.EOL
     val unit = newCompilationUnit(code, "<test>")
     val tree = newUnitParser(unit).parse()
-    if (reporter.hasErrors) throw new Exception("parse has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL))
+    if(reporter.hasErrors) throw new Exception("parse has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL))
 
     // Step 3: typecheck the input code
     import analyzer._
@@ -38,12 +43,9 @@ class BehaviorSpec extends Specification {
     globalPhase = run.typerPhase
     val typer = newTyper(rootContext(unit))
     val typedTree = typer.typed(tree)
-    for (workItem <- unit.toCheck) workItem()
-    if (reporter.hasErrors) throw new Exception("typecheck has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL))
+    for(workItem <- unit.toCheck) workItem()
+    if(reporter.hasErrors) throw new Exception("typecheck has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL) + EOL + showCode(typedTree))
 
-    // Step 4: do the checks
-    println(typedTree)
-
-    1 mustEqual 1
+    true
   }
 }

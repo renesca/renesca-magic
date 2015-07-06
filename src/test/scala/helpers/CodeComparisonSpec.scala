@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 import renesca.schema.macros.{Aborter, Code, Generators, Patterns, Warner}
 
 
-trait CodeComparisonSpec extends Specification with ContextMock {
+trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec {
   sequential
 
   trait ExpectedCode
@@ -49,6 +49,9 @@ trait CodeComparisonSpec extends Specification with ContextMock {
       comparable(showCode(generated)) must (not(contain(comparable(snippet)).setMessage(errorMessage(source, generated, snippet, false))))
   }
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))
-  def generatedContainsCode(source: Tree, snippets: ExpectedCode*) = containCode(source, generate(source), snippets: _*)
+  def annotateCode(code: Tree) = "@renesca.schema.macros.GraphSchema " + showCode(code)
+  def generatedContainsCode(source: Tree, snippets: ExpectedCode*) = {
+    (compileCode(annotateCode(source)) mustEqual true) +: containCode(source, generate(source), snippets: _*)
+  }
 }
 

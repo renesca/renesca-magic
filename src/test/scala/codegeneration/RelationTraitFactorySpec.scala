@@ -38,7 +38,7 @@ class RelationTraitFactorySpec extends CodeComparisonSpec {
 
   "without factory interface (only matches)" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String}; @Relation class R(startNode: Node, endNode: Node) extends T { val t: String }}",
+      q"object A {@Node class N; @Relation trait T {val p:String}; @Relation class R(startNode: N, endNode: N) extends T { val t: String }}",
       q"""trait TMatchesFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
                 extends AbstractRelationFactory[START, RELATION, END] {
               def matchesT(startNode: START, endNode: END, p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): RELATION

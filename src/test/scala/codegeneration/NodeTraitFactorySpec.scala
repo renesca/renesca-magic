@@ -46,7 +46,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
 
   "with own factory with superTraits and external traits" >> {
     generatedContainsCode(
-      q"object A {@Node trait S; @Node trait T extends S; @Node class N extends T with E}",
+      q"object A {trait E; @Node trait S; @Node trait T extends S; @Node class N extends T with E}",
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
@@ -55,7 +55,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesS(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
-  }
+  }.pendingUntilFixed
 
   "with own factory with multiple superTraits" >> {
     generatedContainsCode(
@@ -189,69 +189,69 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
 
   "with indirectly inherited properties and no factory trait" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean }; @Node class N extends X}",
+      q"object A {@Node trait T {val p:String; var x:Long}; @Node trait X extends T { val q: Boolean }; @Node class N extends X}",
       q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
-            def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE
+            def matchesT(p: Option[String] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE
           }""",
       q"""trait XMatchesFactory[+NODE <: X] extends TMatchesFactory[NODE] {
-            def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE;
+            def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE;
           }""",
       q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE];""",
       q"""trait XFactory[+NODE <: X] extends TFactory[NODE] with XMatchesFactory[NODE] {
-            def createX(p: String, q: Boolean, x: Int): NODE;
-            def mergeX(p: String, q: Boolean, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
+            def createX(p: String, q: Boolean, x: Long): NODE;
+            def mergeX(p: String, q: Boolean, x: Long, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
           }""",
-      q"""def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)"""
+      q"""def matchesT(p: Option[String] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)"""
     )
   }
 
   "with indirectly inherited properties and default properties" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
+      q"object A {@Node trait T {val p:String; var x:Long}; @Node trait X extends T { val q: Boolean = true }; @Node class N extends X}",
       q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
-            def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE
+            def matchesT(p: Option[String] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE
           }""",
       q"""trait XMatchesFactory[+NODE <: X] extends TMatchesFactory[NODE] {
-            def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE;
+            def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE;
           }""",
       q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE] {
-            def createT(p: String, x: Int): NODE
-            def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
+            def createT(p: String, x: Long): NODE
+            def mergeT(p: String, x: Long, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
           }""",
         q"""trait XFactory[+NODE <: X] extends TFactory[NODE] with XMatchesFactory[NODE] {
-            def createX(p: String, x: Int, q: Boolean = true): NODE;
-            def mergeX(p: String, x: Int, q: Boolean = true, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
+            def createX(p: String, x: Long, q: Boolean = true): NODE;
+            def mergeX(p: String, x: Long, q: Boolean = true, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
           }"""
     )
   }
 
   "with indirectly inherited properties and optional properties" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {val p:String; var x:Int}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
+      q"object A {@Node trait T {val p:String; var x:Long}; @Node trait X extends T { val q: Option[Boolean] }; @Node class N extends X}",
       q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
-           def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE
+           def matchesT(p: Option[String] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE
          };
          """,
       q"""trait XMatchesFactory[+NODE <: X] extends TMatchesFactory[NODE] {
-           def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): NODE
+           def matchesX(p: Option[String] = None, q: Option[Boolean] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE
          }""",
       q"""trait TFactory[+NODE <: T] extends NodeFactory[NODE] with TMatchesFactory[NODE] {
-            def createT(p: String, x: Int): NODE
-            def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
+            def createT(p: String, x: Long): NODE
+            def mergeT(p: String, x: Long, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
           }""",
       q"""trait XFactory[+NODE <: X] extends TFactory[NODE] with XMatchesFactory[NODE] {
-            def createX(p: String, x: Int, q: Option[Boolean] = None): NODE
-            def mergeX(p: String, x: Int, q: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
+            def createX(p: String, x: Long, q: Option[Boolean] = None): NODE
+            def mergeX(p: String, x: Long, q: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
           }""",
-      q"""def matchesT(p: Option[String] = None, x: Option[Int] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)""",
-      q"""def createT(p: String, x: Int): N = this.create(p, x, None)""",
-      q"""def mergeT(p: String, x: Int, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(p, x, None, merge, onMatch)"""
+      q"""def matchesT(p: Option[String] = None, x: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): N = this.matches(p, None, x, matches)""",
+      q"""def createT(p: String, x: Long): N = this.create(p, x, None)""",
+      q"""def mergeT(p: String, x: Long, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): N = this.merge(p, x, None, merge, onMatch)"""
     )
   }
 
   "only matches factory methods if HyperRelation inherits from NodeTrait" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {val p:String}; @HyperRelation class X(startNode: Node, endNode: Node) extends T}",
+      q"object A {@Node class N; @Node trait T {val p:String}; @HyperRelation class X(startNode: N, endNode: N) extends T}",
       q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
            def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
           }""",
@@ -261,7 +261,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
 
   "only matches factory methods if HyperRelation inherits from NodeTrait with unique property" >> {
     generatedContainsCode(
-      q"object A {@Node trait T {@unique val p:String}; @HyperRelation class X(startNode: Node, endNode: Node) extends T}",
+      q"object A {@Node class N; @Node trait T {@unique val p:String}; @HyperRelation class X(startNode: N, endNode: N) extends T}",
       q"""trait TMatchesFactory[+NODE <: T] extends NodeFactory[NODE] {
            def matchesT(p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
            def matchesOnP(p: String): NODE = this.matchesT(p = Some(p), matches = Set("p"))

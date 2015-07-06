@@ -27,19 +27,19 @@ class RelationFactorySpec extends CodeComparisonSpec {
         }
       } """
     )
-  }
+  }.pendingUntilFixed
 
   "with super factory" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T; @Relation class R(startNode:A, endNode:B) extends T}",
+      q"object A {@Relation trait T; @Node class A; @Node class B;@Relation class R(startNode:A, endNode:B) extends T}",
       """object R extends RelationFactory[A, R, B] with TFactory[A, R, B] { """,
       q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)"""
     )
   }
   "with properties" >> {
     generatedContainsCode(
-      q"object A {@Relation class R(startNode:A, endNode:B) {val p:String; var x:Int}}",
-      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+      q"object A {@Node class A; @Node class B;@Relation class R(startNode:A, endNode:B) {val p:String; var x:Long}}",
+      q"""def create(startNode: A, endNode: B, p: String, x: Long): R = {
             val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
             wrapped.rawItem.properties.update("p", p);
             wrapped.rawItem.properties.update("x", x);
@@ -50,36 +50,36 @@ class RelationFactorySpec extends CodeComparisonSpec {
 
   "with properties - parameter order of create" >> {
     generatedContainsCode(
-      q"""object A {
+      q"""object A {@Node class A; @Node class B
             @Relation class R(startNode:A, endNode:B) {
               var y:Option[Boolean]
               val q:Option[Double]
-              var x:Int
+              var x:Long
               val p:String
             }
           }""",
-      q"""def create(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None):R""",
-      q"""def merge(startNode: A, endNode: B, p: String, x: Int, q: Option[Double] = None, y: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):R""",
-      q"""def matches(startNode: A, endNode: B, p: Option[String] = None, q: Option[Double] = None, x: Option[Int] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
+      q"""def create(startNode: A, endNode: B, p: String, x: Long, q: Option[Double] = None, y: Option[Boolean] = None):R""",
+      q"""def merge(startNode: A, endNode: B, p: String, x: Long, q: Option[Double] = None, y: Option[Boolean] = None, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty):R""",
+      q"""def matches(startNode: A, endNode: B, p: Option[String] = None, q: Option[Double] = None, x: Option[Long] = None, y: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty):R"""
     )
   }
 
   "with inherited properties" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String; var x:Int}; @Relation class R(startNode:A, endNode:B) extends T}",
-      q"""def create(startNode: A, endNode: B, p: String, x: Int): R = {
+      q"object A {@Node class A; @Node class B;@Relation trait T {val p:String; var x:Long}; @Relation class R(startNode:A, endNode:B) extends T}",
+      q"""def create(startNode: A, endNode: B, p: String, x: Long): R = {
             val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
             wrapped.rawItem.properties.update("p", p);
             wrapped.rawItem.properties.update("x", x);
             wrapped
           }""",
-      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x) """
+      q""" def createT(startNode: A, endNode: B, p: String, x: Long): R = this.create(startNode, endNode, p, x) """
     )
   }
 
   "with inherited properties from two traits" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String}; @Relation trait S {var x:Int}; @Relation class R(startNode:A, endNode:B) extends T with S}",
+      q"object A {@Node class A; @Node class B;@Relation trait T {val p:String}; @Relation trait S {var x:Long}; @Relation class R(startNode:A, endNode:B) extends T with S}",
       Not( """ def createT(startNode: A, endNode: B, p: String"""),
       Not( """ def createS(startNode: A, endNode: B, p: String""")
     )
@@ -87,16 +87,16 @@ class RelationFactorySpec extends CodeComparisonSpec {
 
   "with indirectly inherited properties" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String; var x:Int}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def createT(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
-      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)"""
+      q"object A {@Node class A; @Node class B; @Relation trait T {val p:String; var x:Long}; @Relation trait X extends T; @Relation class R(startNode:A, endNode:B) extends X}",
+      q""" def createT(startNode: A, endNode: B, p: String, x: Long): R = this.create(startNode, endNode, p, x)""",
+      q""" def createX(startNode: A, endNode: B, p: String, x: Long): R = this.create(startNode, endNode, p, x)"""
     )
   }
 
   "with indirectly inherited properties in chain" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:String;}; @Relation trait X extends T {var x:Int}; @Relation class R(startNode:A, endNode:B) extends X}",
-      q""" def createX(startNode: A, endNode: B, p: String, x: Int): R = this.create(startNode, endNode, p, x)""",
+      q"object A {@Node class A; @Node class B; @Relation trait T {val p:String;}; @Relation trait X extends T {var x:Long}; @Relation class R(startNode:A, endNode:B) extends X}",
+      q""" def createX(startNode: A, endNode: B, p: String, x: Long): R = this.create(startNode, endNode, p, x)""",
       q""" def matchesT(startNode: A, endNode: B, p: Option[String] = None, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, p, None, matches)""",
       Not( """ def createT(startNode: A, endNode: B, p: String""")
     )

@@ -21,9 +21,9 @@ class RelationTraitSpec extends CodeComparisonSpec {
   }
   "with properties" >> {
     generatedContainsCode(
-      q"object A {@Relation trait T {val p:Int}}",
+      q"object A {@Relation trait T {val p:Long}}",
       q"""trait T[+START <: Node, +END <: Node] extends AbstractRelation[START, END] {
-            def p: Int = rawItem.properties("p").asInstanceOf[IntPropertyValue]
+            def p: Long = rawItem.properties("p").asInstanceOf[LongPropertyValue]
           }"""
     )
   }
