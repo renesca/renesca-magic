@@ -6,7 +6,7 @@ trait CompileSpec {
   import scala.tools.nsc.{CompilerCommand, Global, Settings}
 
   object Config {
-    val paradiseJar = System.getProperty("user.home") + "/.ivy2/cache/org.scalamacros/paradise_2.11.6/jars/paradise_2.11.6-2.1.0-M5.jar"
+    val paradiseJar = System.getProperty("user.home") + "/.ivy2/cache/org.scalamacros/paradise_2.11.7/jars/paradise_2.11.7-2.1.0-M5.jar"
     val classpath = System.getProperty("sbt.paths.tests.classpath")
 
     val options = s"-Xplugin-require:macroparadise -Xplugin:$paradiseJar -cp $classpath"
