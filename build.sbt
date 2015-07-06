@@ -1,6 +1,6 @@
 name := "renesca-magic"
 
-version := "0.3.0"
+version := "0.3.1"
 
 val scalaV = "2.11.7"
 
@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-core" % "3.6.2" % "test",
   "org.specs2" %% "specs2-mock" % "3.6.2" % "test",
   "org.scala-lang" % "scala-compiler" % scalaV % "test",
-  "com.github.renesca" %% "renesca" % "0.3.0"
+  "com.github.renesca" %% "renesca" % "0.3.1"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
