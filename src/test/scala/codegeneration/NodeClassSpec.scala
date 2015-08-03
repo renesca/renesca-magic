@@ -65,12 +65,12 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class N(rawItem: raw.Node) extends Node {
             override val label = raw.Label("N")
             override val labels = Set(raw.Label("N"))
-              def rs: Set[M] = successorsAs(M, R)
+              def rs: Seq[M] = successorsAs(M, R)
             };""",
       q"""case class M(rawItem: raw.Node) extends Node {
             override val label = raw.Label("M")
             override val labels = Set(raw.Label("M"))
-              def rev_rs: Set[N] = predecessorsAs(N, R)
+              def rev_rs: Seq[N] = predecessorsAs(N, R)
             };"""
     )
   }
@@ -81,12 +81,12 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class N(rawItem: raw.Node) extends Node {
             override val label = raw.Label("N")
             override val labels = Set(raw.Label("N"))
-              def rs: Set[M] = successorsAs(M, R)
+              def rs: Seq[M] = successorsAs(M, R)
             };""",
       q"""case class M(rawItem: raw.Node) extends Node {
             override val label = raw.Label("M")
             override val labels = Set(raw.Label("M"))
-              def rev_rs: Set[N] = predecessorsAs(N, R)
+              def rev_rs: Seq[N] = predecessorsAs(N, R)
             };"""
     )
   }
@@ -101,9 +101,9 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class L(rawItem: raw.Node) extends Node {
               override val label = raw.Label("L")
               override val labels = Set(raw.Label("L"))
-              def rNs: Set[N] = successorsAs(N, R)
-              def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[T] = Set.empty.++(rNs).++(rMs)
+              def rNs: Seq[N] = successorsAs(N, R)
+              def rMs: Seq[M] = successorsAs(M, R)
+              def rs: Seq[T] = Seq.empty.++(rNs).++(rMs)
             }"""
     )
   }
@@ -118,9 +118,9 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class L(rawItem: raw.Node) extends Node {
               override val label = raw.Label("L")
               override val labels = Set(raw.Label("L"))
-              def rNs: Set[N] = successorsAs(N, R)
-              def rMs: Set[M] = successorsAs(M, R)
-              def rs: Set[V] = Set.empty.++(rNs).++(rMs)
+              def rNs: Seq[N] = successorsAs(N, R)
+              def rMs: Seq[M] = successorsAs(M, R)
+              def rs: Seq[V] = Seq.empty.++(rNs).++(rMs)
             };"""
     )
   }
@@ -135,9 +135,9 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class L(rawItem: raw.Node) extends Node {
               override val label = raw.Label("L")
               override val labels = Set(raw.Label("L"))
-              def rev_rNs: Set[N] = predecessorsAs(N, R);
-              def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[T] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rNs: Seq[N] = predecessorsAs(N, R);
+              def rev_rMs: Seq[M] = predecessorsAs(M, R);
+              def rev_rs: Seq[T] = Seq.empty.++(rev_rNs).++(rev_rMs)
             };"""
     )
   }
@@ -152,9 +152,9 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class L(rawItem: raw.Node) extends Node {
               override val label = raw.Label("L")
               override val labels = Set(raw.Label("L"))
-              def rev_rNs: Set[N] = predecessorsAs(N, R);
-              def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rev_rNs: Seq[N] = predecessorsAs(N, R);
+              def rev_rMs: Seq[M] = predecessorsAs(M, R);
+              def rev_rs: Seq[V] = Seq.empty.++(rev_rNs).++(rev_rMs)
             };"""
     )
   }
@@ -169,12 +169,12 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class N(rawItem: raw.Node) extends T {
               override val label = raw.Label("N")
               override val labels = Set(raw.Label("N"),raw.Label("T"))
-              def rNs: Set[N] = successorsAs(N, R);
-              def rMs: Set[M] = successorsAs(M, R);
-              def rs: Set[T] = Set.empty.++(rNs).++(rMs);
-              def rev_rNs: Set[N] = predecessorsAs(N, R);
-              def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[T] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rNs: Seq[N] = successorsAs(N, R);
+              def rMs: Seq[M] = successorsAs(M, R);
+              def rs: Seq[T] = Seq.empty.++(rNs).++(rMs);
+              def rev_rNs: Seq[N] = predecessorsAs(N, R);
+              def rev_rMs: Seq[M] = predecessorsAs(M, R);
+              def rev_rs: Seq[T] = Seq.empty.++(rev_rNs).++(rev_rMs)
             };"""
     )
   }
@@ -189,12 +189,12 @@ class NodeClassSpec extends CodeComparisonSpec {
       q"""case class N(rawItem: raw.Node) extends T {
               override val label = raw.Label("N")
               override val labels = Set(raw.Label("N"), raw.Label("V"), raw.Label("T"))
-              def rNs: Set[N] = successorsAs(N, R);
-              def rMs: Set[M] = successorsAs(M, R);
-              def rs: Set[V] = Set.empty.++(rNs).++(rMs);
-              def rev_rNs: Set[N] = predecessorsAs(N, R);
-              def rev_rMs: Set[M] = predecessorsAs(M, R);
-              def rev_rs: Set[V] = Set.empty.++(rev_rNs).++(rev_rMs)
+              def rNs: Seq[N] = successorsAs(N, R);
+              def rMs: Seq[M] = successorsAs(M, R);
+              def rs: Seq[V] = Seq.empty.++(rNs).++(rMs);
+              def rev_rNs: Seq[N] = predecessorsAs(N, R);
+              def rev_rMs: Seq[M] = predecessorsAs(M, R);
+              def rev_rs: Seq[V] = Seq.empty.++(rev_rNs).++(rev_rMs)
             };"""
     )
   }

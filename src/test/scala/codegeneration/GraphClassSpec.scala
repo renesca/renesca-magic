@@ -10,20 +10,20 @@ class GraphClassSpec extends CodeComparisonSpec {
     generatedContainsCode(
       q"object A {@Graph trait G}",
       q"""case class G(graph: raw.Graph) extends Graph {
-            def nodes: Set[Node] = Set.empty;
-            def relations: (Set[_$$18] forSome { 
+            def nodes: Seq[Node] = Seq.empty;
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -31,7 +31,7 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           } """
     )
   }
@@ -39,9 +39,9 @@ class GraphClassSpec extends CodeComparisonSpec {
   "with nodes" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M}",
-      q"""def ns: Set[N] = nodesAs(N);""",
-      q"""def ms: Set[M] = nodesAs(M);""",
-      """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
+      q"""def ns: Seq[N] = nodesAs(N);""",
+      q"""def ms: Seq[M] = nodesAs(M);""",
+      """def nodes: Seq[Node] = Seq.empty.++(ns).++(ms);"""
     )
   }
   "with nodes inserted by traits" >> {
@@ -53,7 +53,7 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Node class O extends T
             @Graph trait G {Nodes(N,T)}
           }""",
-      q"""def nodes: Set[Node] = Set.empty.++(ns).++(ms).++(os)"""
+      q"""def nodes: Seq[Node] = Seq.empty.++(ns).++(ms).++(os)"""
     )
   }
 
@@ -69,9 +69,9 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Relation class R3(startNode:N, endNode:S)
             @Graph trait G {Nodes(T,S)}
           }""",
-      q"""def r1s: Set[R1] = relationsAs(R1);""",
-      q"""def r2s: Set[R2] = relationsAs(R2);""",
-      q"""def r3s: Set[R3] = relationsAs(R3);"""
+      q"""def r1s: Seq[R1] = relationsAs(R1);""",
+      q"""def r2s: Seq[R2] = relationsAs(R2);""",
+      q"""def r3s: Seq[R3] = relationsAs(R3);"""
     )
   }
 
@@ -86,18 +86,18 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Node class N
             @Graph trait G {Nodes(N,S)}
           }""",
-      q"""def ns: Set[N] = nodesAs(N);""",
-      q"""def ms: Set[M] = nodesAs(M);""",
-      q"""def os: Set[O] = nodesAs(O);"""
+      q"""def ns: Seq[N] = nodesAs(N);""",
+      q"""def ms: Seq[M] = nodesAs(M);""",
+      q"""def os: Seq[O] = nodesAs(O);"""
     )
   }
 
   "with duplicate nodes" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M,N)}; @Node class N; @Node class M}",
-      q"""def ns: Set[N] = nodesAs(N);""",
-      q"""def ms: Set[M] = nodesAs(M);""",
-      """def nodes: Set[Node] = Set.empty.++(ns).++(ms);"""
+      q"""def ns: Seq[N] = nodesAs(N);""",
+      q"""def ms: Seq[M] = nodesAs(M);""",
+      """def nodes: Seq[Node] = Seq.empty.++(ns).++(ms);"""
     )
   }
 
@@ -109,21 +109,21 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Graph trait G extends T {Nodes(N,M)}
           }""",
       q"""case class T(graph: raw.Graph) extends Graph {
-            def os: Set[O] = nodesAs(O);
-            def nodes: Set[Node] = Set.empty.++(os);
-            def relations: (Set[_$$18] forSome { 
+            def os: Seq[O] = nodesAs(O);
+            def nodes: Seq[Node] = Seq.empty.++(os);
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -131,26 +131,26 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           };""",
       q"""case class G(graph: raw.Graph) extends Graph {
-            def ns: Set[N] = nodesAs(N);
-            def ms: Set[M] = nodesAs(M);
-            def os: Set[O] = nodesAs(O);
-            def nodes: Set[Node] = Set.empty.++(ns).++(ms).++(os);
-            def relations: (Set[_$$18] forSome { 
+            def ns: Seq[N] = nodesAs(N);
+            def ms: Seq[M] = nodesAs(M);
+            def os: Seq[O] = nodesAs(O);
+            def nodes: Seq[Node] = Seq.empty.++(ns).++(ms).++(os);
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -158,7 +158,7 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           }"""
     )
   }
@@ -172,23 +172,23 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Graph trait G extends T with S {Nodes(N)}
           }""",
       q"""case class G(graph: raw.Graph) extends Graph {
-            def ns: Set[N] = nodesAs(N);
-            def os: Set[O] = nodesAs(O);
-            def ms: Set[M] = nodesAs(M);
-            def nodes: Set[Node] = Set.empty.++(ns).++(os).++(ms);
-            def relations: (Set[_$$18] forSome { 
+            def ns: Seq[N] = nodesAs(N);
+            def os: Seq[O] = nodesAs(O);
+            def ms: Seq[M] = nodesAs(M);
+            def nodes: Seq[Node] = Seq.empty.++(ns).++(os).++(ms);
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -196,7 +196,7 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           }"""
     )
   }
@@ -210,21 +210,21 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Graph trait G extends T with S {Nodes()}
           }""",
       q"""case class G(graph: raw.Graph) extends Graph {
-            def ns: Set[N] = nodesAs(N);
-            def nodes: Set[Node] = Set.empty.++(ns);
-            def relations: (Set[_$$18] forSome { 
+            def ns: Seq[N] = nodesAs(N);
+            def nodes: Seq[Node] = Seq.empty.++(ns);
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -232,7 +232,7 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           }"""
     )
   }
@@ -247,21 +247,21 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Graph trait G extends T with S
           }""",
       q"""case class G(graph: raw.Graph) extends Graph {
-            def ns: Set[N] = nodesAs(N);
-            def nodes: Set[Node] = Set.empty.++(ns);
-            def relations: (Set[_$$18] forSome { 
+            def ns: Seq[N] = nodesAs(N);
+            def nodes: Seq[Node] = Seq.empty.++(ns);
+            def relations: (Seq[_$$18] forSome { 
               type _$$18 <: (Relation[_$$26, _$$24] forSome { 
                 type _$$26;
                 type _$$24
               })
-            }) = Set.empty;
-            def abstractRelations: (Set[_$$22] forSome { 
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$22] forSome { 
               type _$$22 <: (AbstractRelation[_$$25, _$$23] forSome { 
                 type _$$25;
                 type _$$23
               })
-            }) = Set.empty;
-            def hyperRelations: (Set[_$$21] forSome { 
+            }) = Seq.empty;
+            def hyperRelations: (Seq[_$$21] forSome { 
               type _$$21 <: (HyperRelation[_$$20, _$$16, _$$15, _$$19, _$$17] forSome { 
                 type _$$20;
                 type _$$16;
@@ -269,7 +269,7 @@ class GraphClassSpec extends CodeComparisonSpec {
                 type _$$19;
                 type _$$17
               })
-            }) = Set.empty
+            }) = Seq.empty
           }"""
     )
   }
@@ -277,20 +277,20 @@ class GraphClassSpec extends CodeComparisonSpec {
   "with relations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @Relation class R(startNode:N, endNode: M); @Relation class S(startNode:M, endNode: N)}",
-      q"""def rs: Set[R] = relationsAs(R);""",
-      q"""def s: Set[S] = relationsAs(S);""",
-      """def relations: (Set[_] forSome { 
+      q"""def rs: Seq[R] = relationsAs(R);""",
+      q"""def s: Seq[S] = relationsAs(S);""",
+      """def relations: (Seq[_] forSome { 
             type _ <: (Relation[_, _] forSome { 
               type _;
               type _
             })
-          }) = Set.empty.++(rs).++(s);""",
-      """def abstractRelations: (Set[_] forSome { 
+          }) = Seq.empty.++(rs).++(s);""",
+      """def abstractRelations: (Seq[_] forSome { 
             type _ <: (AbstractRelation[_, _] forSome { 
               type _;
               type _
             })
-          }) = Set.empty.++(rs).++(s);"""
+          }) = Seq.empty.++(rs).++(s);"""
     )
   }
 
@@ -304,27 +304,27 @@ class GraphClassSpec extends CodeComparisonSpec {
             @Node class M extends T
             @Relation class R(startNode:N, endNode: S)
           }""",
-      q"""def rs: Set[R] = relationsAs(R);""",
-      """def relations: (Set[_] forSome { 
+      q"""def rs: Seq[R] = relationsAs(R);""",
+      """def relations: (Seq[_] forSome { 
             type _ <: (Relation[_, _] forSome { 
               type _;
               type _
             })
-          }) = Set.empty.++(rs);""",
-      """def abstractRelations: (Set[_] forSome { 
+          }) = Seq.empty.++(rs);""",
+      """def abstractRelations: (Seq[_] forSome { 
             type _ <: (AbstractRelation[_, _] forSome { 
               type _;
               type _
             })
-          }) = Set.empty.++(rs);"""
+          }) = Seq.empty.++(rs);"""
     )
   }
 
   "with hyperRelations" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N,M)}; @Node class N; @Node class M; @HyperRelation class R(startNode:N, endNode: M);}",
-      q"""def rs: Set[R] = hyperRelationsAs(R);""",
-      """def hyperRelations: (Set[_] forSome { 
+      q"""def rs: Seq[R] = hyperRelationsAs(R);""",
+      """def hyperRelations: (Seq[_] forSome { 
             type _ <: (HyperRelation[_, _, _, _, _] forSome { 
               type _;
               type _;
@@ -332,27 +332,27 @@ class GraphClassSpec extends CodeComparisonSpec {
               type _;
               type _
             })
-          }) = Set.empty.++(rs)""",
-      """def abstractRelations: (Set[_] forSome { 
+          }) = Seq.empty.++(rs)""",
+      """def abstractRelations: (Seq[_] forSome { 
             type _ <: (AbstractRelation[_, _] forSome { 
               type _;
               type _
             })
-          }) = Set.empty.++(rs); """
+          }) = Seq.empty.++(rs); """
     )
   }
 
   "with node trait and one node" >> {
     generatedContainsCode(
       q"object A {@Graph trait G {Nodes(N)}; @Node trait T; @Node class N extends T;}",
-      """def ts: Set[T] = Set.empty.++(ns);""", // tNodes
-      """def tRelations: (Set[_] forSome { 
+      """def ts: Seq[T] = Seq.empty.++(ns);""", // tNodes
+      """def tRelations: (Seq[_] forSome { 
             type _ <: Relation[T, T]
-          }) = Set.empty;""",
-      """def tAbstractRelations: (Set[_] forSome { 
+          }) = Seq.empty;""",
+      """def tAbstractRelations: (Seq[_] forSome { 
             type _ <: AbstractRelation[T, T]
-          }) = Set.empty;""",
-      """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome { 
+          }) = Seq.empty;""",
+      """def tHyperRelations: Seq[(HyperRelation[T, _, _, _, T] forSome { 
             type _ <: (Relation[T, _] forSome { 
               type _
             });
@@ -364,7 +364,7 @@ class GraphClassSpec extends CodeComparisonSpec {
             type _ <: (Relation[_, T] forSome { 
               type _
             })
-          })] = Set.empty;"""
+          })] = Seq.empty;"""
     )
   }
 
@@ -375,12 +375,12 @@ class GraphClassSpec extends CodeComparisonSpec {
         @Node class M extends T;
         @Relation class R(startNode:N, endNode:M)
       }""",
-      """def tRelations: (Set[_] forSome { 
+      """def tRelations: (Seq[_] forSome { 
             type _ <: Relation[T, T]
-          }) = Set.empty.++(rs);""",
-      """def tAbstractRelations: (Set[_] forSome {
+          }) = Seq.empty.++(rs);""",
+      """def tAbstractRelations: (Seq[_] forSome {
             type _ <: AbstractRelation[T, T]
-          }) = Set.empty.++(rs);"""
+          }) = Seq.empty.++(rs);"""
     )
   }
 
@@ -399,12 +399,12 @@ class GraphClassSpec extends CodeComparisonSpec {
         @Relation class R3(startNode:N, endNode:P)
         @Relation class R4(startNode:N, endNode:Q)
       }""",
-      """def tRelations: (Set[_] forSome { 
+      """def tRelations: (Seq[_] forSome { 
             type _ <: Relation[T, T]
-          }) = Set.empty.++(rs);""",
-      """def tAbstractRelations: (Set[_] forSome { 
+          }) = Seq.empty.++(rs);""",
+      """def tAbstractRelations: (Seq[_] forSome { 
             type _ <: AbstractRelation[T, T]
-       }) = Set.empty.++(rs);"""
+       }) = Seq.empty.++(rs);"""
     )
   }
 
@@ -423,10 +423,10 @@ class GraphClassSpec extends CodeComparisonSpec {
         @HyperRelation class R3(startNode:N, endNode:P)
         @HyperRelation class R4(startNode:N, endNode:Q)
       }""",
-      """def tAbstractRelations: (Set[_] forSome {
+      """def tAbstractRelations: (Seq[_] forSome {
           type _ <: AbstractRelation[T, T]
-        }) = Set.empty.++(rs);""",
-      """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome {
+        }) = Seq.empty.++(rs);""",
+      """def tHyperRelations: Seq[(HyperRelation[T, _, _, _, T] forSome {
           type _ <: (Relation[T, _] forSome { 
             type _
           });
@@ -438,7 +438,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           type _ <: (Relation[_, T] forSome { 
             type _
           })
-     })] = Set.empty.++(rs);"""
+     })] = Seq.empty.++(rs);"""
     )
   }
 
@@ -455,7 +455,7 @@ class GraphClassSpec extends CodeComparisonSpec {
         @HyperRelation class R2(startNode:N, endNode:O) extends X
         @HyperRelation class R3(startNode:N, endNode:P) extends X
       }""",
-      """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome {
+      """def tHyperRelations: Seq[(HyperRelation[T, _, _, _, T] forSome {
           type _ <: (Relation[T, _] forSome { 
             type _
           });
@@ -467,7 +467,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           type _ <: (Relation[_, T] forSome { 
             type _
           })
-        }) with X] = Set.empty.++(rs).++(r2s).++(r3s);"""
+        }) with X] = Seq.empty.++(rs).++(r2s).++(r3s);"""
 
     )
   }
@@ -487,7 +487,7 @@ class GraphClassSpec extends CodeComparisonSpec {
         @HyperRelation class R2(startNode:N, endNode:O) extends X
         @HyperRelation class R3(startNode:N, endNode:P) extends Z with X
       }""",
-      """def tHyperRelations: Set[(HyperRelation[T, _, _, _, T] forSome {
+      """def tHyperRelations: Seq[(HyperRelation[T, _, _, _, T] forSome {
           type _ <: (Relation[T, _] forSome { 
             type _
           });
@@ -499,7 +499,7 @@ class GraphClassSpec extends CodeComparisonSpec {
           type _ <: (Relation[_, T] forSome { 
             type _
           })
-        }) with X] = Set.empty.++(rs).++(r2s).++(r3s);"""
+        }) with X] = Seq.empty.++(rs).++(r2s).++(r3s);"""
     )
   }
 }

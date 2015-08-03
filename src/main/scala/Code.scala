@@ -193,8 +193,8 @@ trait Code extends Context with Generators {
   def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
     val traitName = TypeName(nodeTrait)
     val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.map(s => q"${ TermName(s) }")
-    val combined = (q"Set.empty" :: successors).reduce[Tree]((a, b) => q"$a ++ $b")
-    q""" def $relationPlural:Set[$traitName] = $combined"""
+    val combined = (q"Seq.empty" :: successors).reduce[Tree]((a, b) => q"$a ++ $b")
+    q""" def $relationPlural:Seq[$traitName] = $combined"""
   }
 
   def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
@@ -331,7 +331,7 @@ trait Code extends Context with Generators {
   def nodeClasses(schema: Schema): List[Tree] = schema.nodes.map { node => import node._
     val directNeighbours = node.neighbours_terms.map {
       case (accessorName, relation_term, endNode_type, endNode_term) =>
-        q"""def $accessorName:Set[$endNode_type] = successorsAs($endNode_term,$relation_term)"""
+        q"""def $accessorName:Seq[$endNode_type] = successorsAs($endNode_term,$relation_term)"""
     }
 
     val successorTraits = outRelationsToTrait.map { case (r, nodeTrait) =>
@@ -341,7 +341,7 @@ trait Code extends Context with Generators {
 
     val directRevNeighbours = node.rev_neighbours_terms.map {
       case (accessorName, relation_term, startNode_type, startNode_term) =>
-        q"""def $accessorName:Set[$startNode_type] = predecessorsAs($startNode_term, $relation_term)"""
+        q"""def $accessorName:Seq[$startNode_type] = predecessorsAs($startNode_term, $relation_term)"""
     }
 
     val predecessorTraits = inRelationsFromTrait.map { case (r, nodeTrait) =>
@@ -566,26 +566,26 @@ trait Code extends Context with Generators {
   def graphClasses(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._
     // TODO: create subgraphs
 
-    def itemSets(nameAs: String, names: List[String]) = names.map { name => q""" def ${ TermName(nameToPlural(name)) }: Set[${ TypeName(name) }] = ${ TermName(nameAs) }(${ TermName(name) }) """ }
-    def allOf(items: List[String]) = (q"Set.empty" :: items.map(s => q"${ TermName(nameToPlural(s)) }")).reduce[Tree]((a, b) => q"$a ++ $b")
+    def itemSets(nameAs: String, names: List[String]) = names.map { name => q""" def ${ TermName(nameToPlural(name)) }: Seq[${ TypeName(name) }] = ${ TermName(nameAs) }(${ TermName(name) }) """ }
+    def allOf(items: List[String]) = (q"Seq.empty" :: items.map(s => q"${ TermName(nameToPlural(s)) }")).reduce[Tree]((a, b) => q"$a ++ $b")
 
     val nodeSets = itemSets("nodesAs", nodes)
     val relationSets = itemSets("relationsAs", relations)
     val hyperRelationSets = itemSets("hyperRelationsAs", hyperRelations)
 
     val nodeTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      q"def $name_plural_term:Set[$name_type] = ${ allOf(subNodes) }"
+      q"def $name_plural_term:Seq[$name_type] = ${ allOf(subNodes) }"
     }
     val relationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      q"def ${ TermName(nameToPlural(name + "Relation")) }:Set[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relations)) }"
+      q"def ${ TermName(nameToPlural(name + "Relation")) }:Seq[_ <: Relation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relations)) }"
     }
     val abstractRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      q"def ${ TermName(nameToPlural(name + "AbstractRelation")) }:Set[_ <: AbstractRelation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relationsWithHyperRelations)) }"
+      q"def ${ TermName(nameToPlural(name + "AbstractRelation")) }:Seq[_ <: AbstractRelation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relationsWithHyperRelations)) }"
     }
     val hyperRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
       val hyperNodeRelationTraits_type = commonHyperNodeRelationTraits_type.map(t => tq"$t[$name_type, $name_type]")
       q"""
-            def ${ TermName(nameToPlural(name + "HyperRelation")) } :Set[HyperRelation[
+            def ${ TermName(nameToPlural(name + "HyperRelation")) } :Seq[HyperRelation[
                     $name_type,
                     _ <: Relation[$name_type, _],
                     _ <: HyperRelation[$name_type, _, _, _, $name_type] with ..$commonHyperNodeNodeTraits_type with ..$hyperNodeRelationTraits_type,
@@ -608,10 +608,10 @@ trait Code extends Context with Generators {
              ..$abstractRelationTraitSets
              ..$hyperRelationTraitSets
 
-             def nodes: Set[Node] = ${ allOf(nodes) }
-             def relations: Set[_ <: Relation[_,_]] = ${ allOf(relations) }
-             def abstractRelations: Set[_ <: AbstractRelation[_,_]] = ${ allOf(relationsWithHyperRelations) }
-             def hyperRelations: Set[_ <: HyperRelation[_,_,_,_,_]] = ${ allOf(hyperRelations) }
+             def nodes: Seq[Node] = ${ allOf(nodes) }
+             def relations: Seq[_ <: Relation[_,_]] = ${ allOf(relations) }
+             def abstractRelations: Seq[_ <: AbstractRelation[_,_]] = ${ allOf(relationsWithHyperRelations) }
+             def hyperRelations: Seq[_ <: HyperRelation[_,_,_,_,_]] = ${ allOf(hyperRelations) }
            }
            """
   }
