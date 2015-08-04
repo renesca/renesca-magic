@@ -12,11 +12,11 @@ scalaVersion := scalaV
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" // specs2
 
 libraryDependencies ++= Seq(
+  "com.github.renesca" %% "renesca" % "0.3.2",
   "org.scala-lang" % "scala-reflect" % scalaV,
   "org.specs2" %% "specs2-core" % "3.6.2" % "test",
   "org.specs2" %% "specs2-mock" % "3.6.2" % "test",
-  "org.scala-lang" % "scala-compiler" % scalaV % "test",
-  "com.github.renesca" %% "renesca" % "0.3.1"
+  "org.scala-lang" % "scala-compiler" % scalaV % "test"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
