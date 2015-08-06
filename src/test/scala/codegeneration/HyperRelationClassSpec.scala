@@ -36,6 +36,46 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
     )
   }
 
+  "direct neighbour accessors" >> {
+    generatedContainsCode(
+      q"""object A {@Node class A; @Node class B; @Node class M
+          @HyperRelation class N(startNode:A, endNode:B)
+          @Relation class R(startNode:N, endNode:M)
+          @Relation class S(startNode:M, endNode:N)}
+          """,
+      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, AToN, N, NToB, B] {
+            override val label = raw.Label("N")
+            override val labels = Set(raw.Label("N"))
+            def rs: Seq[M] = successorsAs(M, R)
+            def rev_s: Seq[M] = predecessorsAs(M, S)
+            };""",
+      q"""case class M(rawItem: raw.Node) extends Node {
+            override val label = raw.Label("M")
+            override val labels = Set(raw.Label("M"))
+            def s: Seq[N] = successorsAs(N, S)
+            def rev_rs: Seq[N] = predecessorsAs(N, R)
+            };"""
+    )
+  }
+
+  "direct neighbour accessors over hyperrelations" >> {
+    generatedContainsCode(
+      q"""object A {@Node class A; @Node class B; @Node class M
+          @HyperRelation class N(startNode:A, endNode:B)
+          @HyperRelation class R(startNode:N,endNode:M)}""",
+      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, AToN, N, NToB, B] {
+            override val label = raw.Label("N")
+            override val labels = Set(raw.Label("N"))
+              def rs: Seq[M] = successorsAs(M, R)
+            };""",
+      q"""case class M(rawItem: raw.Node) extends Node {
+            override val label = raw.Label("M")
+            override val labels = Set(raw.Label("M"))
+              def rev_rs: Seq[N] = predecessorsAs(N, R)
+            };"""
+    )
+  }
+
   "with super relation types" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",

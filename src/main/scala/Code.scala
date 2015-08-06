@@ -507,7 +507,26 @@ trait Code extends Context with Generators {
   }
 
   def hyperRelationClasses(schema: Schema): List[Tree] = schema.hyperRelations.flatMap { hyperRelation => import hyperRelation._
-    //TODO: generate indirect neighbour-accessors based on hyperrelations
+    val directNeighbours = hyperRelation.neighbours_terms.map {
+      case (accessorName, relation_term, endNode_type, endNode_term) =>
+        q"""def $accessorName:Seq[$endNode_type] = successorsAs($endNode_term,$relation_term)"""
+    }
+
+    val successorTraits = outRelationsToTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(nameToPlural(r))
+      accumulatedTraitNeighbours(r, hyperRelation.neighbours, relationPlural, nodeTrait)
+    }
+
+    val directRevNeighbours = hyperRelation.rev_neighbours_terms.map {
+      case (accessorName, relation_term, startNode_type, startNode_term) =>
+        q"""def $accessorName:Seq[$startNode_type] = predecessorsAs($startNode_term, $relation_term)"""
+    }
+
+    val predecessorTraits = inRelationsFromTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(rev(nameToPlural(r)))
+      accumulatedTraitNeighbours(r, hyperRelation.rev_neighbours, relationPlural, nodeTrait)
+    }
+
     //TODO: property accessors
     val superRelationTypesGenerics = superRelationTypes.map(TypeName(_)).map(superType => tq"$superType[$startNode_type,$endNode_type]")
     val labels = flatSuperNodeTypesWithSelf.map(nameToLabel(_)).map(l => q"raw.Label($l)")
@@ -520,7 +539,11 @@ trait Code extends Context with Generators {
                 with ..${ superRelationTypesGenerics ::: superNodeTypes.map(t => tq"${ TypeName(t) }") } {
                 override val label = raw.Label($name_label)
                 override val labels = Set(..$labels)
-               ..$relationBody
+                ..$directNeighbours
+                ..$successorTraits
+                ..$directRevNeighbours
+                ..$predecessorTraits
+                ..$relationBody
              }
              """,
       q"""

@@ -194,6 +194,18 @@ trait Generators extends Context with Patterns with Parameters {
           superNodeTypes = filterSuperTypes(nodeTraitPatterns, hyperRelationPattern),
           flatSuperNodeTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) intersect (hyperRelationPattern.name :: nodeTraits.map(_.name)),
           superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
+          neighbours = neighbours(hyperRelationPattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
+          rev_neighbours = rev_neighbours(hyperRelationPattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
+          outRelationsToTrait = allRelationPatterns.filter { r =>
+            (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) contains r.startNode) &&
+              (nodeTraitPatterns.map(_.name) contains r.endNode)
+          }.map(r => (r.name, r.endNode)),
+          inRelationsFromTrait = allRelationPatterns.filter { r =>
+            // endNode is this node or one of its supertypes
+            // and startNode is a Node Trait
+            (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) contains r.endNode) &&
+              (nodeTraitPatterns.map(_.name) contains r.startNode)
+          }.map(r => (r.name, r.startNode)),
           flatSuperStatements = flatSuperStatements(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, nodeTraits ::: relationTraits))
       }
@@ -243,7 +255,7 @@ trait Generators extends Context with Patterns with Parameters {
         found.get
     }
 
-    def neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val sources = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(sources contains _.startNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.endNode) {
@@ -262,7 +274,7 @@ trait Generators extends Context with Patterns with Parameters {
       }
     }
 
-    def rev_neighbours(nodePattern: NodePattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def rev_neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val targets = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(targets contains _.endNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.startNode) {
@@ -499,11 +511,23 @@ trait Generators extends Context with Patterns with Parameters {
                             superNodeTypes: List[String],
                             flatSuperNodeTypesWithSelf: List[String], // only self and nodeTraits without external traits
                             superRelationTypes: List[String],
+                            neighbours: List[(String, String, String)], // accessorName, relation, endNode
+                            rev_neighbours: List[(String, String, String)], // accessorName, relation, startNode
+                            outRelationsToTrait: List[(String, String)],
+                            inRelationsFromTrait: List[(String, String)],
                             flatSuperStatements: List[Tree],
                             traitFactoryParameterList: List[ParameterList]
                             ) extends Named with SuperTypes with StartEndNode with Statements with StartEndRelation with HasParameterList with HasTraitFactoryParameterList {
 
     val parameterList = ParameterList.create(flatSuperStatements, name, representsNode = true)
-  }
 
+    //TODO: share code with Node
+    def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
+      (TermName(accessorName), TermName(relation), TypeName(endNode), TermName(endNode))
+    }
+
+    def rev_neighbours_terms = rev_neighbours.map { case (rev_accessorName, relation, startNode) =>
+      (TermName(rev_accessorName), TermName(relation), TypeName(startNode), TermName(startNode))
+    }
+  }
 }
