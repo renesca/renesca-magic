@@ -38,6 +38,14 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
              val middleNode = raw.Node.matches(labels, matches = matches);
              wrap(middleNode)
            }
+          } """,
+      q"""object AToR extends RelationFactory[A, AToR, R] {
+            val relationType = raw.RelationType("ATOR");
+            def wrap(relation: raw.Relation) = AToR(A.wrap(relation.startNode), relation, R.wrap(relation.endNode));
+          } """,
+      q"""object RToB extends RelationFactory[R, RToB, B] {
+            val relationType = raw.RelationType("RTOB");
+            def wrap(relation: raw.Relation) = RToB(R.wrap(relation.startNode), relation, B.wrap(relation.endNode));
           } """
     )
   }

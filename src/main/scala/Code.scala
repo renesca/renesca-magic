@@ -426,6 +426,27 @@ trait Code extends Context with Generators {
            """
   }
 
+  def subRelationFactories(schema: Schema): List[Tree] = schema.hyperRelations.flatMap { hyperRelation => import hyperRelation._
+    List(q"""
+            object $endRelation_term extends RelationFactory[$name_type, $endRelation_type, $endNode_type] {
+               val relationType = raw.RelationType($endRelation_label)
+               def wrap(relation: raw.Relation) = $endRelation_term(
+                 $name_term.wrap(relation.startNode),
+                 relation,
+                 $endNode_term.wrap(relation.endNode))
+            }
+            """,
+         q"""
+            object $startRelation_term extends RelationFactory[$startNode_type, $startRelation_type, $name_type] {
+               val relationType = raw.RelationType($startRelation_label)
+               def wrap(relation: raw.Relation) = $startRelation_term(
+                 $startNode_term.wrap(relation.startNode),
+                 relation,
+                 $name_term.wrap(relation.endNode))
+            }
+             """
+    )
+  }
 
   def hyperRelationFactories(schema: Schema): List[Tree] = schema.hyperRelations.map { hyperRelation => import hyperRelation._
     val superRelationFactories = superRelationTypes.map(t => tq"${ TypeName(traitFactoryName(t)) }[$startNode_type, $name_type, $endNode_type]")
@@ -709,6 +730,7 @@ trait Code extends Context with Generators {
              ..${ relationClasses(schema) }
 
              ..${ hyperRelationFactories(schema) }
+             ..${ subRelationFactories(schema) }
              ..${ hyperRelationClasses(schema) }
 
              ..${ graphFactories(schema) }
