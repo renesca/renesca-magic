@@ -10,13 +10,13 @@ class RelationTraitSpec extends CodeComparisonSpec {
   "simple trait" >> {
     generatedContainsCode(
       q"object A {@Relation trait T}",
-      """trait T[+START <: Node, +END <: Node] extends AbstractRelation[START, END]  }"""
+      """trait T[+START <: Node, +END <: Node] extends AbstractRelation[START, END]  ;"""
     )
   }
   "with super trait" >> {
     generatedContainsCode(
       q"object A { @Relation trait K; @Relation trait T extends K}",
-      """trait T[+START <: Node, +END <: Node] extends K[START, END]  }"""
+      """trait T[+START <: Node, +END <: Node] extends K[START, END]  ;"""
     )
   }
   "with properties" >> {

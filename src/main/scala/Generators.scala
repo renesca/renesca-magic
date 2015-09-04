@@ -147,7 +147,9 @@ trait Generators extends Context with Patterns with Parameters {
       }
       }
 
-      val graphs = graphPatterns.map { graphPattern =>
+      val wholeGraph = GraphPattern("Whole" + schemaPattern.name, Nil, nodePatterns.map(_.name) ::: nodeTraitPatterns.map(_.name))
+
+      val graphs = (wholeGraph :: graphPatterns).map { graphPattern =>
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Node", "trait", nodeTraitPatterns)
         abortIfInheritsFrom("Graph", "trait", graphPattern, "Relation", "class", relationPatterns)

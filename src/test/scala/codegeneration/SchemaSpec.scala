@@ -9,9 +9,9 @@ class SchemaSpec extends CodeComparisonSpec {
 
   "Empty Schema" >> {
     generatedContainsCode(
-      q"object A",
+      q"object Empty",
       q"""
-      object A {
+      object Empty {
        import renesca.{graph => raw}
        import renesca.QueryHandler
        import renesca.schema._
@@ -26,6 +26,40 @@ class SchemaSpec extends CodeComparisonSpec {
        }
 
        def setupDbConstraints(queryHandler: QueryHandler) = ()
+
+
+        object WholeEmpty {
+          def empty = new WholeEmpty(raw.Graph.empty);
+          def apply(items: Item*) = {
+            val wrapper = empty;
+            wrapper.add(((items): _*));
+            wrapper
+          }
+        };
+        case class WholeEmpty(graph: raw.Graph) extends Graph {
+          def nodes: Seq[Node] = Seq.empty;
+          def relations: (Seq[_$$3] forSome { 
+            type _$$3 <: (Relation[_$$12, _$$11] forSome { 
+              type _$$12;
+              type _$$11
+            })
+          }) = Seq.empty;
+          def abstractRelations: (Seq[_$$9] forSome { 
+            type _$$9 <: (AbstractRelation[_$$6, _$$10] forSome { 
+              type _$$6;
+              type _$$10
+            })
+          }) = Seq.empty;
+          def hyperRelations: (Seq[_$$8] forSome { 
+            type _$$8 <: (HyperRelation[_$$5, _$$4, _$$7, _$$2, _$$1] forSome { 
+              type _$$5;
+              type _$$4;
+              type _$$7;
+              type _$$2;
+              type _$$1
+            })
+          }) = Seq.empty
+        }
       } """)
   }
 
@@ -79,5 +113,75 @@ class SchemaSpec extends CodeComparisonSpec {
             @HyperRelation class R(startNode:A, endNode:B) extends Y
           }""",
       q"""val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(X.labels, XMatches), scala.Tuple2(A.labels, A), scala.Tuple2(B.labels, B), scala.Tuple2(R.labels, R));""")
+  }
+
+  "One Graph which covers the whole Schema" >> {
+    generatedContainsCode(
+      q"""object A {
+            @Node trait T
+            @Relation trait R
+            @Node class N extends T
+            @Node class M
+            @HyperRelation class H(startNode:M, endNode:T) extends T
+          }""",
+      q"""
+          object WholeA {
+            def empty = new WholeA(raw.Graph.empty);
+            def apply(items: Item*) = {
+              val wrapper = empty;
+              wrapper.add(((items): _*));
+              wrapper
+            }
+          };
+          """,
+          q"""
+          case class WholeA(graph: raw.Graph) extends Graph {
+            def ns: Seq[N] = nodesAs(N);
+            def ms: Seq[M] = nodesAs(M);
+            def hs: Seq[H] = hyperRelationsAs(H);
+            def ts: Seq[T] = Seq.empty.++(ns).++(hs);
+            def tRelations: (Seq[_$$1] forSome {
+              type _$$1 <: Relation[T, T]
+            }) = Seq.empty;
+            def tAbstractRelations: (Seq[_$$2] forSome {
+              type _$$2 <: AbstractRelation[T, T]
+            }) = Seq.empty;
+            def tHyperRelations: Seq[(HyperRelation[T, _$$3, _$$9, _$$7, T] forSome {
+              type _$$3 <: (Relation[T, _$$10] forSome {
+                type _$$10
+              });
+              type _$$9 <: (HyperRelation[T, _$$6, _$$5, _$$8, T] forSome {
+                type _$$6;
+                type _$$5;
+                type _$$8
+              });
+              type _$$7 <: (Relation[_$$4, T] forSome {
+                type _$$4
+              })
+            })] = Seq.empty;
+            def nodes: Seq[Node] = Seq.empty.++(ns).++(ms).++(hs);
+            def relations: (Seq[_$$13] forSome {
+              type _$$13 <: (Relation[_$$22, _$$21] forSome {
+                type _$$22;
+                type _$$21
+              })
+            }) = Seq.empty;
+            def abstractRelations: (Seq[_$$19] forSome {
+              type _$$19 <: (AbstractRelation[_$$16, _$$20] forSome {
+                type _$$16;
+                type _$$20
+              })
+            }) = Seq.empty.++(hs);
+            def hyperRelations: (Seq[_$$18] forSome {
+              type _$$18 <: (HyperRelation[_$$15, _$$14, _$$17, _$$12, _$$11] forSome {
+                type _$$15;
+                type _$$14;
+                type _$$17;
+                type _$$12;
+                type _$$11
+              })
+            }) = Seq.empty.++(hs)
+          }
+      """)
   }
 }

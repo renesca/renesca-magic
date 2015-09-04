@@ -14,7 +14,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
           override val labels = Set(raw.Label("R"))
       }""",
       """case class AToR(startNode: A, rawItem: raw.Relation, endNode: R) extends Relation[A, R];""",
-      """case class RToB(startNode: R, rawItem: raw.Relation, endNode: B) extends Relation[R, B]  }"""
+      """case class RToB(startNode: R, rawItem: raw.Relation, endNode: B) extends Relation[R, B];"""
     )
   }
 
