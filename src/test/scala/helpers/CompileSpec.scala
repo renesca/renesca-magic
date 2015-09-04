@@ -1,6 +1,7 @@
 package helpers
 
-trait CompileSpec {
+trait CompileSpec extends Colors {
+
   import scala.tools.cmd.CommandLineParser
   import scala.tools.nsc.reporters.StoreReporter
   import scala.tools.nsc.{CompilerCommand, Global, Settings}
@@ -44,7 +45,7 @@ trait CompileSpec {
     val typer = newTyper(rootContext(unit))
     val typedTree = typer.typed(tree)
     for(workItem <- unit.toCheck) workItem()
-    if(reporter.hasErrors) throw new Exception("typecheck has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL) + EOL + showCode(typedTree))
+    if(reporter.hasErrors) throw new Exception("typecheck has failed:" + EOL + (reporter.infos map (_.msg) mkString EOL) + EOL + highlight(showCode(typedTree)))
 
     true
   }

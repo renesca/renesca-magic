@@ -3,8 +3,7 @@ package helpers
 import org.specs2.mutable.Specification
 import renesca.schema.macros.{Aborter, Code, Generators, Patterns, Warner}
 
-
-trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec {
+trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec with Colors {
   sequential
 
   trait ExpectedCode
@@ -30,12 +29,13 @@ trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec
 
   private def errorMessage(source: Tree, generated: Tree, snippet: String, shouldContain: Boolean) = {
     val failMsg = if(shouldContain) "which doesn't contain:" else "which contains but shouldn't:"
-    comparableWildcards(showCode(source)) +
-      "\n--- generates: ---\n" +
-      comparableWildcards(showCode(generated)) +
-      s"\n--- $failMsg ---\n" +
-      comparableWildcards(snippet) +
-      "\n----------\n"
+
+    highlight(comparableWildcards(showCode(source))) +
+      "\n" + bold(red("--- generates: ---")) + "\n" +
+      highlight(comparableWildcards(showCode(generated))) +
+      "\n" + bold(red(s"--- $failMsg ---")) + "\n" +
+      highlight(comparableWildcards(snippet)) +
+      "\n" + bold(red("----------")) + "\n"
   }
 
   private val wildcardRegex = "_\\$\\d+".r
