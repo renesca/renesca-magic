@@ -427,7 +427,7 @@ trait Code extends Context with Generators {
   }
 
   def subRelationFactories(schema: Schema): List[Tree] = schema.hyperRelations.flatMap { hyperRelation => import hyperRelation._
-    List(q"""
+    List( q"""
             object $endRelation_term extends RelationFactory[$name_type, $endRelation_type, $endNode_type] {
                val relationType = raw.RelationType($endRelation_label)
                def wrap(relation: raw.Relation) = $endRelation_term(
@@ -436,7 +436,7 @@ trait Code extends Context with Generators {
                  $endNode_term.wrap(relation.endNode))
             }
             """,
-         q"""
+      q"""
             object $startRelation_term extends RelationFactory[$startNode_type, $startRelation_type, $name_type] {
                val relationType = raw.RelationType($startRelation_label)
                def wrap(relation: raw.Relation) = $startRelation_term(
@@ -627,15 +627,15 @@ trait Code extends Context with Generators {
       q"def ${ TermName(nameToPlural(name + "AbstractRelation")) }:Seq[_ <: AbstractRelation[$name_type, $name_type]] = ${ allOf(subRelations.intersect(relationsWithHyperRelations)) }"
     }
     val hyperRelationTraitSets = nodeTraits.map { nodeTrait => import nodeTrait._
-      val hyperNodeRelationTraits_type = commonHyperNodeRelationTraits_type.map(t => tq"$t[$name_type, $name_type]")
+      val hyperRelationRelationTraits_type = commonHyperRelationRelationTraits_type.map(t => tq"$t[$name_type, $name_type]")
       q"""
             def ${ TermName(nameToPlural(name + "HyperRelation")) } :Seq[HyperRelation[
                     $name_type,
                     _ <: Relation[$name_type, _],
-                    _ <: HyperRelation[$name_type, _, _, _, $name_type] with ..$commonHyperNodeNodeTraits_type with ..$hyperNodeRelationTraits_type,
+                    _ <: HyperRelation[$name_type, _, _, _, $name_type] with ..$commonHyperRelationNodeTraits_type with ..$hyperRelationRelationTraits_type,
                     _ <: Relation[_, $name_type],
                     $name_type]
-                    with ..$commonHyperNodeNodeTraits_type with ..$hyperNodeRelationTraits_type]
+                    with ..$commonHyperRelationNodeTraits_type with ..$hyperRelationRelationTraits_type]
                 = ${ allOf(subHyperRelations.intersect(hyperRelations)) }
             """
     }
@@ -652,7 +652,7 @@ trait Code extends Context with Generators {
              ..$abstractRelationTraitSets
              ..$hyperRelationTraitSets
 
-             def nodes: Seq[Node] = ${ allOf(nodes) }
+             def nodes: Seq[Node] = ${ allOf(nodesWithHyperRelations) }
              def relations: Seq[_ <: Relation[_,_]] = ${ allOf(relations) }
              def abstractRelations: Seq[_ <: AbstractRelation[_,_]] = ${ allOf(relationsWithHyperRelations) }
              def hyperRelations: Seq[_ <: HyperRelation[_,_,_,_,_]] = ${ allOf(hyperRelations) }

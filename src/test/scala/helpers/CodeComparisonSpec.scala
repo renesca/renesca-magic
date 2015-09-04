@@ -51,7 +51,8 @@ trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec
   def generate(code: Tree) = schema(Schema(SchemaPattern.unapply(code).get))
   def annotateCode(code: Tree) = "@renesca.schema.macros.GraphSchema " + showCode(code)
   def generatedContainsCode(source: Tree, snippets: ExpectedCode*) = {
-    (compileCode(annotateCode(source)) mustEqual true) +: containCode(source, generate(source), snippets: _*)
+    (compileCode(annotateCode(source)) mustEqual true) +:
+      containCode(source, generate(source), snippets: _*)
   }
 }
 
