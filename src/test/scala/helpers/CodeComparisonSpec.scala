@@ -15,9 +15,9 @@ trait CodeComparisonSpec extends Specification with ContextMock with CompileSpec
   val magic = new Patterns with Generators with Code {
     val context: contextMock.type = contextMock
     val aborter = mock[Aborter].smart
-    aborter.abort(anyString) answers { msg => throw new RuntimeException(msg.toString) }
+    aborter.abort(anyString) answers { msg => val e = new RuntimeException(msg.toString); e.printStackTrace(); throw e }
     val warner = mock[Warner].smart
-    warner.warning(anyString) answers { msg => throw new RuntimeException(msg.toString) }
+    warner.warning(anyString) answers { msg => val e = new RuntimeException(msg.toString); e.printStackTrace(); throw e }
   }
 
   import contextMock.universe._
