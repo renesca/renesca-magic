@@ -502,4 +502,17 @@ class GraphClassSpec extends CodeComparisonSpec {
         }) with X] = Seq.empty.++(rs).++(r2s).++(r3s);"""
     )
   }
+
+  "generate node accessors for node traits which are only extended by HyperRelations" >> {
+    generatedContainsCode(
+      q"""object A {@Graph trait G {Nodes(T, N)};
+        @Node trait T;
+        @Node class N;
+        @HyperRelation class H(startNode:N, endNode:N) extends T
+      }""",
+      """def hs: Seq[H] = relationsAs(H)""",
+      """def ts: Seq[T] = Seq.empty.++(hs)""",
+      """def ns: Seq[N] = nodeAs(N)"""
+    )
+  }.pendingUntilFixed
 }
