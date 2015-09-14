@@ -17,6 +17,11 @@ class GraphFactorySpec extends CodeComparisonSpec {
     q"""
           object G {
             def empty = new G(raw.Graph.empty);
+            def remove(items: Item*) = {
+              val wrapper = empty;
+              wrapper.remove(((items): _*));
+              wrapper
+            }
             def apply(items: Item*) = {
               val wrapper = empty;
               wrapper.add(((items): _*));

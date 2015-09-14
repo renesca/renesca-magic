@@ -598,6 +598,12 @@ trait Code extends Context with Generators {
           object $name_term {
             def empty = new $name_type(raw.Graph.empty)
 
+            def remove(items: Item*) = {
+              val wrapper = empty
+              wrapper.remove(items: _*)
+              wrapper
+            }
+
             def apply(items: Item*) = {
               val wrapper = empty
               wrapper.add(items: _*)
