@@ -30,6 +30,11 @@ class SchemaSpec extends CodeComparisonSpec {
 
         object WholeEmpty {
           def empty = new WholeEmpty(raw.Graph.empty);
+          def remove(items: Item*) = {
+            val wrapper = empty;
+            wrapper.remove(((items): _*));
+            wrapper
+          }
           def apply(items: Item*) = {
             val wrapper = empty;
             wrapper.add(((items): _*));
@@ -127,6 +132,11 @@ class SchemaSpec extends CodeComparisonSpec {
       q"""
           object WholeA {
             def empty = new WholeA(raw.Graph.empty);
+            def remove(items: Item*) = {
+              val wrapper = empty;
+              wrapper.remove(((items): _*));
+              wrapper
+            }
             def apply(items: Item*) = {
               val wrapper = empty;
               wrapper.add(((items): _*));
