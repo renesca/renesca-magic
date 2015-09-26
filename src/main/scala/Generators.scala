@@ -20,10 +20,16 @@ trait Generators extends Context with Patterns with Parameters {
 
   trait SuperTypes {
     def pattern: SuperTypesPattern
-    def superTypes = pattern.superTypes
+    def externalSuperTypes: List[String]
+    def externalSuperTypes_type = externalSuperTypes.map(TypeName(_))
 
+    //TODO: should filter external super types here.
+    //currently the pattern is copied before instantiating this. Because some
+    //functions in this file rely on pattern.superTypes to be correct.
+    def superTypes = pattern.superTypes
     def superTypes_type = superTypes.map(TypeName(_))
   }
+
 
   trait StartEndNode {
     def pattern: StartEndNodePattern
@@ -85,26 +91,31 @@ trait Generators extends Context with Patterns with Parameters {
           abort(s"$childItem $childType `${ child.name }` cannot inherit from $parentItem $parentType `$parentName`.")
       }
 
-      val nodeTraits = nodeTraitPatterns.map { nodeTraitPattern =>
-        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "class", relationPatterns)
-        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Relation", "trait", relationTraitPatterns)
-        abortIfInheritsFrom("Node", "trait", nodeTraitPattern, "Graph", "trait", graphPatterns)
-        NodeTrait(nodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
+      val nodeTraits = nodeTraitPatterns.map { rawNodeTraitPattern =>
+        abortIfInheritsFrom("Node", "trait", rawNodeTraitPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Node", "trait", rawNodeTraitPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Node", "trait", rawNodeTraitPattern, "Relation", "trait", relationTraitPatterns)
+        abortIfInheritsFrom("Node", "trait", rawNodeTraitPattern, "Graph", "trait", graphPatterns)
+
+        NodeTrait(rawNodeTraitPattern, nodeTraitPatterns, relationTraitPatterns, nodePatterns, hyperRelationPatterns, relationPatterns, hyperRelationPatterns)
       }
 
       nodeTraits.foreach { nodeTrait =>
         nodeTrait.traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodeTrait.pattern, nodeTraits)
       }
 
-      val relationTraits = relationTraitPatterns.map { relationTraitPattern =>
-        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Relation", "class", relationPatterns)
-        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Node", "trait", nodeTraitPatterns)
-        abortIfInheritsFrom("Relation", "trait", relationTraitPattern, "Graph", "trait", graphPatterns)
+      val relationTraits = relationTraitPatterns.map { rawRelationTraitPattern =>
+        abortIfInheritsFrom("Relation", "trait", rawRelationTraitPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Relation", "trait", rawRelationTraitPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Relation", "trait", rawRelationTraitPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Relation", "trait", rawRelationTraitPattern, "Graph", "trait", graphPatterns)
+
+        val externalSuperTypes = rawRelationTraitPattern.superTypes diff relationTraitPatterns.map(_.name)
+        val relationTraitPattern = rawRelationTraitPattern.copy(_superTypes = rawRelationTraitPattern.superTypes diff externalSuperTypes)
         RelationTrait(relationTraitPattern,
+          externalSuperTypes = externalSuperTypes,
           flatSuperStatements(relationTraitPatterns, relationTraitPattern),
-          traitCanHaveOwnFactory(allRelationPatterns ::: nodeTraitPatterns ::: relationTraitPatterns, relationTraitPattern)) //TODO: why nodeTraitPatterns
+          traitCanHaveOwnFactory(allRelationPatterns ::: relationTraitPatterns, rawRelationTraitPattern))
       }
 
       // create special nodepatterns for creating matches class for nodetraits
@@ -118,17 +129,17 @@ trait Generators extends Context with Patterns with Parameters {
         (pattern, mapping.toMap)
       }
 
-      val nodes = (traitImplementationPattern ++ nodePatterns).map { rawNodePattern => {
+      val nodes = (traitImplementationPattern ++ nodePatterns).map { rawNodePattern =>
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Node", "class", nodePatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "class", relationPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Relation", "trait", relationTraitPatterns)
         abortIfInheritsFrom("Node", "class", rawNodePattern, "Graph", "trait", graphPatterns)
 
-        val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes intersect nodeTraits.map(_.name))
+        val externalSuperTypes = rawNodePattern.superTypes diff nodeTraitPatterns.map(_.name)
+        val nodePattern = rawNodePattern.copy(_superTypes = rawNodePattern.superTypes diff externalSuperTypes)
         Node(nodePattern,
-          superTypes = nodePattern.superTypes,
           flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name) intersect (nodePattern.name :: nodeTraits.map(_.name)),
-          externalSuperTypes = rawNodePattern.superTypes.filterNot(nodeTraits.map(_.name) contains _),
+          externalSuperTypes = externalSuperTypes,
           neighbours = neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
           rev_neighbours = rev_neighbours(nodePattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
           outRelationsToTrait = allRelationPatterns.filter { r =>
@@ -144,7 +155,6 @@ trait Generators extends Context with Patterns with Parameters {
           flatStatements = flatSuperStatements(nodeTraitPatterns, nodePattern),
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns, nodePattern, nodeTraits),
           implementedTrait = traitImplementationMap.get(nodePattern.name))
-      }
       }
 
       val wholeGraph = GraphPattern("Whole" + schemaPattern.name, Nil, nodePatterns.map(_.name) ::: nodeTraitPatterns.map(_.name))
@@ -185,21 +195,24 @@ trait Generators extends Context with Patterns with Parameters {
         )
       }
 
-      val hyperRelations = hyperRelationPatterns.map { hyperRelationPattern =>
-        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Relation", "class", relationPatterns)
-        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("HyperRelation", "class", hyperRelationPattern, "Graph", "trait", graphPatterns)
-        if(graphPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
-        if(relationPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
-        if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.startNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs startNode `${ hyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
-        if(graphPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
-        if(relationPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
-        if(relationTraitPatterns.map(_.name) contains hyperRelationPattern.endNode) abort(s"HyperRelation class `${ hyperRelationPattern.name }` needs endNode `${ hyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      val hyperRelations = hyperRelationPatterns.map { rawHyperRelationPattern =>
+        abortIfInheritsFrom("HyperRelation", "class", rawHyperRelationPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("HyperRelation", "class", rawHyperRelationPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("HyperRelation", "class", rawHyperRelationPattern, "Graph", "trait", graphPatterns)
+        if(graphPatterns.map(_.name) contains rawHyperRelationPattern.startNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs startNode `${ rawHyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
+        if(relationPatterns.map(_.name) contains rawHyperRelationPattern.startNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs startNode `${ rawHyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains rawHyperRelationPattern.startNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs startNode `${ rawHyperRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+        if(graphPatterns.map(_.name) contains rawHyperRelationPattern.endNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs endNode `${ rawHyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
+        if(relationPatterns.map(_.name) contains rawHyperRelationPattern.endNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs endNode `${ rawHyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains rawHyperRelationPattern.endNode) abort(s"HyperRelation class `${ rawHyperRelationPattern.name }` needs endNode `${ rawHyperRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
 
+        val externalSuperTypes = rawHyperRelationPattern.superTypes diff (nodeTraitPatterns.map(_.name) ++ relationTraitPatterns.map(_.name))
+        val hyperRelationPattern = rawHyperRelationPattern.copy(_superTypes = rawHyperRelationPattern.superTypes diff externalSuperTypes)
         HyperRelation(
           pattern = hyperRelationPattern,
           superNodeTypes = filterSuperTypes(nodeTraitPatterns, hyperRelationPattern),
           flatSuperNodeTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, hyperRelationPattern).map(_.name) intersect (hyperRelationPattern.name :: nodeTraits.map(_.name)),
+          externalSuperTypes = externalSuperTypes,
           superRelationTypes = filterSuperTypes(relationTraitPatterns, hyperRelationPattern),
           neighbours = neighbours(hyperRelationPattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
           rev_neighbours = rev_neighbours(hyperRelationPattern, allRelationPatterns, nodePatterns, nodeTraitPatterns),
@@ -217,20 +230,23 @@ trait Generators extends Context with Patterns with Parameters {
           traitFactoryParameterList = findSuperFactoryParameterList(nodeTraitPatterns ::: relationTraitPatterns, hyperRelationPattern, nodeTraits ::: relationTraits))
       }
 
-      val relations = relationPatterns.map { relationPattern =>
-        abortIfInheritsFrom("Relation", "class", relationPattern, "Relation", "class", relationPatterns)
-        abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "class", nodePatterns)
-        abortIfInheritsFrom("Relation", "class", relationPattern, "Node", "trait", nodeTraitPatterns)
-        abortIfInheritsFrom("Relation", "class", relationPattern, "Graph", "trait", graphPatterns)
-        if(graphPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
-        if(relationPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
-        if(relationTraitPatterns.map(_.name) contains relationPattern.startNode) abort(s"Relation class `${ relationPattern.name }` needs startNode `${ relationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
-        if(graphPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
-        if(relationPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
-        if(relationTraitPatterns.map(_.name) contains relationPattern.endNode) abort(s"Relation class `${ relationPattern.name }` needs endNode `${ relationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+      val relations = relationPatterns.map { rawRelationPattern =>
+        abortIfInheritsFrom("Relation", "class", rawRelationPattern, "Relation", "class", relationPatterns)
+        abortIfInheritsFrom("Relation", "class", rawRelationPattern, "Node", "class", nodePatterns)
+        abortIfInheritsFrom("Relation", "class", rawRelationPattern, "Node", "trait", nodeTraitPatterns)
+        abortIfInheritsFrom("Relation", "class", rawRelationPattern, "Graph", "trait", graphPatterns)
+        if(graphPatterns.map(_.name) contains rawRelationPattern.startNode) abort(s"Relation class `${ rawRelationPattern.name }` needs startNode `${ rawRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
+        if(relationPatterns.map(_.name) contains rawRelationPattern.startNode) abort(s"Relation class `${ rawRelationPattern.name }` needs startNode `${ rawRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains rawRelationPattern.startNode) abort(s"Relation class `${ rawRelationPattern.name }` needs startNode `${ rawRelationPattern.startNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
+        if(graphPatterns.map(_.name) contains rawRelationPattern.endNode) abort(s"Relation class `${ rawRelationPattern.name }` needs endNode `${ rawRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Graph.")
+        if(relationPatterns.map(_.name) contains rawRelationPattern.endNode) abort(s"Relation class `${ rawRelationPattern.name }` needs endNode `${ rawRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation.")
+        if(relationTraitPatterns.map(_.name) contains rawRelationPattern.endNode) abort(s"Relation class `${ rawRelationPattern.name }` needs endNode `${ rawRelationPattern.endNode }` to be a Node, Node trait, or HyperRelation. Not a Relation trait.")
 
+        val externalSuperTypes = rawRelationPattern.superTypes diff relationTraitPatterns.map(_.name)
+        val relationPattern = rawRelationPattern.copy(_superTypes = rawRelationPattern.superTypes diff externalSuperTypes)
         Relation(
           pattern = relationPattern,
+          externalSuperTypes = externalSuperTypes,
           flatStatements = flatSuperStatements(relationTraitPatterns, relationPattern),
           traitFactoryParameterList = findSuperFactoryParameterList(relationTraitPatterns, relationPattern, relationTraits))
       }
@@ -412,6 +428,7 @@ trait Generators extends Context with Patterns with Parameters {
                      graphs: List[Graph],
                      statements: List[Tree]
                      ) extends Named with SuperTypes {
+    val externalSuperTypes = List.empty
   }
 
   case class Graph(
@@ -422,12 +439,15 @@ trait Generators extends Context with Patterns with Parameters {
                     relations: List[String],
                     hyperRelations: List[String],
                     nodeTraits: List[NodeTrait]
-                    ) extends Named with SuperTypes
+                    ) extends Named with SuperTypes {
+    val externalSuperTypes = List.empty
+  }
 
 
   case class NodeTrait(
                         pattern: NodeTraitPattern,
                         flatSuperTypesWithSelf: List[String], // only self and nodeTraits without external traits
+                        externalSuperTypes: List[String],
                         subNodes: List[String],
                         subRelations: List[String],
                         subHyperRelations: List[String],
@@ -447,7 +467,7 @@ trait Generators extends Context with Patterns with Parameters {
 
   object NodeTrait {
     def apply(
-               nodeTraitPattern: NodeTraitPattern,
+               rawNodeTraitPattern: NodeTraitPattern,
                nodeTraitPatterns: List[NodeTraitPattern],
                relationTraitPatterns: List[RelationTraitPattern],
                selectedNodePatterns: List[NamePattern with SuperTypesPattern with StatementsPattern],
@@ -457,24 +477,30 @@ trait Generators extends Context with Patterns with Parameters {
                ) = {
 
       import Schema.{childNodesOfNodeTrait, flatSuperStatements, nodeNamesToRelations, nodeTraitToCommonHyperRelationTraits, patternToFlatSuperTypesWithSelf, traitCanHaveOwnFactory}
+
+      val externalSuperTypes = rawNodeTraitPattern.superTypes diff nodeTraitPatterns.map(_.name)
+      val nodeTraitPattern = rawNodeTraitPattern.copy(_superTypes = rawNodeTraitPattern.superTypes diff externalSuperTypes)
+
       val childNodes = childNodesOfNodeTrait(nodeTraitPatterns, selectedNodePatterns ::: selectedHyperRelationPatterns, nodeTraitPattern)
       val childTraits = childNodesOfNodeTrait(nodeTraitPatterns, nodeTraitPatterns, nodeTraitPattern)
       new NodeTrait(
         nodeTraitPattern,
         flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodeTraitPattern).map(_.name) intersect nodeTraitPatterns.map(_.name),
+        externalSuperTypes = externalSuperTypes,
         subNodes = childNodes,
         subRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns ::: relationPatterns).map(_.name),
         subHyperRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns).map(_.name),
         commonHyperRelationNodeTraits = nodeTraitToCommonHyperRelationTraits(nodeTraitPatterns, nodeTraitPatterns, selectedNodePatterns, hyperRelationPatterns, nodeTraitPattern),
         commonHyperRelationRelationTraits = nodeTraitToCommonHyperRelationTraits(nodeTraitPatterns, relationTraitPatterns, selectedNodePatterns, hyperRelationPatterns, nodeTraitPattern),
         flatStatements = flatSuperStatements(nodeTraitPatterns, nodeTraitPattern),
-        hasOwnFactory = traitCanHaveOwnFactory(selectedNodePatterns ::: hyperRelationPatterns ::: relationTraitPatterns ::: nodeTraitPatterns, nodeTraitPattern)
+        hasOwnFactory = traitCanHaveOwnFactory(selectedNodePatterns ::: hyperRelationPatterns ::: relationTraitPatterns ::: nodeTraitPatterns, rawNodeTraitPattern)
       )
     }
   }
 
   case class RelationTrait(
                             pattern: RelationTraitPattern,
+                            externalSuperTypes: List[String],
                             flatStatements: List[Tree],
                             hasOwnFactory: Option[Boolean]
                             ) extends Named with SuperTypes with Statements with HasOwnFactory with HasParameterList {
@@ -484,7 +510,6 @@ trait Generators extends Context with Patterns with Parameters {
 
   case class Node(
                    pattern: NodePattern,
-                   override val superTypes: List[String], // only nodeTraits
                    flatSuperTypesWithSelf: List[String], // only self and nodeTraits without external traits
                    externalSuperTypes: List[String],
                    neighbours: List[(String, String, String)], // accessorName, relation, endNode
@@ -511,6 +536,7 @@ trait Generators extends Context with Patterns with Parameters {
 
   case class Relation(
                        pattern: RelationPattern,
+                       externalSuperTypes: List[String],
                        flatStatements: List[Tree], // TODO: rename to flatSuperStatements (same for node etc)
                        traitFactoryParameterList: List[ParameterList]
                        ) extends Named with StartEndNode with SuperTypes with Statements with HasParameterList with HasTraitFactoryParameterList {
@@ -522,6 +548,7 @@ trait Generators extends Context with Patterns with Parameters {
                             pattern: HyperRelationPattern,
                             superNodeTypes: List[String],
                             flatSuperNodeTypesWithSelf: List[String], // only self and nodeTraits without external traits
+                            externalSuperTypes: List[String],
                             superRelationTypes: List[String],
                             neighbours: List[(String, String, String)], // accessorName, relation, endNode
                             rev_neighbours: List[(String, String, String)], // accessorName, relation, startNode

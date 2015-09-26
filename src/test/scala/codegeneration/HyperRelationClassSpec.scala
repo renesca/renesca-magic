@@ -105,4 +105,14 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       }"""
     )
   }
+
+  "with super relation and node types and external trait" >> {
+    generatedContainsCode(
+      q"object A {@Node class A; @Node class B; @Relation trait T; @Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends T with K with Immutable}",
+      """case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] with T[A, B] with K with Immutable {
+        override val label = raw.Label("R");
+        override val labels = Set(raw.Label("R"), raw.Label("K"))
+      }"""
+    )
+  }
 }

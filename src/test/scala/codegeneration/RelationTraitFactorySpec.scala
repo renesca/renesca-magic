@@ -63,4 +63,19 @@ class RelationTraitFactorySpec extends CodeComparisonSpec {
           }"""
     )
   }
+
+  "with external superType" >> {
+    generatedContainsCode(
+      q"object A {@Relation trait T; @Relation trait X extends T with Immutable}",
+      q"""trait XMatchesFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
+                extends TMatchesFactory[START, RELATION, END] {
+              def matchesX(startNode: START, endNode: END, matches: Set[PropertyKey] = Set.empty): RELATION
+          }""",
+      q"""trait XFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node]
+                extends TFactory[START, RELATION, END] with XMatchesFactory[START,RELATION,END] {
+              def createX(startNode: START, endNode: END): RELATION
+              def mergeX(startNode: START, endNode: END, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): RELATION
+          }"""
+    )
+  }
 }

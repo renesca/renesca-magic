@@ -67,6 +67,23 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     )
   }
 
+  "with node super factory and external supertype" >> {
+    generatedContainsCode(
+      q"object A {@Node class A; @Node class B; @Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T with Immutable}",
+      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[R] {"""
+    )
+  }
+
+  "with relation super factory and external supertype" >> {
+    generatedContainsCode(
+      q"object A {@Node class A; @Node class B; @Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T with Immutable}",
+      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
+      q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)""",
+      q"""def mergeT(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, merge, onMatch)""",
+      q"""def matchesT(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, matches)"""
+    )
+  }
+
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @HyperRelation class R(startNode:A, endNode:B) {val p:String; var x:Long}}",

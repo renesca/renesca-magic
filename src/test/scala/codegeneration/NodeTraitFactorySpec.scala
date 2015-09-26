@@ -46,7 +46,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
 
   "with own factory with superTraits and external traits" >> {
     generatedContainsCode(
-      q"object A {trait E; @Node trait S; @Node trait T extends S; @Node class N extends T with E}",
+      q"object A {@Node trait S; @Node trait T extends S with Immutable;}",
       q"""object T extends RootNodeTraitFactory[T] with TMatchesFactory[T] {
             val label = TMatches.label
             val labels = TMatches.labels
@@ -55,7 +55,7 @@ class NodeTraitFactorySpec extends CodeComparisonSpec {
             def matchesS(matches: Set[PropertyKey] = Set.empty):TMatches = this.matches(matches)
           }"""
     )
-  }.pendingUntilFixed
+  }
 
   "with own factory with multiple superTraits" >> {
     generatedContainsCode(

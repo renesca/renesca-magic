@@ -36,6 +36,15 @@ class RelationFactorySpec extends CodeComparisonSpec {
       q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)"""
     )
   }
+
+  "with external supertype" >> {
+    generatedContainsCode(
+      q"object A {@Relation trait T; @Node class A; @Node class B;@Relation class R(startNode:A, endNode:B) extends T with Immutable}",
+      """object R extends RelationFactory[A, R, B] with TFactory[A, R, B] { """,
+      q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)"""
+    )
+  }
+
   "with properties" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B;@Relation class R(startNode:A, endNode:B) {val p:String; var x:Long}}",

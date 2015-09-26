@@ -351,7 +351,6 @@ trait Code extends Context with Generators {
 
     val nodeBody = statements.flatMap(generatePropertyAccessors(_))
     val superNodeTraitTypesWithDefault = if(superTypes.isEmpty) List(TypeName("Node")) else superTypes_type
-    val externalSuperTypes_type = externalSuperTypes.map(TypeName(_))
 
     // if this is an implementedTrait, we should refer to the trait for labels
     val label = implementedTrait.map(_.name_label).getOrElse(name_label)
@@ -419,7 +418,7 @@ trait Code extends Context with Generators {
 
     q"""
             case class $name_type(startNode: $startNode_type, rawItem: raw.Relation, endNode: $endNode_type)
-              extends ..$superTypesWithDefaultGenerics {
+              extends ..$superTypesWithDefaultGenerics with ..$externalSuperTypes_type {
 
               ..$relationBody
             }
@@ -557,7 +556,8 @@ trait Code extends Context with Generators {
       q"""
              case class $name_type(rawItem: raw.Node)
                 extends HyperRelation[$startNode_type, $startRelation_type, $name_type, $endRelation_type, $endNode_type]
-                with ..${ superRelationTypesGenerics ::: superNodeTypes.map(t => tq"${ TypeName(t) }") } {
+                with ..${ superRelationTypesGenerics ::: superNodeTypes.map(t => tq"${ TypeName(t) }") }
+                with ..$externalSuperTypes_type {
                 override val label = raw.Label($name_label)
                 override val labels = Set(..$labels)
                 ..$directNeighbours
@@ -583,14 +583,15 @@ trait Code extends Context with Generators {
     val traitBody = statements.flatMap(generatePropertyAccessors(_))
     val matchesClassName = TypeName(traitMatchesClassName(name))
 
-    q""" trait $name_type extends ..$superTypesWithDefault { ..$traitBody } """
+    q""" trait $name_type extends ..$superTypesWithDefault with ..$externalSuperTypes_type { ..$traitBody } """
   }
 
   def relationSuperTraits(schema: Schema): List[Tree] = schema.relationTraits.map { relationTrait => import relationTrait._
     val superTypesWithDefault = if(superTypes.isEmpty) List("AbstractRelation") else superTypes
     val superTypesWithDefaultGenerics = superTypesWithDefault.map(TypeName(_)).map(superType => tq"$superType[START,END]")
     val traitBody = statements.flatMap(generatePropertyAccessors(_))
-    q""" trait $name_type[+START <: Node,+END <: Node] extends ..$superTypesWithDefaultGenerics { ..$traitBody } """
+
+    q""" trait $name_type[+START <: Node,+END <: Node] extends ..$superTypesWithDefaultGenerics with ..$externalSuperTypes_type { ..$traitBody } """
   }
 
   def graphFactories(schema: Schema): List[Tree] = schema.graphs.map { graph => import graph._

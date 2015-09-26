@@ -34,6 +34,13 @@ class RelationClassSpec extends CodeComparisonSpec {
     )
   }
 
+  "with external super types" >> {
+    generatedContainsCode(
+      q"object A {@Node class A; @Node class B; @Relation trait T; @Relation class R(startNode:A, endNode:B) extends T with Immutable}",
+      """case class R(startNode: A, rawItem: raw.Relation, endNode: B) extends Relation[A, B] with T[A, B] with Immutable;"""
+    )
+  }
+
   "with multiple super types" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @Relation trait S; @Relation class R(startNode:A, endNode:B) extends T with S}",

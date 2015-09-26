@@ -41,13 +41,13 @@ class NodeFactorySpec extends CodeComparisonSpec {
 
   "with super factory with external superType" >> {
     generatedContainsCode(
-      q"object A {trait E; @Node trait T; @Node class N extends T with E}",
+      q"object A {@Node trait T; @Node class N extends T with Immutable}",
       """object N extends TFactory[N] {""",
       q"""val label = raw.Label("N")""",
       q"""val labels = Set(raw.Label("N"), raw.Label("T"))""",
       q"""def createT(): N = this.create()"""
     )
-  }.pendingUntilFixed
+  }
 
   "with multiple super factories" >> {
     generatedContainsCode(
