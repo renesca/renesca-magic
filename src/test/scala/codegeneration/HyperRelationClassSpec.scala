@@ -9,12 +9,12 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "simple class, helper relations" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @HyperRelation class R(startNode:A, endNode:B)}",
-      q"""case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] {
+      q"""case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] {
           override val label = raw.Label("R");
           override val labels = Set(raw.Label("R"))
       }""",
-      """case class AToR(startNode: A, rawItem: raw.Relation, endNode: R) extends Relation[A, R];""",
-      """case class RToB(startNode: R, rawItem: raw.Relation, endNode: B) extends Relation[R, B];"""
+      """case class RStart(startNode: A, rawItem: raw.Relation, endNode: R) extends Relation[A, R];""",
+      """case class REnd(startNode: R, rawItem: raw.Relation, endNode: B) extends Relation[R, B];"""
     )
   }
 
@@ -28,7 +28,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "preserve custom code" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @HyperRelation class R(startNode:A, endNode:B) {def custom = 0}}",
-      q"""case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] {
+      q"""case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] {
             override val label = raw.Label("R");
             override val labels = Set(raw.Label("R"))
             def custom = 0
@@ -43,7 +43,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
           @Relation class R(startNode:N, endNode:M)
           @Relation class S(startNode:M, endNode:N)}
           """,
-      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, AToN, N, NToB, B] {
+      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, NStart, N, NEnd, B] {
             override val label = raw.Label("N")
             override val labels = Set(raw.Label("N"))
             def rs: Seq[M] = successorsAs(M, R)
@@ -63,7 +63,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
       q"""object A {@Node class A; @Node class B; @Node class M
           @HyperRelation class N(startNode:A, endNode:B)
           @HyperRelation class R(startNode:N,endNode:M)}""",
-      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, AToN, N, NToB, B] {
+      q"""case class N(rawItem: raw.Node) extends HyperRelation[A, NStart, N, NEnd, B] {
             override val label = raw.Label("N")
             override val labels = Set(raw.Label("N"))
               def rs: Seq[M] = successorsAs(M, R)
@@ -79,7 +79,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "with super relation types" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      """case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] with T[A, B] {
+      """case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] with T[A, B] {
         override val label = raw.Label("R");
         override val labels = Set(raw.Label("R"))
       }"""
@@ -89,7 +89,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "with super node types" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends K}",
-      """case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] with K {
+      """case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] with K {
         override val label = raw.Label("R");
         override val labels = Set(raw.Label("R"), raw.Label("K"))
       }"""
@@ -99,7 +99,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "with super relation and node types" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends T with K}",
-      """case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] with T[A, B] with K {
+      """case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] with T[A, B] with K {
         override val label = raw.Label("R");
         override val labels = Set(raw.Label("R"), raw.Label("K"))
       }"""
@@ -109,7 +109,7 @@ class HyperRelationClassSpec extends CodeComparisonSpec {
   "with super relation and node types and external trait" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @Node trait K; @HyperRelation class R(startNode:A, endNode:B) extends T with K with Immutable}",
-      """case class R(rawItem: raw.Node) extends HyperRelation[A, AToR, R, RToB, B] with T[A, B] with K with Immutable {
+      """case class R(rawItem: raw.Node) extends HyperRelation[A, RStart, R, REnd, B] with T[A, B] with K with Immutable {
         override val label = raw.Label("R");
         override val labels = Set(raw.Label("R"), raw.Label("K"))
       }"""

@@ -19,7 +19,8 @@ object Helpers {
   def factoryMatchesMethod(name: String) = "matches" + name
   def factoryUniqueMatchesMethod(name: String) = "matchesOn" + name.capitalize
   def nameToLabel(name: String) = name.toUpperCase
-  def relationName(start: String, end: String) = s"${ start }To${ end }"
+  def hyperStartRelationName(name:String) = s"${ name }Start"
+  def hyperEndRelationName(name:String) = s"${ name }End"
 
   def writeFile(filename: String, contents: String) = {
     val parent = new File(filename).getParentFile

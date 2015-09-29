@@ -46,11 +46,11 @@ trait Generators extends Context with Patterns with Parameters {
   trait StartEndRelation extends StartEndNode with Named {
     def pattern: StartEndNodePattern with NamePattern
 
-    def startRelation = relationName(startNode, name)
+    def startRelation = hyperStartRelationName(name)
     def startRelation_type = TypeName(startRelation)
     def startRelation_term = TermName(startRelation)
     def startRelation_label = nameToLabel(startRelation)
-    def endRelation = relationName(name, endNode)
+    def endRelation = hyperEndRelationName(name)
     def endRelation_type = TypeName(endRelation)
     def endRelation_term = TermName(endRelation)
     def endRelation_label = nameToLabel(endRelation)

@@ -10,16 +10,16 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
     generatedContainsCode(
       // TODO: fail with compile error when start or endNode does not exist
       q"object A {@Node class A; @Node class B; @HyperRelation class R(startNode:A, endNode:B)}",
-      q"""object R extends HyperRelationFactory[A, AToR, R, RToB, B] {
+      q"""object R extends HyperRelationFactory[A, RStart, R, REnd, B] {
             override val label = raw.Label("R");
             override val labels = Set(raw.Label("R"))
-            override val startRelationType = raw.RelationType("ATOR");
-            override val endRelationType = raw.RelationType("RTOB");
+            override val startRelationType = raw.RelationType("RSTART");
+            override val endRelationType = raw.RelationType("REND");
             override def wrap(node: raw.Node) = new R(node);
             override def wrap(startRelation: raw.Relation, middleNode: raw.Node, endRelation: raw.Relation) = {
               val hyperRelation = wrap(middleNode);
-              hyperRelation._startRelation = AToR(A.wrap(startRelation.startNode), startRelation, hyperRelation);
-              hyperRelation._endRelation = RToB(hyperRelation, endRelation, B.wrap(endRelation.endNode));
+              hyperRelation._startRelation = RStart(A.wrap(startRelation.startNode), startRelation, hyperRelation);
+              hyperRelation._endRelation = REnd(hyperRelation, endRelation, B.wrap(endRelation.endNode));
               hyperRelation
             };
             def create(startNode: A, endNode: B): R = {
@@ -39,13 +39,13 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
              wrap(middleNode)
            }
           } """,
-      q"""object AToR extends RelationFactory[A, AToR, R] {
-            val relationType = raw.RelationType("ATOR");
-            def wrap(relation: raw.Relation) = AToR(A.wrap(relation.startNode), relation, R.wrap(relation.endNode));
+      q"""object RStart extends RelationFactory[A, RStart, R] {
+            val relationType = raw.RelationType("RSTART");
+            def wrap(relation: raw.Relation) = RStart(A.wrap(relation.startNode), relation, R.wrap(relation.endNode));
           } """,
-      q"""object RToB extends RelationFactory[R, RToB, B] {
-            val relationType = raw.RelationType("RTOB");
-            def wrap(relation: raw.Relation) = RToB(R.wrap(relation.startNode), relation, B.wrap(relation.endNode));
+      q"""object REnd extends RelationFactory[R, REnd, B] {
+            val relationType = raw.RelationType("REND");
+            def wrap(relation: raw.Relation) = REnd(R.wrap(relation.startNode), relation, B.wrap(relation.endNode));
           } """
     )
   }
@@ -53,14 +53,14 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
   "with node super factory" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[R] {"""
+      """object R extends HyperRelationFactory[A, RStart, R, REnd, B] with TFactory[R] {"""
     )
   }
 
   "with relation super factory" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T}",
-      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
+      """object R extends HyperRelationFactory[A, RStart, R, REnd, B] with TFactory[A, R, B] {""",
       q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)""",
       q"""def mergeT(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, merge, onMatch)""",
       q"""def matchesT(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, matches)"""
@@ -70,14 +70,14 @@ class HyperRelationFactorySpec extends CodeComparisonSpec {
   "with node super factory and external supertype" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Node trait T; @HyperRelation class R(startNode:A, endNode:B) extends T with Immutable}",
-      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[R] {"""
+      """object R extends HyperRelationFactory[A, RStart, R, REnd, B] with TFactory[R] {"""
     )
   }
 
   "with relation super factory and external supertype" >> {
     generatedContainsCode(
       q"object A {@Node class A; @Node class B; @Relation trait T; @HyperRelation class R(startNode:A, endNode:B) extends T with Immutable}",
-      """object R extends HyperRelationFactory[A, AToR, R, RToB, B] with TFactory[A, R, B] {""",
+      """object R extends HyperRelationFactory[A, RStart, R, REnd, B] with TFactory[A, R, B] {""",
       q"""def createT(startNode: A, endNode: B): R = this.create(startNode, endNode)""",
       q"""def mergeT(startNode: A, endNode: B, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): R = this.merge(startNode, endNode, merge, onMatch)""",
       q"""def matchesT(startNode: A, endNode: B, matches: Set[PropertyKey] = Set.empty): R = this.matches(startNode, endNode, matches)"""
