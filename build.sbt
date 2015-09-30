@@ -1,7 +1,7 @@
 name := "renesca-magic"
 
 // don't forget to change the version in README.md
-version := "0.3.3"
+version := "0.3.4"
 
 val scalaV = "2.11.7"
 
