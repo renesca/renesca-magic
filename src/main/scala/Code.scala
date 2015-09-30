@@ -190,11 +190,14 @@ trait Code extends Context with Generators {
     })
   }
 
-  def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String): Tree = {
+  def accumulatedTraitNeighbours(r: String, neighbours: List[(String, String, String)], relationPlural: TermName, nodeTrait: String, onlyInterface:Boolean = false): Tree = {
     val traitName = TypeName(nodeTrait)
     val successors = neighbours.collect { case (accessorName, `r`, _) => accessorName }.map(s => q"${ TermName(s) }")
     val combined = (q"Seq.empty" :: successors).reduce[Tree]((a, b) => q"$a ++ $b")
-    q""" def $relationPlural:Seq[$traitName] = $combined"""
+    if( onlyInterface )
+      q""" def $relationPlural:Seq[$traitName]"""
+    else 
+      q""" def $relationPlural:Seq[$traitName] = $combined"""
   }
 
   def nodeTraitFactories(schema: Schema): List[Tree] = schema.nodeTraits.flatMap { nodeTrait => import nodeTrait._
@@ -579,11 +582,38 @@ trait Code extends Context with Generators {
   }
 
   def nodeSuperTraits(schema: Schema): List[Tree] = schema.nodeTraits.map { nodeTrait => import nodeTrait._
+
+    val directNeighbours = neighbours_terms.map {
+      case (accessorName, relation_term, endNode_type, endNode_term) =>
+        q"""def $accessorName:Seq[$endNode_type]"""
+    }
+
+    val successorTraits = outRelationsToTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(nameToPlural(r))
+      accumulatedTraitNeighbours(r, neighbours, relationPlural, nodeTrait, onlyInterface = true)
+    }
+
+    val directRevNeighbours = rev_neighbours_terms.map {
+      case (accessorName, relation_term, startNode_type, startNode_term) =>
+        q"""def $accessorName:Seq[$startNode_type]"""
+    }
+
+    val predecessorTraits = inRelationsFromTrait.map { case (r, nodeTrait) =>
+      val relationPlural = TermName(rev(nameToPlural(r)))
+      accumulatedTraitNeighbours(r, rev_neighbours, relationPlural, nodeTrait, onlyInterface = true)
+    }
+
     val superTypesWithDefault = (if(superTypes.isEmpty) List("Node") else superTypes).map(TypeName(_))
     val traitBody = statements.flatMap(generatePropertyAccessors(_))
     val matchesClassName = TypeName(traitMatchesClassName(name))
 
-    q""" trait $name_type extends ..$superTypesWithDefault with ..$externalSuperTypes_type { ..$traitBody } """
+    q""" trait $name_type extends ..$superTypesWithDefault with ..$externalSuperTypes_type {
+      ..$directNeighbours
+      ..$successorTraits
+      ..$directRevNeighbours
+      ..$predecessorTraits
+      ..$traitBody 
+    } """
   }
 
   def relationSuperTraits(schema: Schema): List[Tree] = schema.relationTraits.map { relationTrait => import relationTrait._

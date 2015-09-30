@@ -1,9 +1,6 @@
 package renesca.schema.macros
 
 trait Generators extends Context with Patterns with Parameters {
-
-  //TODO: abort when wrong superType inheritance. example: Relation extends NodeTrait
-
   import Helpers._
   import context.universe._
 
@@ -278,7 +275,7 @@ trait Generators extends Context with Patterns with Parameters {
         found.get
     }
 
-    def neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val sources = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(sources contains _.startNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.endNode) {
@@ -297,7 +294,7 @@ trait Generators extends Context with Patterns with Parameters {
       }
     }
 
-    def rev_neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NodePattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
+    def rev_neighbours(nodePattern: NamePattern with SuperTypesPattern, relations: List[NamePattern with StartEndNodePattern], nodePatterns: List[NamePattern with SuperTypesPattern with StatementsPattern], nodeTraitPatterns: List[NodeTraitPattern]): List[(String, String, String)] = {
       val targets = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodePattern).map(_.name)
       relations.filter(targets contains _.endNode).flatMap { r =>
         if(nodeTraitPatterns.map(_.name) contains r.startNode) {
@@ -448,6 +445,10 @@ trait Generators extends Context with Patterns with Parameters {
                         pattern: NodeTraitPattern,
                         flatSuperTypesWithSelf: List[String], // only self and nodeTraits without external traits
                         externalSuperTypes: List[String],
+                        neighbours: List[(String, String, String)], // accessorName, relation, endNode
+                        rev_neighbours: List[(String, String, String)], // accessorName, relation, startNode
+                        outRelationsToTrait: List[(String, String)],
+                        inRelationsFromTrait: List[(String, String)],
                         subNodes: List[String],
                         subRelations: List[String],
                         subHyperRelations: List[String],
@@ -460,6 +461,14 @@ trait Generators extends Context with Patterns with Parameters {
     def commonHyperRelationNodeTraits_type = commonHyperRelationNodeTraits.map(TypeName(_))
     def commonHyperRelationRelationTraits_type = commonHyperRelationRelationTraits.map(TypeName(_))
 
+    def neighbours_terms = neighbours.map { case (accessorName, relation, endNode) =>
+      (TermName(accessorName), TermName(relation), TypeName(endNode), TermName(endNode))
+    }
+
+    def rev_neighbours_terms = rev_neighbours.map { case (rev_accessorName, relation, startNode) =>
+      (TermName(rev_accessorName), TermName(relation), TypeName(startNode), TermName(startNode))
+    }
+    
     val parameterList = ParameterList.create(flatStatements, name, representsNode = true, hasOwnFactory)
 
     var traitFactoryParameterList: List[ParameterList] = null
@@ -478,6 +487,8 @@ trait Generators extends Context with Patterns with Parameters {
 
       import Schema.{childNodesOfNodeTrait, flatSuperStatements, nodeNamesToRelations, nodeTraitToCommonHyperRelationTraits, patternToFlatSuperTypesWithSelf, traitCanHaveOwnFactory}
 
+      val allRelationPatterns = relationPatterns ::: hyperRelationPatterns
+
       val externalSuperTypes = rawNodeTraitPattern.superTypes diff nodeTraitPatterns.map(_.name)
       val nodeTraitPattern = rawNodeTraitPattern.copy(_superTypes = rawNodeTraitPattern.superTypes diff externalSuperTypes)
 
@@ -487,6 +498,20 @@ trait Generators extends Context with Patterns with Parameters {
         nodeTraitPattern,
         flatSuperTypesWithSelf = patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodeTraitPattern).map(_.name) intersect nodeTraitPatterns.map(_.name),
         externalSuperTypes = externalSuperTypes,
+
+        neighbours = Schema.neighbours(nodeTraitPattern, allRelationPatterns, selectedNodePatterns, nodeTraitPatterns),
+        rev_neighbours = Schema.rev_neighbours(nodeTraitPattern, allRelationPatterns, selectedNodePatterns, nodeTraitPatterns),
+        outRelationsToTrait = allRelationPatterns.filter { r =>
+          (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodeTraitPattern).map(_.name) contains r.startNode) &&
+          (nodeTraitPatterns.map(_.name) contains r.endNode)
+        }.map(r => (r.name, r.endNode)),
+        inRelationsFromTrait = allRelationPatterns.filter { r =>
+          // endNode is this node or one of its supertypes
+          // and startNode is a Node Trait
+          (patternToFlatSuperTypesWithSelf(nodeTraitPatterns, nodeTraitPattern).map(_.name) contains r.endNode) &&
+          (nodeTraitPatterns.map(_.name) contains r.startNode)
+        }.map(r => (r.name, r.startNode)),
+
         subNodes = childNodes,
         subRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns ::: relationPatterns).map(_.name),
         subHyperRelations = nodeNamesToRelations(nodeTraitPattern.name :: childNodes ::: childTraits, hyperRelationPatterns).map(_.name),
