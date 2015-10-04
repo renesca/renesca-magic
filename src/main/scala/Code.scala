@@ -196,7 +196,7 @@ trait Code extends Context with Generators {
     val combined = (q"Seq.empty" :: successors).reduce[Tree]((a, b) => q"$a ++ $b")
     if( onlyInterface )
       q""" def $relationPlural:Seq[$traitName]"""
-    else 
+    else
       q""" def $relationPlural:Seq[$traitName] = $combined"""
   }
 
@@ -605,14 +605,13 @@ trait Code extends Context with Generators {
 
     val superTypesWithDefault = (if(superTypes.isEmpty) List("Node") else superTypes).map(TypeName(_))
     val traitBody = statements.flatMap(generatePropertyAccessors(_))
-    val matchesClassName = TypeName(traitMatchesClassName(name))
 
     q""" trait $name_type extends ..$superTypesWithDefault with ..$externalSuperTypes_type {
       ..$directNeighbours
       ..$successorTraits
       ..$directRevNeighbours
       ..$predecessorTraits
-      ..$traitBody 
+      ..$traitBody
     } """
   }
 
