@@ -19,9 +19,9 @@ renesca-magic is an abstraction layer for [renesca](https://github.com/renesca/r
 To use renesca-magic in your sbt project, add these dependencies and the marco compiler plugin to your ```build.sbt```:
 
 ```scala
-libraryDependencies += "com.github.renesca" %% "renesca-magic" % "0.3.4"
+libraryDependencies += "com.github.renesca" %% "renesca-magic" % "0.3.4-1"
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 ```
 
 ## Feedback
