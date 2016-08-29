@@ -4,6 +4,15 @@
 
 renesca-magic is an abstraction layer for [renesca](https://github.com/renesca/renesca), which generates typesafe graph database schemas for the Neo4j database using scala macros.
 
+## Academic Article
+There is also an academic article about renesca and renesca-magic: [An Open-Source Object-Graph-Mapping Framework for Neo4j and Scala: Renesca](https://link.springer.com/chapter/10.1007/978-3-319-45507-5_14). Feel free to use these libraries in any of your projects. If you use them in an academic setting, we'd appreciate if you cite this article.
+
+
+> Dietze, F., Karoff, J., Calero Valdez, A. , Ziefle, M., Greven, C., & Schroeder, U. (2016, August).
+> An Open-Source Object-Graph-Mapping Framework for Neo4j and Scala: Renesca.
+> *In International Conference on Availability, Reliability, and Security* (pp. 204-218). Springer International Publishing.
+
+
 ## Feature summary
 * Generate boilerplate classes and factories to wrap Nodes, Relations and Graphs
 * Generate boilerplate for handling HyperRelations ```(n)-[]->(hyperRelation)-[]->(m)```
