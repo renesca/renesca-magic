@@ -55,7 +55,7 @@ case class Animal(node: Node) {
   val label = Label("ANIMAL")
   def eats: Set[Food] = node.outRelations.
     filter(_.relationType == Eats.relationType).map(_.endNode).
-    filter(_.labels.contains(Food.label)).map(Food.wrap)
+    filter(_.labels.contains(Food.label)).map(Food.wrap).toSet
   def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
 }
 
