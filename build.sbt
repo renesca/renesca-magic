@@ -1,10 +1,10 @@
 name := "renesca-magic"
 
 // don't forget to change the version in README.md
-version := "0.3.4-1"
 
 val scalaV = "2.11.7"
 
+version := "1.0.0-SNAPSHOT"
 val paradiseVersion = "2.1.0"
 
 scalaVersion := scalaV
