@@ -18,11 +18,16 @@ libraryDependencies ++= Seq(
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
-
 scalacOptions ++= scalacOpts
 
-scalacOptions in Test ++= Seq("-Yrangepos") // specs2
+// scalaxy (faster collection operations)
+scalacOptions += "-Xplugin-require:scalaxy-streams"
+scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams"))
+scalacOptions in Test += "-Xplugin-disable:scalaxy-streams"
+autoCompilerPlugins := true
+addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4")
 
+scalacOptions in Test ++= Seq("-Yrangepos") // specs2
 parallelExecution in Test := false
 
 // publishing
