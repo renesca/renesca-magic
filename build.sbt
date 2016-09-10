@@ -1,12 +1,9 @@
 name := "renesca-magic"
 
 // don't forget to change the version in README.md
-
-val scalaV = "2.11.7"
-
 version := "1.0.0-SNAPSHOT"
+val scalaV = "2.11.8"
 val paradiseVersion = "2.1.0"
-
 scalaVersion := scalaV
 
 
@@ -15,8 +12,8 @@ resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" // spec
 libraryDependencies ++= Seq(
   "com.github.renesca" %% "renesca" % "0.3.2-9",
   "org.scala-lang" % "scala-reflect" % scalaV,
-  "org.specs2" %% "specs2-core" % "3.6.2" % "test",
-  "org.specs2" %% "specs2-mock" % "3.6.2" % "test",
+  "org.specs2" %% "specs2-core" % "3.6.6" % "test", //TODO: higher specs versions seem to produce a memory leak...
+  "org.specs2" %% "specs2-mock" % "3.6.6" % "test",
   "org.scala-lang" % "scala-compiler" % scalaV % "test"
 )
 
@@ -28,12 +25,9 @@ scalacOptions in Test ++= Seq("-Yrangepos") // specs2
 
 parallelExecution in Test := false
 
-
 // publishing
 pgpSecretRing := file("local.secring.gpg")
-
 pgpPublicRing := file("local.pubring.gpg")
-
 organization := "com.github.renesca"
 
 pomExtra := {
@@ -62,21 +56,22 @@ pomExtra := {
     </developers>
 }
 
-
-val scalacOpts = Seq(
-  "-encoding", "UTF-8",
-  "-unchecked",
-  "-deprecation",
-  "-explaintypes",
-  "-feature",
-  "-Yinline", "-Yinline-warnings",
-  "-language:_"
-  //,"-Xdisable-assertions", "-optimize"
+val scalacOpts = (
+  "-encoding" :: "UTF-8" ::
+  "-unchecked" ::
+  "-deprecation" ::
+  "-explaintypes" ::
+  "-feature" ::
+  "-Yinline" :: "-Yinline-warnings" ::
+  "-language:_" ::
+  // "-Xdisable-assertions" :: "-optimize" ::
+  Nil
 )
 
-val scalacMacroOpts = Seq(
-  "-Ymacro-debug-lite",
-  "-Yshow-trees-stringified"
+val scalacMacroOpts = (
+  "-Ymacro-debug-lite" ::
+  "-Yshow-trees-stringified" ::
+  Nil
 )
 
 fullClasspath in Test := {
