@@ -10,7 +10,7 @@ scalaVersion := scalaV
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases" // specs2
 
 libraryDependencies ++= Seq(
-  "com.github.renesca" %% "renesca" % "0.3.2-9",
+  "com.github.renesca" %% "renesca" % "1.0.0-SNAPSHOT" % "test",
   "org.scala-lang" % "scala-reflect" % scalaV,
   "org.specs2" %% "specs2-core" % "3.6.6" % "test", //TODO: higher specs versions seem to produce a memory leak...
   "org.specs2" %% "specs2-mock" % "3.6.6" % "test",
