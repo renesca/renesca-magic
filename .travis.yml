@@ -15,16 +15,9 @@ script:
 - rm ~/.sbt/boot/scala-*/org.scala-sbt/sbt/*/sbt.components.lock ~/.sbt/boot/sbt.boot.lock
 after_success:
 - test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION coveralls
-- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && sbt ++$TRAVIS_SCALA_VERSION
-  publishSigned sonatypeRelease
+# multi-line script?
+- test -n "${TRAVIS_TAG}" && test "${TRAVIS_JDK_VERSION}" = 'oraclejdk7' && openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out local.credentials.sbt -d && openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg -d && openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg -d && sbt ++$TRAVIS_SCALA_VERSION publishSigned sonatypeRelease
 env:
   global:
   - secure: oDpGPZs1hGH2MeOZUdF2UQc91Or72KvbX8ZhkOwVnxgC0dlUc/bWAv5mQfHkTCB9/My6gCwpR/2TTexw60/x/gj2FdT75jXCXEaSMqPL0ZUvLgJ1dZf4cfqG/X+bi+CwgzjDVLsIC9ws8IbZwUxq7M8qn1pbxSxeCiqhSxeAVoE=
   - secure: kFXL9YZ4zHjonwjxscQrLfINscmMPjr49lAruQ9s2vhrn2QMrSn2KMUiNWA3Vi1GThTiSJsmq+302JY4DNU++dtTpsmGTNoKExqXgNsgK9XIfOcZGprQCgwZ0RnNn4PKtm7m1QyJEJpHilCaGAZQZ9uZwmHxD/bR8pHagdDmZ10=
-before_install:
-- openssl aes-256-cbc -k "$file_encryption_password" -in credentials.sbt.enc -out
-  local.credentials.sbt -d
-- openssl aes-256-cbc -k "$file_encryption_password" -in secring.gpg.enc -out local.secring.gpg
-  -d
-- openssl aes-256-cbc -k "$file_encryption_password" -in pubring.gpg.enc -out local.pubring.gpg
-  -d
